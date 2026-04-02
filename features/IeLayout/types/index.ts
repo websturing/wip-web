@@ -1,0 +1,34 @@
+export interface IeLayout {
+    id: number;
+    name: string;
+    price: number;
+    is_gl_number: boolean;
+    gl_number: string | null;
+    department: string;
+    created_by_id: number | null;
+    updated_by_id: number | null;
+    created_at: string;
+    updated_at: string;
+    details?: TimeStudy[];
+}
+
+export interface TimeStudy {
+    id: number;
+    ie_layout_id: number;
+    operation_id: number;
+    handling_position: string;
+    length: number;
+    sequence: number;
+    machine_type: string;
+    machine_turn: number;
+    operation?: Operation;
+}
+
+export interface Operation {
+    id: number;
+    name: string;
+    code: string;
+    sequence: number;
+    machine_type: string;
+    grade: string;
+}
