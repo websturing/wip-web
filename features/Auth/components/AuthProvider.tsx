@@ -1,66 +1,57 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AuthService } from '../services/AuthService';
-import { User } from '../types';
+import { SessionProvider, signIn, signOut, useSession } from "next-auth/react";
+import React, { createContext, useContext } from 'react';
 
 interface AuthContextType {
-    user: User | null;
+    user: any | null;
     isLoading: boolean;
     login: (credentials: { email: string; password: string }) => Promise<void>;
     logout: () => void;
+    token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-    const pathname = usePathname();
+const AuthManager = ({ children }: { children: React.ReactNode }) => {
+    const { data: session, status } = useSession();
 
-    const fetchMe = async () => {
-        setIsLoading(true);
-        try {
-            const token = AuthService.getToken();
-            if (token) {
-                // If we had a direct /me endpoint, we'd use it.
-                // For now, assume user is stored in localStorage or refetched.
-                const storedUser = localStorage.getItem('auth_user');
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
-                }
-            }
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            AuthService.logout();
-            setUser(null);
-        } finally {
-            setIsLoading(false);
+    const login = async (credentials: { email: string; password: string }) => {
+        const result = await signIn("credentials", {
+            email: credentials.email,
+            password: credentials.password,
+            redirect: false,
+        });
+
+        if (result?.error) {
+            throw new Error(result.error);
         }
     };
 
-    useEffect(() => {
-        fetchMe();
-    }, []);
+    const logout = () => signOut({ callbackUrl: "/login" });
 
-    const login = async (credentials: { email: string; password: string }) => {
-        const response = await AuthService.login(credentials);
-        setUser(response.user);
-        localStorage.setItem('auth_user', JSON.stringify(response.user));
-    };
-
-    const logout = () => {
-        AuthService.logout();
-        setUser(null);
-        router.push('/login');
+    const authValue = {
+        user: (session as any)?.user || null,
+        isLoading: status === "loading",
+        login,
+        logout,
+        token: (session as any)?.accessToken || null,
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+        <AuthContext.Provider value={authValue}>
             {children}
         </AuthContext.Provider>
+    );
+};
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    return (
+        <SessionProvider>
+            <AuthManager>
+                {children}
+            </AuthManager>
+        </SessionProvider>
     );
 };
 

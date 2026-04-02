@@ -1,60 +1,75 @@
+'use client';
+
+import { useAuth } from '@/features/Auth/components/AuthProvider';
+import { useState } from 'react';
 
 export default function AdminDashboard() {
-    return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-1000">
-            <header>
-                <h1 className="text-4xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter">
-                    Dashboard <span className="text-blue-600 font-mono tracking-widest italic">Overview</span>
-                </h1>
-                <p className="mt-2 text-sm text-zinc-500 font-medium tracking-tight">
-                    Real-time performance metrics and industrial engineering data.
-                </p>
-            </header>
+    const { user } = useAuth();
+    const [showToast, setShowToast] = useState(true);
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    { label: 'Active Layouts', value: '42', change: '+12%', color: 'blue' },
-                    { label: 'Total Operations', value: '1.2k', change: '+0.5%', color: 'purple' },
-                    { label: 'Avg Efficiency', value: '89%', change: '-2%', color: 'green' },
-                    { label: 'Cycle Time', value: '4.2s', change: '-5%', color: 'orange' },
-                ].map((stat, i) => (
-                    <div key={i} className="p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-xl border border-zinc-100 dark:border-zinc-800 transition-all hover:scale-105 active:scale-95 group cursor-pointer">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 group-hover:text-blue-600 transition-colors">
-                            {stat.label}
-                        </p>
-                        <div className="mt-4 flex items-baseline justify-between gap-4">
-                            <span className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter">
-                                {stat.value}
-                            </span>
-                            <span className={`text-xs font-bold ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-500'} italic font-mono`}>
-                                {stat.change}
-                            </span>
+    const roles = ['admin', 'Matching Girl'];
+    const assignedLines = ['A1', 'A2', 'A3', 'A4', 'A5']; // Added A4, A5 for visual +17 more
+
+    return (
+        <div className="relative animate-in fade-in duration-700 min-h-screen bg-zinc-50 p-10">
+            {/* Toast Notification to match Image 1 */}
+            {showToast && (
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 flex justify-center animate-in slide-in-from-top-10 duration-500">
+                    <div className="w-full h-16 bg-white rounded-2xl border border-green-500/30 flex items-center px-6 shadow-xl shadow-green-500/10">
+                        <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center p-2 mr-4 border border-green-200">
+                            <span className="text-green-600 text-lg">✔️</span>
                         </div>
+                        <div className="flex-1">
+                            <h4 className="text-sm font-bold text-zinc-900 tracking-tight">Great to have you back Super Admin!</h4>
+                        </div>
+                        <button
+                            onClick={() => setShowToast(false)}
+                            className="p-1.5 text-zinc-300 hover:text-zinc-600 transition-colors"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                        </button>
                     </div>
-                ))}
+                </div>
+            )}
+
+            {/* Main Welcome Message */}
+            <div className="mb-12">
+                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight mb-2">
+                    Welcome Back, <span className="text-zinc-800">{user?.email || 'admin@admin.com'}</span>
+                </h1>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-zinc-400">You have</span>
+                    {roles.map((role, i) => (
+                        <span
+                            key={i}
+                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest ${i === 0
+                                    ? 'bg-green-100/50 text-green-700 border border-green-200'
+                                    : 'bg-teal-100/50 text-teal-700 border border-teal-200'
+                                }`}
+                        >
+                            {role}
+                        </span>
+                    ))}
+                    <span className="text-xs font-bold text-zinc-400 ml-1">roles</span>
+                </div>
             </div>
 
-            <section className="p-10 bg-white dark:bg-zinc-900 rounded-[3.5rem] shadow-2xl border border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center justify-between mb-10">
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter decoration-blue-600 underline underline-offset-8">
-                        System Efficiency
-                    </h3>
-                    <div className="flex gap-2">
-                        <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Live Feed</span>
-                    </div>
-                </div>
-
-                <div className="h-64 flex items-end gap-3 px-4">
-                    {[40, 70, 45, 90, 65, 80, 55, 100, 85, 75, 40, 60].map((h, i) => (
-                        <div
-                            key={i}
-                            style={{ height: `${h}%` }}
-                            className="flex-1 bg-gradient-to-t from-blue-600 to-blue-400 dark:from-blue-900 dark:to-blue-700 rounded-full transition-all hover:scale-110 hover:shadow-2xl hover:shadow-blue-500/30"
-                        ></div>
+            {/* Assigned Lines to match Image 1 */}
+            <div className="mb-14">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-4">Assigned Lines:</label>
+                <div className="flex flex-wrap gap-2 items-center">
+                    {assignedLines.slice(0, 3).map((line, i) => (
+                        <div key={i} className="px-4 py-2 bg-white rounded-xl border border-zinc-100 shadow-sm flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            <span className="text-xs font-bold text-zinc-900">{line}</span>
+                        </div>
                     ))}
+                    <span className="text-xs font-bold text-blue-600 pl-4">+17 more</span>
                 </div>
-            </section>
+            </div>
+
+            {/* Empty space mimicking screenshot placeholder */}
+            <div className="w-full h-px bg-zinc-100 mb-12"></div>
         </div>
     );
 }

@@ -8,66 +8,109 @@ export const AdminSidebar = () => {
     const pathname = usePathname();
     const { logout } = useAuth();
 
-    const menuItems = [
-        { name: 'Dashboard', path: '/admin', icon: '📊' },
-        { name: 'IE Layouts', path: '/admin/ielayout', icon: '⚡' },
-        { name: 'Users', path: '/admin/users', icon: '👥' },
-        { name: 'Settings', path: '/admin/settings', icon: '⚙️' },
+    const sections = [
+        {
+            items: [
+                { name: 'Dashboard', path: '/admin', icon: '📊', badge: null }
+            ]
+        },
+        {
+            title: 'Operation Planning',
+            items: [
+                { name: 'Leaders', path: '/admin/leaders', icon: '👤', badge: null },
+                { name: 'GL Number', path: '/admin/gl-number', icon: '🔢', badge: null }
+            ],
+            badgeSection: '404'
+        },
+        { title: 'Lines', items: [], badgeSection: null },
+        {
+            title: 'Replacements',
+            items: [
+                { name: 'Tracking Ticket', path: '/admin/tracking', icon: '🎫', badge: '404' },
+                { name: 'Ticket Request', path: '/admin/request', icon: '📋', badge: '404' },
+                { name: 'Approval', path: '/admin/approval', icon: '✅', badge: '404' }
+            ],
+            badgeSection: '404'
+        },
+        {
+            title: 'Transfers',
+            items: [
+                { name: 'Stock In', path: '/admin/stock-in', icon: '📦', badge: null },
+                { name: 'Stock Out', path: '/admin/stock-out', icon: '📤', badge: '404' },
+                { name: 'Defect', path: '/admin/defect', icon: '⚠️', badge: null }
+            ],
+            badgeSection: '404'
+        },
+        {
+            title: 'User Management',
+            items: [
+                { name: 'Permissions', path: '/admin/permissions', icon: '🔑', badge: null },
+                { name: 'Users', path: '/admin/users', icon: '👥', badge: '404' },
+                { name: 'Employee', path: '/admin/employee', icon: '👷', badge: '404' }
+            ],
+            badgeSection: '404'
+        }
     ];
 
     return (
-        <aside className="w-80 h-screen sticky top-0 bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 p-8 flex flex-col justify-between shadow-2xl">
-            <div>
-                <div className="mb-14 flex items-center gap-4 px-2">
-                    <div className="p-2 bg-blue-600 rounded-2xl w-10 h-10 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                        <span className="text-white font-black italic tracking-tighter">GL</span>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter">
-                            Admin <span className="text-blue-600">Panel</span>
-                        </h1>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                            v1.0.4 - Premium
-                        </p>
-                    </div>
-                </div>
+        <div className="w-[260px] h-full bg-[#111827] rounded-[2rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-500">
+            <div className="flex-1 overflow-y-auto pt-10 pb-6 scrollbar-hide">
+                <nav className="space-y-0.5">
+                    {sections.map((section, sIdx) => (
+                        <div key={sIdx} className="mb-4">
+                            {section.title && (
+                                <div className="px-6 py-2 flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest leading-none">
+                                        {section.title}
+                                    </span>
+                                    {section.badgeSection && (
+                                        <span className="bg-red-500/10 text-red-500 px-1 py-0.5 rounded-[4px] text-[8px] font-black tracking-tighter">
+                                            {section.badgeSection}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            <div className="space-y-0.5">
+                                {section.items.map((item, iIdx) => {
+                                    const isActive = pathname === item.path;
+                                    return (
+                                        <Link
+                                            key={iIdx}
+                                            href={item.path}
+                                            className={`relative flex items-center justify-between pl-8 pr-4 py-3 transition-all group ${isActive
+                                                    ? 'bg-[#1f2937] text-orange-400 font-black'
+                                                    : 'text-zinc-500 hover:bg-[#1f2937]/50 hover:text-white'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className={`${isActive ? 'text-orange-400' : 'text-zinc-600'}`}>{item.icon}</span>
+                                                <span className="text-[12.5px] font-bold tracking-tight">{item.name}</span>
+                                            </div>
 
-                <nav className="space-y-2">
-                    {menuItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            href={item.path}
-                            className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${pathname === item.path
-                                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl shadow-zinc-500/10 scale-105'
-                                    : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white group'
-                                }`}
-                        >
-                            <span className={`text-lg transition-transform group-hover:scale-110 ${pathname === item.path ? 'scale-110' : ''}`}>
-                                {item.icon}
-                            </span>
-                            {item.name}
-                        </Link>
+                                            {item.badge && (
+                                                <span className="bg-red-500 text-white px-1.5 py-0.5 rounded-[4px] text-[8px] font-black">
+                                                    {item.badge}
+                                                </span>
+                                            )}
+
+                                            {isActive && (
+                                                <div className="absolute right-0 top-0 w-1 h-full bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.6)]"></div>
+                                            )}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     ))}
                 </nav>
             </div>
 
-            <div className="space-y-6">
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-zinc-800 dark:to-zinc-800/50 rounded-[2rem] border border-blue-100 dark:border-zinc-700 shadow-inner">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">
-                        Get Support
-                    </p>
-                    <p className="text-xs text-zinc-500 font-medium leading-relaxed">
-                        Need help? Contact our tech team.
-                    </p>
-                </div>
-
-                <button
-                    onClick={logout}
-                    className="w-full py-4 px-6 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-100 dark:hover:bg-red-900/20 active:scale-95 transition-all outline outline-1 outline-transparent hover:outline-red-200 dark:hover:outline-red-900/30"
-                >
-                    System Logout
-                </button>
-            </div>
-        </aside>
+            <button
+                onClick={logout}
+                className="h-20 flex items-center justify-center gap-3 bg-[#1f2937] text-orange-400/70 hover:text-red-400 transition-all font-black text-[13px] border-t border-zinc-800"
+            >
+                <span> Logout</span>
+            </button>
+        </div>
     );
 };

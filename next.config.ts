@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    turbopack: {
+      // Explicitly set the workspace root relative to this file
+      root: ".",
+    },
+  },
 };
 
 export default nextConfig;
