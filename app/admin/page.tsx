@@ -1,14 +1,28 @@
 'use client';
 
 import { useAuth } from '@/features/Auth/components/AuthProvider';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const [showToast, setShowToast] = useState(true);
+    const [showToast, setShowToast] = useState(false);
+
+    useEffect(() => {
+        // Check if user just logged in
+        const justLoggedIn = sessionStorage.getItem('just_logged_in');
+        if (justLoggedIn) {
+            setShowToast(true);
+            // Remove the flag so it doesn't show again on refresh
+            sessionStorage.removeItem('just_logged_in');
+
+            // Auto hide after 5 seconds
+            const timer = setTimeout(() => setShowToast(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, []);
 
     const roles = ['admin', 'Matching Girl'];
-    const assignedLines = ['A1', 'A2', 'A3', 'A4', 'A5']; // Added A4, A5 for visual +17 more
+    const assignedLines = ['A1', 'A2', 'A3', 'A4', 'A5'];
 
     return (
         <div className="relative animate-in fade-in duration-700 min-h-screen bg-zinc-50 p-10">
@@ -43,8 +57,8 @@ export default function AdminDashboard() {
                         <span
                             key={i}
                             className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest ${i === 0
-                                    ? 'bg-green-100/50 text-green-700 border border-green-200'
-                                    : 'bg-teal-100/50 text-teal-700 border border-teal-200'
+                                ? 'bg-green-100/50 text-green-700 border border-green-200'
+                                : 'bg-teal-100/50 text-teal-700 border border-teal-200'
                                 }`}
                         >
                             {role}

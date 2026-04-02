@@ -18,6 +18,7 @@ export const LoginForm = () => {
         setError(null);
         try {
             await login(credentials);
+            sessionStorage.setItem('just_logged_in', 'true');
             router.push('/admin');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Invalid credentials');
