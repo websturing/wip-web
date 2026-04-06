@@ -27,11 +27,10 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             ],
             badgeSection: '404'
         },
-        { title: 'Lines', items: [], badgeSection: null },
         {
-            title: 'Replacements',
+            title: 'User Security & Permissions',
             items: [
-                { name: 'Tracking Ticket', path: '/admin/tracking', icon: '🎫', badge: '404' },
+                { name: 'Permissions', path: '/admin/tracking', icon: '🎫', badge: '404' },
                 { name: 'Ticket Request', path: '/admin/request', icon: '📋', badge: '404' },
                 { name: 'Approval', path: '/admin/approval', icon: '✅', badge: '404' }
             ],
@@ -58,7 +57,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     ];
 
     return (
-        <div className="w-[260px] lg:w-[280px] h-full bg-[#111827] rounded-[0.8rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300">
+        <div className="w-[260px] lg:w-[280px] h-full bg-[#1f3145] rounded-[0.8rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300">
 
             {/* Header Area with Close for Mobile */}
             <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-800/50">
@@ -76,13 +75,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto pt-6 pb-6 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto pt-6 pb-6 hover-scrollbar-dark scroll-smooth">
                 <nav className="space-y-0.5">
                     {sections.map((section, sIdx) => (
                         <div key={sIdx} className="mb-4">
                             {section.title && (
-                                <div className="px-6 py-2 flex items-center justify-between group cursor-default">
-                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] leading-none transition-colors group-hover:text-zinc-500">
+                                <div className="px-4 py-0.5 flex items-center justify-between group cursor-default">
+                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] leading-none transition-colors group-hover:text-zinc-500">
                                         {section.title}
                                     </span>
                                     {section.badgeSection && (
@@ -92,7 +91,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                     )}
                                 </div>
                             )}
-                            <div className="space-y-0.5">
+                            <div className="">
                                 {section.items.map((item, iIdx) => {
                                     const isActive = pathname === item.path;
                                     return (
@@ -100,14 +99,14 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                             key={iIdx}
                                             href={item.path}
                                             onClick={() => isMobile && onClose?.()}
-                                            className={`relative flex items-center justify-between pl-8 pr-4 py-3 transition-all group ${isActive
-                                                    ? 'bg-[#1f2937] text-orange-400 font-black'
-                                                    : 'text-zinc-500 hover:bg-[#1f2937]/50 hover:text-white'
+                                            className={`relative flex items-center justify-between pl-6 pr-4 py-1 transition-all group ${isActive
+                                                ? 'bg-[#1f2937] text-orange-400 font-black'
+                                                : 'text-white hover:bg-[#1f2937]/50 hover:text-orange-400'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <span className={`${isActive ? 'text-orange-400' : 'text-zinc-700'} transition-transform group-hover:scale-110`}>{item.icon}</span>
-                                                <span className="text-[12px] font-bold tracking-tight">{item.name}</span>
+                                                <span className="text-[12px] tracking-tight">{item.name}</span>
                                             </div>
 
                                             {item.badge && (
