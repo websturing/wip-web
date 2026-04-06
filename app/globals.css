@@ -100,4 +100,60 @@ body {
   }
 }
 
+/* Custom Utilities for Radix States */
+@layer utilities {
+  .data-open-animate-overlay {
+    will-change: opacity;
+    &[data-state="open"] { animation: overlayShow 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    &[data-state="closed"] { animation: overlayHide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  }
+  .data-open-animate-content {
+    will-change: transform, opacity;
+    transform: translate3d(-50%, -50%, 0); /* Base Centering */
+    &[data-state="open"] { animation: contentShow 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    &[data-state="closed"] { animation: contentHide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  }
+}
+
+/* Modern Animations for Primitives */
+@theme {
+  @keyframes contentShow {
+    from { opacity: 0; transform: translate3d(-50%, -48%, 0) scale(0.96); }
+    to { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(1); }
+  }
+  @keyframes contentHide {
+    from { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(1); }
+    to { opacity: 0; transform: translate3d(-50%, -48%, 0) scale(0.96); }
+  }
+
+  @keyframes overlayShow {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes overlayHide {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  /* Toast Animations */
+  @keyframes slideInFromTop {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes slideOutToTop {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-100%); opacity: 0; }
+  }
+}
+
+/* Custom Utilities for Radix Toast */
+@layer utilities {
+  .data-state-open-animate-slide-in-top {
+    &[data-state="open"] { animation: slideInFromTop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    &[data-state="closed"] { animation: slideOutToTop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  }
+}
+
+
+
 

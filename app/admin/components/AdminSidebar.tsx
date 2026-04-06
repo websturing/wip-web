@@ -1,8 +1,20 @@
 'use client';
 
+import { Button } from '@/app/components/ui/Button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/app/components/ui/Dialog';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
+import { AlertTriangle, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+
 
 interface AdminSidebarProps {
     isMobile?: boolean; // Prop to handle mobile view specifics
@@ -12,8 +24,10 @@ interface AdminSidebarProps {
 export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     const pathname = usePathname();
     const { logout } = useAuth();
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
     const sections = [
+
         {
             items: [
                 { name: 'Dashboard', path: '/admin', icon: '📊', badge: null }
@@ -56,8 +70,11 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         }
     ];
 
+
     return (
         <div className="w-[260px] lg:w-[280px] h-full bg-[#1f3145] rounded-[0.8rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300">
+
+
 
             {/* Header Area with Close for Mobile */}
             <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-800/50">
@@ -127,12 +144,35 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 </nav>
             </div>
 
-            <button
-                onClick={logout}
-                className="h-16 flex items-center justify-center gap-3 bg-[#1f2937] text-orange-400/70 hover:text-red-400 transition-all font-black text-[12px] uppercase tracking-widest border-t border-zinc-800"
-            >
-                <span>Logout</span>
-            </button>
+            <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+                <button
+                    onClick={() => setIsLogoutDialogOpen(true)}
+                    className="h-16 flex items-center justify-center gap-3 bg-[#1f2937] text-orange-400/70 hover:text-red-400 transition-all font-black text-[12px] uppercase tracking-widest border-t border-zinc-800 cursor-pointer w-full group"
+                >
+                    <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    <span>Logout</span>
+                </button>
+                <DialogContent className="max-w-[340px]">
+                    <DialogHeader>
+                        <div className="mx-auto w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                            <AlertTriangle className="w-6 h-6 text-red-500" />
+                        </div>
+                        <DialogTitle className="text-center">Confirm Logout</DialogTitle>
+                        <DialogDescription className="text-center mt-2">
+                            Are you sure you want to log out? <br /> Any unsaved changes might be lost.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center gap-2 mt-6">
+                        <Button variant="ghost" size="sm" onClick={() => setIsLogoutDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => logout()}>
+                            Yes, Logout
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
+
