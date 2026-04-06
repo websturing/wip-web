@@ -135,24 +135,50 @@ EOF
 }
 
 gen_page() {
-    # Buat folder route di app
-    LOWER_FEATURE=$(echo "$FEATURE_NAME" | tr '[:upper:]' '[:lower:]')
-    mkdir -p "app/$LOWER_FEATURE"
-    cat <<EOF > "app/$LOWER_FEATURE/page.tsx"
+    # 1. Tentukan path app (Admin atau General)
+    read -p "Apakah ini fitur Admin? (y/n): " IS_ADMIN
+    LOWER_FEATURE=$(echo "$FEATURE_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+    
+    if [ "$IS_ADMIN" == "y" ]; then
+        APP_PATH="app/admin/$LOWER_FEATURE"
+    else
+        APP_PATH="app/$LOWER_FEATURE"
+    fi
+
+    # 2. Buat REAL PAGE di dalam folder fitur
+    mkdir -p "$FEATURE_PATH/pages"
+    cat <<EOF > "$FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx"
 import React from 'react';
-import { ${FILE_NAME} } from '@/features/${FEATURE_NAME}/components/${FILE_NAME}';
+import { ${FILE_NAME} } from '../components/${FILE_NAME}';
 
 export default function ${COMPONENT_NAME}Page() {
     return (
-        <main className="container mx-auto py-10 px-4">
-            <h1 className="text-3xl font-extrabold mb-8 capitalize">${FEATURE_NAME} Management</h1>
-            <${FILE_NAME} />
-        </main>
+        <div className="animate-in fade-in duration-700">
+            <div className="mb-10">
+                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight capitalize">
+                    ${FEATURE_NAME} <span className="text-zinc-400 font-medium">Management</span>
+                </h1>
+                <p className="text-zinc-500 text-sm font-medium mt-2">Manage and monitor your ${FEATURE_NAME} operations.</p>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+                <${FILE_NAME} />
+            </div>
+        </div>
     );
 }
 EOF
-    echo -e "${GREEN}✅ Page (app/$LOWER_FEATURE/page.tsx) dibuat.${NC}"
+
+    # 3. Buat PROXY PAGE di folder app
+    mkdir -p "$APP_PATH"
+    cat <<EOF > "$APP_PATH/page.tsx"
+export { default } from '@/features/${FEATURE_NAME}/pages/${COMPONENT_NAME}Page';
+EOF
+
+    echo -e "${GREEN}✅ Feature Page ($FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx) dibuat.${NC}"
+    echo -e "${GREEN}✅ App Route ($APP_PATH/page.tsx) dibuat.${NC}"
 }
+
 
 # --- EXECUTION ---
 case $CHOICE in
