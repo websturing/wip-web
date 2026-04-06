@@ -78,7 +78,7 @@ export default function AdminLayout({
         <div className="h-screen flex flex-col bg-[#f1f5f9] font-sans selection:bg-blue-600 selection:text-white antialiased text-[#1f2937] overflow-hidden">
 
             {/* 1. Header Area (Full Width or Padded) */}
-            <div className="p-2 sm:px-4 sm:pt-4">
+            <div className="">
                 <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} />
             </div>
 

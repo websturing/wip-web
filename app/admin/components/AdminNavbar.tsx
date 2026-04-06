@@ -33,26 +33,17 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
     }, []);
 
     return (
-        <header className="h-[64px] bg-white border border-zinc-50 flex items-center justify-between px-6 z-40 shadow-sm rounded-xl transition-all w-full">
-            <div className="flex items-center gap-4 lg:gap-12">
-                {/* Hamburger menu for mobile */}
-                <button
-                    onClick={onToggleSidebar}
-                    className="p-2 -ml-2 lg:hidden text-zinc-500 hover:bg-zinc-50 rounded-lg transition-colors"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-                </button>
+        <header className="h-[52px] flex items-center justify-between pt-2 px-3 z-40 transition-all w-full">
 
-                {/* Logo and App Title matching Image 1 */}
-                <div className="flex items-center gap-3">
-                    <div className="bg-blue-600 p-1 rounded-md shadow-md">
-                        <span className="text-white font-black text-xs px-1">S</span>
-                    </div>
-                    <span className="text-[#1f2937] font-black text-[13px] tracking-tight hidden sm:inline-block whitespace-nowrap">Sewing Application</span>
-                </div>
+            <div className="flex items-center gap-3">
+                <div className="bg-blue-600 p-1 rounded font-black text-[10px] text-white">W</div>
+                <span className="font-black text-xs uppercase tracking-widest">WIP Administrator</span>
+            </div>
 
+
+            <div className="flex items-center gap-4 lg:gap-12 bg-gray-200 p-2 rounded-lg">
                 {/* Clock matching Image 1 position */}
-                <span className="text-[11px] lg:text-[12px] font-bold text-zinc-400 font-mono tracking-tighter whitespace-nowrap hidden md:inline-block">
+                <span className="text-[11px] lg:text-[12px] font-bold  font-mono tracking-tighter whitespace-nowrap hidden md:inline-block">
                     {dateTime}
                 </span>
             </div>
