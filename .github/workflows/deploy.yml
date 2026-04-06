@@ -1,0 +1,26 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: self-hosted # Menggunakan runner yang kamu install di VPS
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          cd /var/www/demo-sewing-app
+          git fetch origin production
+          git reset --hard origin/production
+          npm install
+
+      - name: Build Next.js
+        run: |
+          cd /var/www/demo-sewing-app
+          rm -rf .next
+          npm run build
