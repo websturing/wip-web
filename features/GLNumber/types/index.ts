@@ -1,4 +1,4 @@
-export interface GLNumber {
+export interface GLNumberData {
     id: number;
     name: string;
     created_at?: string;
@@ -6,7 +6,7 @@ export interface GLNumber {
 }
 
 export interface GLNumberState {
-    data: GLNumber[];
+    data: GLNumberData[];
     loading: boolean;
     error: string | null;
 }
