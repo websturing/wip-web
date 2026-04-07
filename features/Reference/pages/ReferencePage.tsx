@@ -10,7 +10,7 @@ const ReferencePageContent = () => {
                 title="Reference Center"
                 breadcrumbItems={[
                     { label: 'Master Data', href: '#' },
-                    { label: 'Garment Reference', active: true }
+                    { label: 'Garment Reference' }
                 ]}
             />
             <div className="flex-1 overflow-y-auto">
