@@ -35,6 +35,12 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             ]
         },
         {
+            title: 'Master Data',
+            items: [
+                { name: 'Garment Reference', path: '/admin/reference', icon: 'solar:database-bold-duotone', badge: null }
+            ]
+        },
+        {
             title: 'Operation Planning',
             items: [
                 { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
@@ -131,13 +137,6 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             </div>
 
             <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
-                <button
-                    onClick={() => setIsLogoutDialogOpen(true)}
-                    className="h-16 flex items-center justify-center gap-3 bg-[#111827] text-zinc-500 hover:text-red-400 transition-all font-black text-[12px] uppercase tracking-widest border-t border-zinc-800/50 cursor-pointer w-full group"
-                >
-                    <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    <span>Logout</span>
-                </button>
                 <DialogContent className="max-w-[340px]">
                     <DialogHeader>
                         <div className="mx-auto w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
@@ -158,6 +157,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <button
+                onClick={() => setIsLogoutDialogOpen(true)}
+                className="h-16 flex items-center justify-center gap-3 bg-[#111827] text-zinc-500 hover:text-red-400 transition-all font-black text-[12px] uppercase tracking-widest border-t border-zinc-800/50 cursor-pointer w-full group"
+            >
+                <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                <span>Logout</span>
+            </button>
         </div>
     );
 };
