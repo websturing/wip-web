@@ -38,7 +38,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             title: 'Operation Planning',
             items: [
                 { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
-                { name: 'Lines', path: '/admin/glnumber', icon: 'solar:tablet-bold-duotone', badge: null }
+                { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-bold-duotone', badge: null }
             ],
             badgeSection: '404'
         },

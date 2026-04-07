@@ -5,7 +5,8 @@ import React from 'react';
 import { Breadcrumb, BreadcrumbItem } from './Breadcrumb';
 
 interface PageHeaderProps {
-    items: BreadcrumbItem[];
+    items?: BreadcrumbItem[]; // Optional now
+    breadcrumbItems?: BreadcrumbItem[]; // New prop
     title?: string | React.ReactNode;
     subtitle?: string;
     description?: string;
@@ -15,16 +16,20 @@ interface PageHeaderProps {
 
 export const PageHeader = ({
     items,
+    breadcrumbItems,
     title,
     subtitle,
     description,
     showTitle = true,
     className
 }: PageHeaderProps) => {
+    // Merge or fallback
+    const finalItems = breadcrumbItems || items || [];
+
     return (
         <div className={cn("animate-in fade-in duration-700", className)}>
             {/* Breadcrumb Part */}
-            <Breadcrumb items={items} />
+            <Breadcrumb items={finalItems} />
 
             {/* Title & Description Part */}
             {showTitle && title && (

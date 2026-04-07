@@ -1,19 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ProductionService } from '../services/ProductionService';
+import { LineService } from '../services/LineService';
 
-export const useProduction = () => {
+export const useLines = () => {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const fetchProductions = async () => {
+    const fetchLines = async () => {
         setIsLoading(true);
         try {
-            const result = await ProductionService.getAll();
+            const result = await LineService.getAll();
             if (result.status === 'success') {
-                setData(result.data.data || []);
+                // Backend is paginated return Line::paginate: { current_page, data, ... }
+                setData(result.data.data || result.data || []);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
@@ -23,7 +24,7 @@ export const useProduction = () => {
     };
 
     useEffect(() => {
-        fetchProductions();
+        fetchLines();
     }, []);
 
     return {
@@ -31,6 +32,6 @@ export const useProduction = () => {
         isLoading,
         error,
         setData,
-        refresh: fetchProductions
+        refresh: fetchLines
     };
 };

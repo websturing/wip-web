@@ -11,15 +11,15 @@ export interface BreadcrumbItem {
 }
 
 interface BreadcrumbProps {
-    items: BreadcrumbItem[];
+    items?: BreadcrumbItem[]; // Optional
     className?: string;
 }
 
-export const Breadcrumb = ({ items, className }: BreadcrumbProps) => {
+export const Breadcrumb = ({ items = [], className }: BreadcrumbProps) => {
     return (
         <nav aria-label="Breadcrumb" className={cn("flex mb-2 md:mb-4", className)}>
             <ol className="flex items-center space-x-1.5 overflow-x-auto whitespace-nowrap scroll-smooth py-1 no-scrollbar lg:space-x-2">
-                {items.map((item, index) => {
+                {items && items.map((item, index) => {
                     const isLast = index === items.length - 1;
 
                     return (

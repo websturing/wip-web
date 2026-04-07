@@ -1,18 +1,7 @@
-export class ProductionService {
+export class LineService {
     private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    private static resource = 'production';
-
-    static async getLines() {
-        try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/lines`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching lines:', error);
-            throw error;
-        }
-    }
+    private static resource = 'lines'; // Check prefix in backend, AppServiceProvider says strtolower(featureName). My feature is 'Lines' (plural) or 'Line'? 
+    // I named it 'Lines' in backend. So prefix is 'api/lines'.
 
     static async getAll() {
         try {
@@ -21,7 +10,7 @@ export class ProductionService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Error fetching production:', error);
+            console.error('Error fetching lines:', error);
             throw error;
         }
     }
@@ -33,7 +22,7 @@ export class ProductionService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Error fetching production by ID:', error);
+            console.error('Error fetching line by ID:', error);
             throw error;
         }
     }
@@ -50,7 +39,7 @@ export class ProductionService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Error creating production:', error);
+            console.error('Error creating line:', error);
             throw error;
         }
     }
@@ -67,7 +56,7 @@ export class ProductionService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Error updating production:', error);
+            console.error('Error updating line:', error);
             throw error;
         }
     }
@@ -80,7 +69,7 @@ export class ProductionService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Error deleting production:', error);
+            console.error('Error deleting line:', error);
             throw error;
         }
     }

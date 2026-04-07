@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/features/Auth/components/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { AdminNavbar } from './components/AdminNavbar';
 import { AdminSidebar } from './components/AdminSidebar';
@@ -13,6 +13,7 @@ export default function AdminLayout({
 }) {
     const { user, isLoading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
@@ -24,11 +25,11 @@ export default function AdminLayout({
     // Close sidebar on route change (for mobile)
     useEffect(() => {
         setIsSidebarOpen(false);
-    }, [router]);
+    }, [pathname]);
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden font-sans">
+            <div className="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden font-sans text-orange-400">
                 {/* Minimalist background pulse */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#eff6ff_0%,_transparent_70%)] opacity-40 animate-pulse duration-[4000ms]"></div>
 
@@ -94,7 +95,9 @@ export default function AdminLayout({
                 <div className="flex-1 flex flex-col min-w-0 h-full p-2 relative">
                     {/* Scrollable Content Card */}
                     <main className="flex-1 overflow-y-auto px-6 py-6 lg:px-10 lg:py-10 transition-all bg-white shadow-sm border border-zinc-50 rounded-2xl relative scroll-smooth hover-scrollbar">
-                        {children}
+                        <div key={pathname} className="animate-page-in w-full h-full">
+                            {children}
+                        </div>
                     </main>
                 </div>
             </div>
