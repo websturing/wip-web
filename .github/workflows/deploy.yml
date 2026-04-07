@@ -24,3 +24,11 @@ jobs:
           cd /var/www/wip-web
           rm -rf .next
           npm run build
+
+      - name: Restart PM2
+        run: |
+          cd /var/www/wip-web
+          # Menjalankan reload jika sudah ada, atau start jika baru pertama kali
+          pm2 delete wip-frontend || true
+          pm2 start npm --name "wip-frontend" -- start -- -p 3000
+          pm2 save
