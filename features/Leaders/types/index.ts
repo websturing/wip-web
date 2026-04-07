@@ -1,4 +1,4 @@
-export interface Leaders {
+export interface LeaderItem {
     id: number;
     name: string;
     created_at?: string;
@@ -6,7 +6,7 @@ export interface Leaders {
 }
 
 export interface LeadersState {
-    data: Leaders[];
+    data: LeaderItem[];
     loading: boolean;
     error: string | null;
 }
