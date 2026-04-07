@@ -7,7 +7,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V2      ${NC}"
+echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V4      ${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 # Input Handling
@@ -15,15 +15,7 @@ read -p "Nama Fitur (ex: GLNumber): " FEATURE_NAME_RAW
 read -p "Nama Komponen Utama (ex: GLTable): " COMPONENT_NAME
 
 # Formatting Names
-# Convert to PascalCase for Directory/Component (e.g., GLNumber)
-# This logic ensures first letter upper, but preserves other casing if not space/dash
-# Simplified: just use input for Pascal if user followed example, or smarter conversion
-FEATURE_NAME=$(echo "$FEATURE_NAME_RAW" | sed 's/ /-/g') # Just space to dash for path
-# If it has dashes, let's keep it for directory but capitalize each part.
-# But for simplicity, let's just use the RAW input for feature directory if it's PascalCase
-# and use kebab-case for the route.
-
-# Route URL (Kebab-case, e.g., gl-number)
+FEATURE_NAME=$(echo "$FEATURE_NAME_RAW" | sed 's/ /-/g')
 LOWER_FEATURE=$(echo "$FEATURE_NAME_RAW" | sed 's/\([a-z0-9]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
 
 FILE_NAME="${COMPONENT_NAME}"
@@ -66,13 +58,13 @@ export const ${FILE_NAME} = () => {
 
     return (
         <div className="p-8 bg-white rounded-2xl border border-zinc-100 transition-all">
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-6 text-[#111827]">
                 <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                    <Icon icon="solar:widget-5-bold-duotone" className="w-6 h-6" />
+                    <Icon icon="solar:bolt-bold-duotone" className="w-6 h-6" />
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-zinc-900">${FILE_NAME}</h2>
-                    <p className="text-zinc-500 text-xs">Section part of ${FEATURE_NAME} feature</p>
+                    <h2 className="text-xl font-bold tracking-tight">${FILE_NAME}</h2>
+                    <p className="text-zinc-500 text-xs font-medium">Part of ${FEATURE_NAME} module</p>
                 </div>
             </div>
             
@@ -80,15 +72,15 @@ export const ${FILE_NAME} = () => {
                 {/* Content Placeholder */}
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
                     <Icon icon="solar:box-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 1</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Workspace</span>
                 </div>
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
                     <Icon icon="solar:chart-2-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 2</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Analytics</span>
                 </div>
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
-                    <Icon icon="solar:user-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 3</span>
+                    <Icon icon="solar:user-rounded-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Collaborators</span>
                 </div>
             </div>
         </div>
@@ -172,7 +164,7 @@ EOF
 }
 
 gen_page() {
-    # 1. Tentukan path app (Admin atau General)
+    # 1. Tentukan path app
     read -p "Apakah ini fitur Admin? (y/n): " IS_ADMIN
     
     if [ "$IS_ADMIN" == "y" ]; then
@@ -181,30 +173,27 @@ gen_page() {
         APP_PATH="app/$LOWER_FEATURE"
     fi
 
-    # 2. Buat REAL PAGE di dalam folder fitur
+    # 2. Buat REAL PAGE di folder fitur
     cat <<EOF > "$FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx"
 import React from 'react';
-import { Breadcrumb, BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
+import { PageHeader } from '@/app/components/ui/PageHeader';
+import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { ${FILE_NAME} } from '../components/${FILE_NAME}';
 
 export default function ${COMPONENT_NAME}Page() {
     const breadcrumbItems: BreadcrumbItem[] = [
         { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
-        { label: '${FEATURE_NAME}', icon: 'solar:widget-3-bold-duotone' },
+        { label: '${FEATURE_NAME}', icon: 'solar:widget-bold-duotone' },
     ];
 
     return (
         <div className="animate-in fade-in duration-700">
-            <Breadcrumb items={breadcrumbItems} />
-            
-            <div className="mb-10 pt-2">
-                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight lowercase">
-                    ${FEATURE_NAME} <span className="text-blue-500 font-extrabold whitespace-nowrap">Management</span>
-                </h1>
-                <p className="text-zinc-500 text-xs font-medium mt-2 leading-relaxed opacity-80 uppercase tracking-widest">
-                    Manage and monitor your ${FEATURE_NAME} operations efficiently.
-                </p>
-            </div>
+            <PageHeader 
+                items={breadcrumbItems}
+                title="${FEATURE_NAME}"
+                subtitle="Management"
+                description="Manage and monitor your ${FEATURE_NAME} operations efficiently."
+            />
 
             <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden">
                 <${FILE_NAME} />
@@ -220,8 +209,8 @@ EOF
 export { default } from '@/features/${FEATURE_NAME}/pages/${COMPONENT_NAME}Page';
 EOF
 
-    echo -e "${GREEN}✅ Feature Page ($FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx) created.${NC}"
-    echo -e "${GREEN}✅ App Route Proxy ($APP_PATH/page.tsx) created.${NC}"
+    echo -e "${GREEN}✅ Feature Page created.${NC}"
+    echo -e "${GREEN}✅ App Route Proxy created.${NC}"
 }
 
 
@@ -241,7 +230,7 @@ case $CHOICE in
         ;;
 esac
 
-# Export index handling (Public API for the feature)
+# Export index handling
 if [ "$CHOICE" -ne 4 ]; then
     cat <<EOF > "$FEATURE_PATH/index.ts"
 export * from './components/${FILE_NAME}';
@@ -250,11 +239,10 @@ export * from './services/${SERVICE_NAME}';
 export * from './types';
 export { default as ${COMPONENT_NAME}Page } from './pages/${COMPONENT_NAME}Page';
 EOF
-    echo -e "${GREEN}✅ index.ts (Public API) created/updated.${NC}"
+    echo -e "${GREEN}✅ index.ts created.${NC}"
 fi
 
 chmod +x "$FEATURE_PATH" 2>/dev/null || true
 
 echo -e "\n${BLUE}Success! Feature structure for ${CYAN}$FEATURE_NAME${BLUE} is complete.${NC}"
 echo -e "${YELLOW}URL Route:${NC} /$( [ "$IS_ADMIN" == "y" ] && echo "admin/" )$LOWER_FEATURE"
-echo -e "${YELLOW}Feature Dir:${NC} $FEATURE_PATH"

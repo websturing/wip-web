@@ -37,7 +37,7 @@ export const Breadcrumb = ({ items, className }: BreadcrumbProps) => {
                                         href={item.href}
                                         className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-zinc-400 hover:text-blue-500 transition-colors uppercase tracking-widest leading-none outline-none focus:ring-2 focus:ring-blue-500/20 rounded-md py-0.5 px-0.5"
                                     >
-                                        {item.icon && <Icon icon={item.icon} className="w-3 md:w-3.5 h-3 md:h-3.5" />}
+                                        {item.icon && <Icon icon={item.icon} className="w-3 md:w-3.5 h-3 md:h-3.5 mr-1" />}
                                         {item.label}
                                     </Link>
                                 ) : (
@@ -45,7 +45,7 @@ export const Breadcrumb = ({ items, className }: BreadcrumbProps) => {
                                         "flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs uppercase tracking-widest leading-none",
                                         isLast ? "text-blue-600" : "text-zinc-400"
                                     )}>
-                                        {item.icon && <Icon icon={item.icon} className="w-3 md:w-3.5 h-3 md:h-3.5 shrink-0" />}
+                                        {item.icon && <Icon icon={item.icon} className="w-3 md:w-3.5 h-3 md:h-3.5 mr-1 shrink-0" />}
                                         {item.label}
                                     </span>
                                 )}
