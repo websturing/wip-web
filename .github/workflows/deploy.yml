@@ -14,13 +14,13 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd /var/www/demo-sewing-app
+          cd /var/www/wip-web
           git fetch origin production
           git reset --hard origin/production
           npm install
 
       - name: Build Next.js
         run: |
-          cd /var/www/demo-sewing-app
+          cd /var/www/wip-web
           rm -rf .next
           npm run build
