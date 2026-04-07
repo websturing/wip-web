@@ -37,7 +37,7 @@ export const LoginForm = () => {
                         <path d="M7.5 9.75L12 12L16.5 9.75" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </div>
-                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight">WIP <span className="font-extrabold uppercase">GLA</span></h1>
+                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight">WIP <span className="font-extrabold uppercase"></span></h1>
             </div>
 
             {/* Error Area */}
