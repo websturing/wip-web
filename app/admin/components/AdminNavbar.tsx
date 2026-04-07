@@ -35,15 +35,15 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
     return (
         <header className="h-[52px] flex items-center justify-between pt-2 px-3 z-40 transition-all w-full">
 
-            <div className="flex items-center gap-3">
-                <div className="bg-blue-600 p-1 rounded font-black text-[10px] text-white">W</div>
-                <span className="font-black text-xs uppercase tracking-widest">WIP Administrator</span>
+            <div className="flex items-center gap-2 md:gap-3">
+                <div className="bg-blue-600 p-1 md:p-1.5 rounded font-black text-[9px] md:text-[10px] text-white">W</div>
+                <span className="font-black text-[10px] md:text-xs uppercase tracking-widest leading-none">WIP Administrator</span>
             </div>
 
 
             <div className="flex items-center gap-4 lg:gap-12 bg-gray-200 p-2 rounded-lg">
                 {/* Clock matching Image 1 position */}
-                <span className="text-[11px] lg:text-[12px] font-bold  font-mono tracking-tighter whitespace-nowrap hidden md:inline-block">
+                <span className="text-[10px] md:text-[11px] lg:text-[12px] font-bold font-mono tracking-tighter whitespace-nowrap hidden md:inline-block">
                     {dateTime}
                 </span>
             </div>
@@ -56,7 +56,7 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
 
                 <div className="flex items-center gap-3 lg:gap-4 cursor-pointer group">
                     <div className="flex flex-col items-end">
-                        <span className="text-[11px] lg:text-[12px] font-black text-zinc-900 group-hover:text-blue-600 transition-colors tracking-tight truncate max-w-[120px] sm:max-w-none">
+                        <span className="text-[10px] md:text-[11px] lg:text-[12px] font-bold md:font-black text-zinc-900 group-hover:text-blue-600 transition-colors tracking-tight truncate max-w-[100px] sm:max-w-none">
                             {user?.email || 'admin@admin.com'}
                         </span>
                     </div>

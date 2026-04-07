@@ -36,35 +36,15 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         {
             title: 'Operation Planning',
             items: [
-                { name: 'Leaders', path: '/admin/leaders', icon: '👤', badge: null },
-                { name: 'GL Number', path: '/admin/gl-number', icon: '🔢', badge: null }
+                { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-broken', badge: null },
+                { name: 'Lines', path: '/admin/glnumber', icon: 'solar:tablet-broken', badge: null }
             ],
             badgeSection: '404'
         },
         {
             title: 'User Security & Permissions',
             items: [
-                { name: 'Permissions', path: '/admin/tracking', icon: '🎫', badge: '404' },
-                { name: 'Ticket Request', path: '/admin/request', icon: '📋', badge: '404' },
-                { name: 'Approval', path: '/admin/approval', icon: '✅', badge: '404' }
-            ],
-            badgeSection: '404'
-        },
-        {
-            title: 'Transfers',
-            items: [
-                { name: 'Stock In', path: '/admin/stock-in', icon: '📦', badge: null },
-                { name: 'Stock Out', path: '/admin/stock-out', icon: '📤', badge: '404' },
-                { name: 'Defect', path: '/admin/defect', icon: '⚠️', badge: null }
-            ],
-            badgeSection: '404'
-        },
-        {
-            title: 'User Management',
-            items: [
-                { name: 'Permissions', path: '/admin/permissions', icon: '🔑', badge: null },
-                { name: 'Users', path: '/admin/users', icon: '👥', badge: '404' },
-                { name: 'Employee', path: '/admin/employee', icon: '👷', badge: '404' }
+                { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
             ],
             badgeSection: '404'
         }
@@ -121,9 +101,15 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                                 : 'text-white hover:bg-[#1f2937]/50 hover:text-orange-400'
                                                 }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <span className={`${isActive ? 'text-orange-400' : 'text-zinc-700'} transition-transform group-hover:scale-110`}>{item.icon}</span>
-                                                <span className="text-[12px] tracking-tight">{item.name}</span>
+                                            <div className="flex items-center gap-2.5 md:gap-3">
+                                                <Icon
+                                                    icon={item.icon}
+                                                    className={cn(
+                                                        "w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110",
+                                                        isActive ? 'text-orange-400' : 'text-zinc-400'
+                                                    )}
+                                                />
+                                                <span className="text-[11px] md:text-[12px] tracking-tight">{item.name}</span>
                                             </div>
 
                                             {item.badge && (

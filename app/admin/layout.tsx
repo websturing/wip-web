@@ -47,7 +47,7 @@ export default function AdminLayout({
                     </div>
 
                     <div className="flex flex-col items-center gap-6">
-                        <h2 className="text-3xl font-bold text-zinc-900 tracking-tight lowercase">wip<span className="text-blue-500 font-extrabold">.</span></h2>
+                        <h2 className="text-2xl md:text-3xl font-bold text-zinc-900 tracking-tight lowercase">wip<span className="text-blue-500 font-extrabold">.</span></h2>
 
                         {/* Loading Indicator: Circle Spinner on the left, "initialising" on the right */}
                         <div className="flex items-center gap-3 px-5 py-2.5 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300 fill-mode-both">

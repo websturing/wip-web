@@ -3,16 +3,29 @@
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V1      ${NC}"
+echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V2      ${NC}"
 echo -e "${BLUE}========================================${NC}"
 
-read -p "Nama Folder Fitur (ex: layouts): " FEATURE_NAME
-read -p "Nama Komponen/File (ex: LayoutTable): " COMPONENT_NAME
+# Input Handling
+read -p "Nama Fitur (ex: GLNumber): " FEATURE_NAME_RAW
+read -p "Nama Komponen Utama (ex: GLTable): " COMPONENT_NAME
 
-# Nama file
+# Formatting Names
+# Convert to PascalCase for Directory/Component (e.g., GLNumber)
+# This logic ensures first letter upper, but preserves other casing if not space/dash
+# Simplified: just use input for Pascal if user followed example, or smarter conversion
+FEATURE_NAME=$(echo "$FEATURE_NAME_RAW" | sed 's/ /-/g') # Just space to dash for path
+# If it has dashes, let's keep it for directory but capitalize each part.
+# But for simplicity, let's just use the RAW input for feature directory if it's PascalCase
+# and use kebab-case for the route.
+
+# Route URL (Kebab-case, e.g., gl-number)
+LOWER_FEATURE=$(echo "$FEATURE_NAME_RAW" | sed 's/\([a-z0-9]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
+
 FILE_NAME="${COMPONENT_NAME}"
 HOOK_NAME="use${COMPONENT_NAME}"
 SERVICE_NAME="${COMPONENT_NAME}Service"
@@ -23,6 +36,7 @@ mkdir -p "$FEATURE_PATH/components"
 mkdir -p "$FEATURE_PATH/hooks"
 mkdir -p "$FEATURE_PATH/services"
 mkdir -p "$FEATURE_PATH/types"
+mkdir -p "$FEATURE_PATH/pages"
 
 echo -e "\nPilih komponen yang ingin dibuat:"
 echo "1) Full Set (Component, Hook, Service, Type, Page)"
@@ -39,26 +53,49 @@ gen_component() {
 
 import React from 'react';
 import { ${HOOK_NAME} } from '../hooks/${HOOK_NAME}';
+import { Icon } from '@/app/components/ui/Icon';
 
 export const ${FILE_NAME} = () => {
     const { data, isLoading } = ${HOOK_NAME}();
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) return (
+        <div className="flex items-center justify-center p-12">
+            <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+        </div>
+    );
 
     return (
-        <div className="p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-lg border border-zinc-200 dark:border-zinc-800 transition-all hover:shadow-xl">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                ${FILE_NAME}
-            </h2>
-            <div className="mt-4">
-                {/* Content Here */}
-                <p className="text-zinc-500">Feature: ${FEATURE_NAME}</p>
+        <div className="p-8 bg-white rounded-2xl border border-zinc-100 transition-all">
+            <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+                    <Icon icon="solar:widget-5-bold-duotone" className="w-6 h-6" />
+                </div>
+                <div>
+                    <h2 className="text-xl font-bold text-zinc-900">${FILE_NAME}</h2>
+                    <p className="text-zinc-500 text-xs">Section part of ${FEATURE_NAME} feature</p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Content Placeholder */}
+                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
+                    <Icon icon="solar:box-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 1</span>
+                </div>
+                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
+                    <Icon icon="solar:chart-2-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 2</span>
+                </div>
+                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
+                    <Icon icon="solar:user-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 3</span>
+                </div>
             </div>
         </div>
     );
 };
 EOF
-    echo -e "${GREEN}✅ Component (${FILE_NAME}.tsx) dibuat.${NC}"
+    echo -e "${GREEN}✅ Component (${FILE_NAME}.tsx) created.${NC}"
 }
 
 gen_hook() {
@@ -84,7 +121,7 @@ export const ${HOOK_NAME} = () => {
     };
 };
 EOF
-    echo -e "${GREEN}✅ Hook (${HOOK_NAME}.ts) dibuat.${NC}"
+    echo -e "${GREEN}✅ Hook (${HOOK_NAME}.ts) created.${NC}"
 }
 
 gen_service() {
@@ -94,31 +131,31 @@ export class ${SERVICE_NAME} {
 
     static async getAll() {
         try {
-            const response = await fetch(\`\${this.baseUrl}/${FEATURE_NAME}\`);
+            const response = await fetch(\`\${this.baseUrl}/${LOWER_FEATURE}\`);
             return await response.json();
         } catch (error) {
-            console.error('Error fetching ${FEATURE_NAME}:', error);
+            console.error('Error fetching ${LOWER_FEATURE}:', error);
             throw error;
         }
     }
 
     static async getById(id: string | number) {
         try {
-            const response = await fetch(\`\${this.baseUrl}/${FEATURE_NAME}/\${id}\`);
+            const response = await fetch(\`\${this.baseUrl}/${LOWER_FEATURE}/\${id}\`);
             return await response.json();
         } catch (error) {
-            console.error('Error fetching ${FEATURE_NAME} by ID:', error);
+            console.error('Error fetching ${LOWER_FEATURE} by ID:', error);
             throw error;
         }
     }
 }
 EOF
-    echo -e "${GREEN}✅ Service (${SERVICE_NAME}.ts) dibuat.${NC}"
+    echo -e "${GREEN}✅ Service (${SERVICE_NAME}.ts) created.${NC}"
 }
 
 gen_types() {
     cat <<EOF > "$FEATURE_PATH/types/index.ts"
-export interface ${COMPONENT_NAME}Data {
+export interface ${COMPONENT_NAME} {
     id: number;
     name: string;
     created_at?: string;
@@ -126,18 +163,17 @@ export interface ${COMPONENT_NAME}Data {
 }
 
 export interface ${COMPONENT_NAME}State {
-    data: ${COMPONENT_NAME}Data[];
+    data: ${COMPONENT_NAME}[];
     loading: boolean;
     error: string | null;
 }
 EOF
-    echo -e "${GREEN}✅ Types (index.ts) dibuat.${NC}"
+    echo -e "${GREEN}✅ Types (index.ts) created.${NC}"
 }
 
 gen_page() {
     # 1. Tentukan path app (Admin atau General)
     read -p "Apakah ini fitur Admin? (y/n): " IS_ADMIN
-    LOWER_FEATURE=$(echo "$FEATURE_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
     
     if [ "$IS_ADMIN" == "y" ]; then
         APP_PATH="app/admin/$LOWER_FEATURE"
@@ -146,22 +182,31 @@ gen_page() {
     fi
 
     # 2. Buat REAL PAGE di dalam folder fitur
-    mkdir -p "$FEATURE_PATH/pages"
     cat <<EOF > "$FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx"
 import React from 'react';
+import { Breadcrumb, BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { ${FILE_NAME} } from '../components/${FILE_NAME}';
 
 export default function ${COMPONENT_NAME}Page() {
+    const breadcrumbItems: BreadcrumbItem[] = [
+        { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
+        { label: '${FEATURE_NAME}', icon: 'solar:widget-3-bold-duotone' },
+    ];
+
     return (
         <div className="animate-in fade-in duration-700">
-            <div className="mb-10">
-                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight capitalize">
-                    ${FEATURE_NAME} <span className="text-zinc-400 font-medium">Management</span>
+            <Breadcrumb items={breadcrumbItems} />
+            
+            <div className="mb-10 pt-2">
+                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight lowercase">
+                    ${FEATURE_NAME} <span className="text-blue-500 font-extrabold whitespace-nowrap">Management</span>
                 </h1>
-                <p className="text-zinc-500 text-sm font-medium mt-2">Manage and monitor your ${FEATURE_NAME} operations.</p>
+                <p className="text-zinc-500 text-xs font-medium mt-2 leading-relaxed opacity-80 uppercase tracking-widest">
+                    Manage and monitor your ${FEATURE_NAME} operations efficiently.
+                </p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden">
                 <${FILE_NAME} />
             </div>
         </div>
@@ -175,8 +220,8 @@ EOF
 export { default } from '@/features/${FEATURE_NAME}/pages/${COMPONENT_NAME}Page';
 EOF
 
-    echo -e "${GREEN}✅ Feature Page ($FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx) dibuat.${NC}"
-    echo -e "${GREEN}✅ App Route ($APP_PATH/page.tsx) dibuat.${NC}"
+    echo -e "${GREEN}✅ Feature Page ($FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx) created.${NC}"
+    echo -e "${GREEN}✅ App Route Proxy ($APP_PATH/page.tsx) created.${NC}"
 }
 
 
@@ -196,18 +241,20 @@ case $CHOICE in
         ;;
 esac
 
-# Export index handling
-if [ ! -f "$FEATURE_PATH/index.ts" ] && [ "$CHOICE" -ne 4 ]; then
+# Export index handling (Public API for the feature)
+if [ "$CHOICE" -ne 4 ]; then
     cat <<EOF > "$FEATURE_PATH/index.ts"
 export * from './components/${FILE_NAME}';
 export * from './hooks/${HOOK_NAME}';
 export * from './services/${SERVICE_NAME}';
 export * from './types';
+export { default as ${COMPONENT_NAME}Page } from './pages/${COMPONENT_NAME}Page';
 EOF
-    echo -e "${GREEN}✅ index.ts (Public API) dibuat.${NC}"
+    echo -e "${GREEN}✅ index.ts (Public API) created/updated.${NC}"
 fi
 
 chmod +x "$FEATURE_PATH" 2>/dev/null || true
 
-echo -e "\n${BLUE}Selesai! Struktur Frontend $FEATURE_NAME sudah lengkap.${NC}"
-echo -e "${YELLOW}Catatan: Pastikan @/ alias terkonfigurasi di tsconfig.json ke folder root.${NC}"
+echo -e "\n${BLUE}Success! Feature structure for ${CYAN}$FEATURE_NAME${BLUE} is complete.${NC}"
+echo -e "${YELLOW}URL Route:${NC} /$( [ "$IS_ADMIN" == "y" ] && echo "admin/" )$LOWER_FEATURE"
+echo -e "${YELLOW}Feature Dir:${NC} $FEATURE_PATH"

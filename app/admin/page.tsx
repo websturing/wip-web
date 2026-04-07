@@ -44,38 +44,40 @@ export default function AdminDashboard() {
                 </Toast>
 
                 {/* Main Welcome Message */}
-                <div className="mb-12">
-                    <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight mb-2">
+                <div className="mb-10 md:mb-12">
+                    <h1 className="text-2xl md:text-3xl lg:text-[2.2rem] font-bold text-zinc-900 tracking-tight mb-2">
                         Welcome Back, <span className="text-zinc-800">{user?.email || 'admin@admin.com'}</span>
                     </h1>
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-zinc-400">You have</span>
-                        {roles.map((role, i) => (
-                            <span
-                                key={i}
-                                className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest ${i === 0
-                                    ? 'bg-green-100/50 text-green-700 border border-green-200'
-                                    : 'bg-teal-100/50 text-teal-700 border border-teal-200'
-                                    }`}
-                            >
-                                {role}
-                            </span>
-                        ))}
-                        <span className="text-xs font-bold text-zinc-400 ml-1">roles</span>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                        <span className="text-[10px] md:text-xs font-bold text-zinc-400">You have</span>
+                        <div className="flex flex-wrap gap-2">
+                            {roles.map((role, i) => (
+                                <span
+                                    key={i}
+                                    className={`px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${i === 0
+                                        ? 'bg-green-100/50 text-green-700 border border-green-200'
+                                        : 'bg-teal-100/50 text-teal-700 border border-teal-200'
+                                        }`}
+                                >
+                                    {role}
+                                </span>
+                            ))}
+                        </div>
+                        <span className="text-[10px] md:text-xs font-bold text-zinc-400">roles</span>
                     </div>
                 </div>
 
                 {/* Assigned Lines to match Image 1 */}
-                <div className="mb-14">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-4">Assigned Lines:</label>
+                <div className="mb-12 md:mb-14">
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-4">Assigned Lines:</label>
                     <div className="flex flex-wrap gap-2 items-center">
                         {assignedLines.slice(0, 3).map((line, i) => (
-                            <div key={i} className="px-4 py-2 bg-white rounded-xl border border-zinc-100 shadow-sm flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                <span className="text-xs font-bold text-zinc-900">{line}</span>
+                            <div key={i} className="px-3 md:px-4 py-1.5 md:py-2 bg-white rounded-xl border border-zinc-100 shadow-sm flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                                <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-blue-500"></span>
+                                <span className="text-[11px] md:text-xs font-bold text-zinc-900">{line}</span>
                             </div>
                         ))}
-                        <span className="text-xs font-bold text-blue-600 pl-4">+17 more</span>
+                        <span className="text-[11px] md:text-xs font-bold text-blue-600 pl-2 md:pl-4">+17 more</span>
                     </div>
                 </div>
 
