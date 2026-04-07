@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/app/components/ui/Icon';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
 import { useEffect, useState } from 'react';
 
@@ -49,9 +50,9 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
             </div>
 
             <div className="flex items-center gap-4 lg:gap-8">
-                <div className="relative group cursor-pointer text-zinc-300 hover:text-zinc-600 transition-all pt-1 hidden xs:block">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
-                    <div className="absolute top-1 right-0 w-2 h-2 bg-red-500 border border-white rounded-full"></div>
+                <div className="relative group cursor-pointer text-zinc-400 hover:text-blue-500 transition-all pt-1 hidden xs:block">
+                    <Icon icon="solar:bell-bing-bold-duotone" className="w-5 h-5" />
+                    <div className="absolute top-1 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></div>
                 </div>
 
                 <div className="flex items-center gap-3 lg:gap-4 cursor-pointer group">
@@ -67,7 +68,7 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
                             className="w-full h-full rounded-full bg-blue-100"
                         />
                     </div>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 group-hover:rotate-180 transition-transform hidden sm:block"><path d="m6 9 6 6 6-6" /></svg>
+                    <Icon icon="solar:alt-arrow-down-bold-duotone" className="w-3 h-3 text-zinc-400 group-hover:rotate-180 transition-transform hidden sm:block" />
                 </div>
             </div>
         </header>

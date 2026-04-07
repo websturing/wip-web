@@ -9,8 +9,9 @@ import {
     DialogHeader,
     DialogTitle
 } from '@/app/components/ui/Dialog';
+import { Icon } from '@/app/components/ui/Icon';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
-import { AlertTriangle, LogOut } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -30,41 +31,21 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
 
         {
             items: [
-                { name: 'Dashboard', path: '/admin', icon: '📊', badge: null }
+                { name: 'Dashboard', path: '/admin', icon: 'solar:widget-5-bold-duotone', badge: null }
             ]
         },
         {
-            title: 'Operation Planning',
+            title: 'Sewing - Production',
             items: [
-                { name: 'Leaders', path: '/admin/leaders', icon: '👤', badge: null },
-                { name: 'GL Number', path: '/admin/gl-number', icon: '🔢', badge: null }
+                { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-broken', badge: null },
+                { name: 'Lines', path: '/admin/gl-number', icon: 'solar:tablet-broken', badge: null }
             ],
             badgeSection: '404'
         },
         {
-            title: 'User Security & Permissions',
+            title: 'Industrial Engineering',
             items: [
-                { name: 'Permissions', path: '/admin/tracking', icon: '🎫', badge: '404' },
-                { name: 'Ticket Request', path: '/admin/request', icon: '📋', badge: '404' },
-                { name: 'Approval', path: '/admin/approval', icon: '✅', badge: '404' }
-            ],
-            badgeSection: '404'
-        },
-        {
-            title: 'Transfers',
-            items: [
-                { name: 'Stock In', path: '/admin/stock-in', icon: '📦', badge: null },
-                { name: 'Stock Out', path: '/admin/stock-out', icon: '📤', badge: '404' },
-                { name: 'Defect', path: '/admin/defect', icon: '⚠️', badge: null }
-            ],
-            badgeSection: '404'
-        },
-        {
-            title: 'User Management',
-            items: [
-                { name: 'Permissions', path: '/admin/permissions', icon: '🔑', badge: null },
-                { name: 'Users', path: '/admin/users', icon: '👥', badge: '404' },
-                { name: 'Employee', path: '/admin/employee', icon: '👷', badge: '404' }
+                { name: 'GL Layout', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
             ],
             badgeSection: '404'
         }
@@ -97,8 +78,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                     {sections.map((section, sIdx) => (
                         <div key={sIdx} className="mb-4">
                             {section.title && (
-                                <div className="px-4 py-0.5 flex items-center justify-between group cursor-default">
-                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] leading-none transition-colors group-hover:text-zinc-500">
+                                <div className="px-4 py-1 flex items-center justify-between group cursor-default">
+                                    <span className="text-[11px] font-black text-zinc-500 uppercase  leading-none transition-colors group-hover:text-zinc-500">
                                         {section.title}
                                     </span>
                                     {section.badgeSection && (
@@ -122,7 +103,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <span className={`${isActive ? 'text-orange-400' : 'text-zinc-700'} transition-transform group-hover:scale-110`}>{item.icon}</span>
+                                                <Icon
+                                                    icon={item.icon}
+                                                    className={cn(
+                                                        "w-5 h-5 transition-transform group-hover:scale-110",
+                                                        isActive ? 'text-orange-400' : 'text-zinc-400'
+                                                    )}
+                                                />
                                                 <span className="text-[12px] tracking-tight">{item.name}</span>
                                             </div>
 
@@ -149,13 +136,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                     onClick={() => setIsLogoutDialogOpen(true)}
                     className="h-16 flex items-center justify-center gap-3 bg-[#1f2937] text-orange-400/70 hover:text-red-400 transition-all font-black text-[12px] uppercase tracking-widest border-t border-zinc-800 cursor-pointer w-full group"
                 >
-                    <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    <Icon icon="solar:logout-3-bold-duotone" className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                     <span>Logout</span>
                 </button>
                 <DialogContent className="max-w-[340px]">
                     <DialogHeader>
                         <div className="mx-auto w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
-                            <AlertTriangle className="w-6 h-6 text-red-500" />
+                            <Icon icon="solar:danger-triangle-bold-duotone" className="w-6 h-6 text-red-500" />
                         </div>
                         <DialogTitle className="text-center">Confirm Logout</DialogTitle>
                         <DialogDescription className="text-center mt-2">
