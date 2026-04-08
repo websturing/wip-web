@@ -14,11 +14,15 @@ export const useReference = () => {
     const [total, setTotal] = useState(0);
     const [perPage, setPerPage] = useState(50);
 
-    const fetchLots = async (page: number = 1) => {
+    // Search state
+    const [search, setSearch] = useState('');
+
+    const fetchLots = async (page: number = 1, searchQuery: string = search) => {
         setIsLoading(true);
         setCurrentPage(page);
+        setSearch(searchQuery);
         try {
-            const result = await ReferenceService.getLots(page);
+            const result = await ReferenceService.getLots(page, searchQuery);
             if (result.status === 'success') {
                 setLots(result.data.data || []);
                 setTotal(result.data.total || 0);
@@ -33,7 +37,7 @@ export const useReference = () => {
     };
 
     useEffect(() => {
-        fetchLots(1);
+        fetchLots(1, search);
     }, []);
 
     return {
@@ -44,7 +48,9 @@ export const useReference = () => {
         currentPage,
         total,
         perPage,
-        refresh: () => fetchLots(currentPage),
-        setPage: fetchLots
+        search,
+        refresh: () => fetchLots(currentPage, search),
+        setPage: (page: number) => fetchLots(page, search),
+        setSearch: (query: string) => fetchLots(1, query)
     };
 };

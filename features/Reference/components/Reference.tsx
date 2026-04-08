@@ -4,12 +4,14 @@ import { Button } from '@/app/components/ui/Button';
 import { Column, DataTable } from '@/app/components/ui/DataTable';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
+import { useRouter } from 'next/navigation';
 import React, { useMemo, useRef, useState } from 'react';
 import { useReference } from '../hooks/useReference';
 import { ReferenceService } from '../services/ReferenceService';
 
 export const Reference = () => {
-    const { lots, lastImport, isLoading, refresh, currentPage, total, perPage, setPage } = useReference();
+    const router = useRouter();
+    const { lots, lastImport, isLoading, refresh, currentPage, total, perPage, setPage, setSearch } = useReference();
     const [isImporting, setIsImporting] = useState(false);
     const [importSummary, setImportSummary] = useState<any>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -83,7 +85,12 @@ export const Reference = () => {
             filterable: false,
             sortable: true,
             cell: (item) => (
-                <span className="font-bold text-zinc-900">{item.display_gl}</span>
+                <button
+                    onClick={() => router.push(`/admin/reference/summary/${item.gl_group?.id}`)}
+                    className="font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                    {item.display_gl}
+                </button>
             )
         },
         {
@@ -312,6 +319,7 @@ export const Reference = () => {
                 currentPage={currentPage}
                 perPage={perPage}
                 onPageChange={setPage}
+                onSearch={setSearch}
             />
 
             {/* Delete Confirmation Dialog */}

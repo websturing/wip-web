@@ -27,6 +27,7 @@ interface DataTableProps<T> {
     currentPage?: number;
     perPage?: number;
     onPageChange?: (page: number) => void;
+    onSearch?: (query: string) => void;
 }
 
 export const DataTable = <T extends { [key: string]: any }>({
@@ -38,7 +39,8 @@ export const DataTable = <T extends { [key: string]: any }>({
     total,
     currentPage = 1,
     perPage = 20,
-    onPageChange
+    onPageChange,
+    onSearch
 }: DataTableProps<T>) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null });
@@ -110,7 +112,13 @@ export const DataTable = <T extends { [key: string]: any }>({
                             placeholder={searchPlaceholder}
                             className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSearchQuery(val);
+                                if (onSearch) {
+                                    onSearch(val);
+                                }
+                            }}
                         />
                     </div>
                 </div>

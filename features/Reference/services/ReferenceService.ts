@@ -2,9 +2,9 @@ export class ReferenceService {
     private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
     private static resource = 'reference';
 
-    static async getLots(page: number = 1) {
+    static async getLots(page: number = 1, search: string = '') {
         try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/lots?page=${page}`, {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/lots?page=${page}&search=${encodeURIComponent(search)}`, {
                 headers: { 'Accept': 'application/json' }
             });
             return await response.json();
@@ -52,6 +52,18 @@ export class ReferenceService {
             return await response.json();
         } catch (error) {
             console.error('Error deleting lot:', error);
+            throw error;
+        }
+    }
+
+    static async getGlSummary(glGroupId: string) {
+        try {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/gl-groups/${glGroupId}/summary`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching GL summary:', error);
             throw error;
         }
     }
