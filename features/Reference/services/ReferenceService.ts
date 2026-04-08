@@ -2,14 +2,26 @@ export class ReferenceService {
     private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
     private static resource = 'reference';
 
-    static async getLots() {
+    static async getLots(page: number = 1, search: string = '') {
         try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/lots`, {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/lots?page=${page}&search=${encodeURIComponent(search)}`, {
                 headers: { 'Accept': 'application/json' }
             });
             return await response.json();
         } catch (error) {
             console.error('Error fetching lots:', error);
+            throw error;
+        }
+    }
+
+    static async getLotList() {
+        try {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/lots/list`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching lot list:', error);
             throw error;
         }
     }
@@ -40,6 +52,18 @@ export class ReferenceService {
             return await response.json();
         } catch (error) {
             console.error('Error deleting lot:', error);
+            throw error;
+        }
+    }
+
+    static async getGlSummary(glGroupId: string) {
+        try {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/gl-groups/${glGroupId}/summary`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching GL summary:', error);
             throw error;
         }
     }

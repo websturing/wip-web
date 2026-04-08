@@ -9,7 +9,7 @@ export interface Column<T> {
     header: string;
     accessorKey: keyof T | string;
     className?: string;
-    cell?: (item: T) => React.ReactNode;
+    cell?: (item: T, index: number) => React.ReactNode;
     sortable?: boolean;
     filterable?: boolean;
     filterType?: 'text' | 'select'; // New: flexible filter type
@@ -22,6 +22,12 @@ interface DataTableProps<T> {
     searchPlaceholder?: string;
     title?: string;
     onRowClick?: (item: T) => void;
+    // Pagination props
+    total?: number;
+    currentPage?: number;
+    perPage?: number;
+    onPageChange?: (page: number) => void;
+    onSearch?: (query: string) => void;
 }
 
 export const DataTable = <T extends { [key: string]: any }>({
@@ -29,7 +35,12 @@ export const DataTable = <T extends { [key: string]: any }>({
     columns,
     isLoading = false,
     searchPlaceholder = "Search records...",
-    onRowClick
+    onRowClick,
+    total,
+    currentPage = 1,
+    perPage = 20,
+    onPageChange,
+    onSearch
 }: DataTableProps<T>) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null });
@@ -87,7 +98,7 @@ export const DataTable = <T extends { [key: string]: any }>({
     };
 
     return (
-        <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-white rounded-xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
             {/* Toolbar */}
             <div className="p-6 md:p-8 border-b border-zinc-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
@@ -101,7 +112,13 @@ export const DataTable = <T extends { [key: string]: any }>({
                             placeholder={searchPlaceholder}
                             className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSearchQuery(val);
+                                if (onSearch) {
+                                    onSearch(val);
+                                }
+                            }}
                         />
                     </div>
                 </div>
@@ -229,7 +246,7 @@ export const DataTable = <T extends { [key: string]: any }>({
                                 >
                                     {columns.map((col, colIdx) => (
                                         <td key={colIdx} className={cn("px-8 py-6 text-zinc-600 text-sm font-medium", col.className)}>
-                                            {col.cell ? col.cell(item) : item[col.accessorKey]}
+                                            {col.cell ? col.cell(item, rowIdx) : item[col.accessorKey]}
                                         </td>
                                     ))}
                                 </tr>
@@ -242,20 +259,32 @@ export const DataTable = <T extends { [key: string]: any }>({
             {/* Pagination / Summary Footer */}
             <div className="p-6 bg-zinc-50/30 border-t border-zinc-50 flex items-center justify-between">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                    Showing <span className="text-zinc-900">{sortedData.length}</span> of <span className="text-zinc-900">{data.length}</span> entries
+                    Showing <span className="text-zinc-900">{total ? Math.min((currentPage - 1) * perPage + 1, total) : 1}</span> to <span className="text-zinc-900">{total ? Math.min(currentPage * perPage, total) : sortedData.length}</span> of <span className="text-zinc-900">{total || data.length}</span> entries
                 </span>
 
-                <div className="flex items-center gap-1">
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100">
-                        <Icon icon="solar:alt-arrow-left-linear" className="w-4 h-4" />
-                    </button>
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-blue-600 font-black text-xs border border-zinc-100 shadow-sm">
-                        1
+                {onPageChange && total && total > perPage && (
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100 disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                            <Icon icon="solar:alt-arrow-left-linear" className="w-4 h-4" />
+                        </button>
+
+                        <div className="px-3 h-8 rounded-lg bg-white flex items-center justify-center text-blue-600 font-black text-xs border border-zinc-100 shadow-sm min-w-[32px]">
+                            {currentPage} / {Math.ceil(total / perPage)}
+                        </div>
+
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === Math.ceil(total / perPage)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100 disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                            <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4" />
+                        </button>
                     </div>
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100">
-                        <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4" />
-                    </button>
-                </div>
+                )}
             </div>
         </div>
     );

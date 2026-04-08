@@ -2,15 +2,20 @@
 
 import { Button } from '@/app/components/ui/Button';
 import { Column, DataTable } from '@/app/components/ui/DataTable';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
+import { useRouter } from 'next/navigation';
 import React, { useMemo, useRef, useState } from 'react';
 import { useReference } from '../hooks/useReference';
 import { ReferenceService } from '../services/ReferenceService';
 
 export const Reference = () => {
-    const { lots, lastImport, isLoading, refresh } = useReference();
+    const router = useRouter();
+    const { lots, lastImport, isLoading, refresh, currentPage, total, perPage, setPage, setSearch } = useReference();
     const [isImporting, setIsImporting] = useState(false);
     const [importSummary, setImportSummary] = useState<any>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Format utility: get last 5 characters
@@ -33,7 +38,27 @@ export const Reference = () => {
         });
     }, [lots]);
 
+    const handleDelete = async () => {
+        if (!deleteId) return;
+        setIsDeleting(true);
+        try {
+            await ReferenceService.deleteLot(deleteId);
+            refresh();
+            setDeleteId(null);
+        } catch (error) {
+            console.error('Delete failed:', error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const columns: Column<any>[] = [
+        {
+            header: '#',
+            accessorKey: 'index',
+            className: 'w-10 text-zinc-400 font-bold',
+            cell: (_, idx) => idx + 1
+        },
         {
             header: 'Customer',
             accessorKey: 'customer_name',
@@ -60,7 +85,12 @@ export const Reference = () => {
             filterable: false,
             sortable: true,
             cell: (item) => (
-                <span className="font-bold text-zinc-900">{item.display_gl}</span>
+                <button
+                    onClick={() => router.push(`/admin/reference/summary/${item.gl_group?.id}`)}
+                    className="font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                    {item.display_gl}
+                </button>
             )
         },
         {
@@ -71,6 +101,57 @@ export const Reference = () => {
             cell: (item) => (
                 <span className="px-3 py-1 bg-zinc-100 text-zinc-600 rounded-lg font-mono text-[11px] font-bold border border-zinc-200">
                     {item.display_lot_code}
+                </span>
+            )
+        },
+        {
+            header: 'Style No',
+            accessorKey: 'style_no',
+            filterable: true,
+            sortable: true,
+            cell: (item) => <span className="font-bold text-zinc-900">{item.style_no || '-'}</span>
+        },
+        {
+            header: 'Brand',
+            accessorKey: 'brand',
+            filterable: true,
+            sortable: true,
+            cell: (item) => <span className="font-bold text-zinc-900">{item.brand || '-'}</span>
+        },
+        {
+            header: 'SAM',
+            accessorKey: 'sam',
+            sortable: true,
+            cell: (item) => <span className="font-bold text-zinc-900">{item.sam ? Number(item.sam).toFixed(3) : '-'}</span>
+        },
+        {
+            header: 'Order Qty',
+            accessorKey: 'gmt_qty',
+            filterable: false,
+            sortable: true,
+            cell: (item) => (
+                <span className="font-bold text-zinc-900">
+                    {item.gmt_qty ? item.gmt_qty.toLocaleString() : '-'}
+                </span>
+            )
+        },
+        {
+            header: 'Delivery',
+            accessorKey: 'delivery_date',
+            sortable: true,
+            cell: (item) => (
+                <span className="text-xs font-bold text-zinc-900">
+                    {item.delivery_date ? new Date(item.delivery_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                </span>
+            )
+        },
+        {
+            header: 'Order Date',
+            accessorKey: 'order_date',
+            sortable: true,
+            cell: (item) => (
+                <span className="text-xs font-bold text-zinc-900">
+                    {item.order_date ? new Date(item.order_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                 </span>
             )
         },
@@ -115,12 +196,7 @@ export const Reference = () => {
             cell: (item) => (
                 <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                     <button
-                        onClick={async () => {
-                            if (confirm('Delete this Lot?')) {
-                                await ReferenceService.deleteLot(item.id);
-                                refresh();
-                            }
-                        }}
+                        onClick={() => setDeleteId(item.id)}
                         className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                     >
                         <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-5 h-5" />
@@ -150,7 +226,7 @@ export const Reference = () => {
     };
 
     return (
-        <div className="p-8">
+        <div className="">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                 <div className="flex items-center gap-4">
                     <div className="bg-zinc-900 p-3 rounded-2xl text-white shadow-xl shadow-zinc-200">
@@ -196,7 +272,7 @@ export const Reference = () => {
             </div>
 
             {importSummary && (
-                <div className="mb-8 p-6 bg-emerald-50/50 border border-emerald-100 rounded-3xl animate-in fade-in slide-in-from-top-4">
+                <div className="mb-8 p-6 bg-emerald-50/50 border border-emerald-100 rounded-sm animate-in fade-in slide-in-from-top-4">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-emerald-600">
                             <Icon icon="solar:check-circle-bold-duotone" className="w-5 h-5" />
@@ -239,7 +315,43 @@ export const Reference = () => {
                 columns={columns}
                 isLoading={isLoading}
                 searchPlaceholder="Search lots..."
+                total={total}
+                currentPage={currentPage}
+                perPage={perPage}
+                onPageChange={setPage}
+                onSearch={setSearch}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+                <DialogContent className="max-w-md bg-zinc-950 border-zinc-800">
+                    <DialogHeader>
+                        <DialogTitle className="text-white flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-500 flex items-center justify-center">
+                                <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-6 h-6" />
+                            </div>
+                            Confirm Deletion
+                        </DialogTitle>
+                        <DialogDescription className="text-zinc-400 mt-4 h-full">
+                            Are you sure you want to delete this lot? This action cannot be undone and may affect related production logs.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-8 gap-3 sm:gap-0">
+                        <DialogClose asChild>
+                            <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-8 shadow-lg shadow-red-900/20"
+                        >
+                            {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

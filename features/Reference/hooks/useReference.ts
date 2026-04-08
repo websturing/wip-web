@@ -9,12 +9,24 @@ export const useReference = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const fetchLots = async () => {
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [perPage, setPerPage] = useState(50);
+
+    // Search state
+    const [search, setSearch] = useState('');
+
+    const fetchLots = async (page: number = 1, searchQuery: string = search) => {
         setIsLoading(true);
+        setCurrentPage(page);
+        setSearch(searchQuery);
         try {
-            const result = await ReferenceService.getLots();
+            const result = await ReferenceService.getLots(page, searchQuery);
             if (result.status === 'success') {
                 setLots(result.data.data || []);
+                setTotal(result.data.total || 0);
+                setPerPage(result.data.per_page || 50);
                 setLastImport(result.meta?.last_import || null);
             }
         } catch (err) {
@@ -25,7 +37,7 @@ export const useReference = () => {
     };
 
     useEffect(() => {
-        fetchLots();
+        fetchLots(1, search);
     }, []);
 
     return {
@@ -33,6 +45,12 @@ export const useReference = () => {
         lastImport,
         isLoading,
         error,
-        refresh: fetchLots
+        currentPage,
+        total,
+        perPage,
+        search,
+        refresh: () => fetchLots(currentPage, search),
+        setPage: (page: number) => fetchLots(page, search),
+        setSearch: (query: string) => fetchLots(1, query)
     };
 };

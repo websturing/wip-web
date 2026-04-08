@@ -22,6 +22,12 @@ export const Lines = () => {
 
     const columns: Column<any>[] = [
         {
+            header: '#',
+            accessorKey: 'index',
+            className: 'w-10 text-zinc-400 font-bold',
+            cell: (_, idx) => idx + 1
+        },
+        {
             header: 'Line ID',
             accessorKey: 'id',
             className: 'w-[120px]',
