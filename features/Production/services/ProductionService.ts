@@ -14,9 +14,24 @@ export class ProductionService {
         }
     }
 
-    static async getAll() {
+    static async getSummary(lotId: string, color: string) {
         try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}`, {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/summary?lot_id=${lotId}&color=${encodeURIComponent(color)}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching summary:', error);
+            throw error;
+        }
+    }
+
+    static async getAll(date?: string) {
+        try {
+            const url = new URL(`${this.baseUrl}/${this.resource}`);
+            if (date) url.searchParams.append('date', date);
+
+            const response = await fetch(url.toString(), {
                 headers: { 'Accept': 'application/json' }
             });
             return await response.json();

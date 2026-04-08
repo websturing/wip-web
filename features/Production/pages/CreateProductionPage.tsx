@@ -96,16 +96,39 @@ export default function CreateProductionPage() {
         }
     };
 
-    const updateItemColor = (itemIdx: number, color: string, sizeBreakdown?: any[]) => {
+    const updateItemColor = async (itemIdx: number, color: string, sizeBreakdown?: any[]) => {
+        const item = formData.items[itemIdx];
+        const lotId = item.lot_id;
+
+        // Fetch summary of already recorded production in our app
+        let recordedSummary: Record<string, any> = {};
+        if (lotId && color) {
+            try {
+                const res = await ProductionService.getSummary(lotId, color);
+                if (res && res.status === 'success') {
+                    recordedSummary = res.data;
+                }
+            } catch (err) {
+                console.error('Failed to fetch summary:', err);
+            }
+        }
+
         const newItems = [...formData.items];
         newItems[itemIdx] = {
             ...newItems[itemIdx],
             color: color,
             sizes: sizeBreakdown ? sizeBreakdown.map(s => ({
                 size_name: s.size,
+                cut_qty: parseInt(s.cut_qty) || 0,
+                recorded_input: Number(recordedSummary[s.size]?.total_input || 0),
+                recorded_output: Number(recordedSummary[s.size]?.total_output || 0),
                 qty_input: 0,
                 qty_output: 0
-            })) : newItems[itemIdx].sizes
+            })) : newItems[itemIdx].sizes.map(s => ({
+                ...s,
+                recorded_input: Number(recordedSummary[s.size_name]?.total_input || 0),
+                recorded_output: Number(recordedSummary[s.size_name]?.total_output || 0)
+            }))
         };
         setFormData({ ...formData, items: newItems });
     };
@@ -249,48 +272,74 @@ export default function CreateProductionPage() {
                             {item.lot_id && item.sizes.length > 0 && (
                                 <div className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
                                     <>
-                                        <div className="grid grid-cols-4 gap-6 mb-6 text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] px-2">
+                                        <div className="grid grid-cols-5 gap-4 mb-6 text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] px-2">
                                             <div className="col-span-1">Size</div>
+                                            <div className="col-span-1 text-orange-500">To Cut Balance</div>
                                             <div className="col-span-1 text-blue-600">Input (Assembly)</div>
                                             <div className="col-span-1 text-green-600">Output (Finish)</div>
-                                            <div className="col-span-1 text-right">Balance</div>
+                                            <div className="col-span-1 text-right">Progress (%)</div>
                                         </div>
                                         <div className="space-y-4">
-                                            {item.sizes.map((size, sIdx) => (
-                                                <div key={sIdx} className="grid grid-cols-4 gap-6 items-center group/row">
-                                                    <div className="font-black text-zinc-900 bg-zinc-50 h-12 flex items-center px-4 rounded-xl border border-zinc-100 tracking-widest text-xs transition-colors group-hover/row:bg-zinc-100">
-                                                        {size.size_name}
+                                            {item.sizes.map((size: any, sIdx: number) => {
+                                                const totalOutput = (size.recorded_output || 0) + (size.qty_output || 0);
+                                                const progress = size.cut_qty > 0 ? (totalOutput / size.cut_qty) * 100 : 0;
+                                                const remainingToCut = size.cut_qty - totalOutput;
+
+                                                return (
+                                                    <div key={sIdx} className="grid grid-cols-5 gap-4 items-center group/row">
+                                                        <div className="font-black text-zinc-900 bg-zinc-50 h-10 flex items-center px-4 rounded-xl border border-zinc-100 tracking-widest text-[11px] transition-colors group-hover/row:bg-zinc-100">
+                                                            {size.size_name}
+                                                        </div>
+
+                                                        {/* Balance To Cut (Based on Output per user request) */}
+                                                        <div className={cn(
+                                                            "text-center font-black text-[13px] h-10 flex items-center justify-center rounded-xl bg-orange-50/50 border border-orange-100/50",
+                                                            remainingToCut < 0 ? "text-red-500" : "text-orange-600"
+                                                        )}>
+                                                            {remainingToCut}
+                                                        </div>
+
+                                                        <input
+                                                            type="number"
+                                                            tabIndex={(iIdx + 1) * 100 + sIdx}
+                                                            className="bg-zinc-50 border border-zinc-100 h-10 rounded-xl text-center font-bold text-[13px] focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none"
+                                                            value={size.qty_input || ''}
+                                                            onChange={(e) => {
+                                                                const newItems = [...formData.items];
+                                                                newItems[iIdx].sizes[sIdx].qty_input = parseInt(e.target.value) || 0;
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            tabIndex={(iIdx + 1) * 100 + 50 + sIdx}
+                                                            className="bg-zinc-50 border border-zinc-100 h-10 rounded-xl text-center font-bold text-[13px] focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all outline-none border-green-100/50"
+                                                            value={size.qty_output || ''}
+                                                            onChange={(e) => {
+                                                                const newItems = [...formData.items];
+                                                                newItems[iIdx].sizes[sIdx].qty_output = parseInt(e.target.value) || 0;
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                        />
+
+                                                        {/* Progress Percentage */}
+                                                        <div className="text-right flex flex-col items-end pr-2">
+                                                            <div className={cn(
+                                                                "text-[11px] font-black",
+                                                                progress >= 100 ? "text-green-600" : "text-zinc-400"
+                                                            )}>
+                                                                {progress.toFixed(1)}%
+                                                            </div>
+                                                            <div className="w-16 h-1 bg-zinc-100 rounded-full mt-1 overflow-hidden">
+                                                                <div
+                                                                    className={cn("h-full transition-all duration-500", progress >= 100 ? "bg-green-500" : "bg-blue-500")}
+                                                                    style={{ width: `${Math.min(progress, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <input
-                                                        type="number"
-                                                        tabIndex={(iIdx + 1) * 100 + sIdx}
-                                                        className="bg-zinc-50 border border-zinc-100 h-12 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none"
-                                                        value={size.qty_input || ''}
-                                                        onChange={(e) => {
-                                                            const newItems = [...formData.items];
-                                                            newItems[iIdx].sizes[sIdx].qty_input = parseInt(e.target.value) || 0;
-                                                            setFormData({ ...formData, items: newItems });
-                                                        }}
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        tabIndex={(iIdx + 1) * 100 + 50 + sIdx}
-                                                        className="bg-zinc-50 border border-zinc-100 h-12 rounded-xl text-center font-bold text-sm focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all outline-none border-green-100/50"
-                                                        value={size.qty_output || ''}
-                                                        onChange={(e) => {
-                                                            const newItems = [...formData.items];
-                                                            newItems[iIdx].sizes[sIdx].qty_output = parseInt(e.target.value) || 0;
-                                                            setFormData({ ...formData, items: newItems });
-                                                        }}
-                                                    />
-                                                    <div className={cn(
-                                                        "text-right text-xs font-black pr-2 transition-colors",
-                                                        (size.qty_input || 0) > (size.qty_output || 0) ? "text-blue-600" : "text-zinc-400"
-                                                    )}>
-                                                        {(size.qty_input || 0) - (size.qty_output || 0)}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </>
                                 </div>
