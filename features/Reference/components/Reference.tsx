@@ -75,6 +75,17 @@ export const Reference = () => {
             )
         },
         {
+            header: 'Order Qty',
+            accessorKey: 'gmt_qty',
+            filterable: false,
+            sortable: true,
+            cell: (item) => (
+                <span className="font-bold text-zinc-900">
+                    {item.gmt_qty ? item.gmt_qty.toLocaleString() : '-'}
+                </span>
+            )
+        },
+        {
             header: 'Status',
             accessorKey: 'status_text',
             filterable: true,
