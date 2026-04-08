@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { useProduction } from '../hooks/useProduction';
+import { ProductionService } from '../services/ProductionService';
 
 export const Production = () => {
     const router = useRouter();
@@ -163,9 +164,47 @@ export const Production = () => {
                         />
                     </div>
 
+                    <input
+                        type="file"
+                        id="production-import"
+                        className="hidden"
+                        accept=".xlsx, .xls, .csv"
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            // Using local state to manage loading if needed
+                            const confirmed = confirm('Import production data from this Excel?');
+                            if (!confirmed) return;
+
+                            try {
+                                const result = await ProductionService.importExcel(file);
+                                if (result.status === 'success' && result.summary) {
+                                    alert(`Import Success!\nTotal: ${result.summary.total}\nInserted: ${result.summary.inserted}\nErrors: ${result.summary.errors.length}`);
+                                    refresh();
+                                } else {
+                                    alert(`Import failed: ${result.message || 'Unknown error'}`);
+                                }
+                            } catch (error) {
+                                console.error('Import failed:', error);
+                                alert('Failed to import production data.');
+                            } finally {
+                                if (e.target) e.target.value = '';
+                            }
+                        }}
+                    />
+                    <Button
+                        variant="ghost"
+                        onClick={() => document.getElementById('production-import')?.click()}
+                        className="bg-white hover:bg-zinc-50 text-zinc-600 rounded-2xl px-4 h-10 flex items-center gap-2 transition-all border border-zinc-100 shadow-sm text-[10px] font-black uppercase tracking-widest"
+                    >
+                        <Icon icon="solar:file-send-bold-duotone" className="w-4 h-4 text-blue-500" />
+                        <span>Import</span>
+                    </Button>
+
                     <Button
                         onClick={() => router.push('/admin/production/create')}
-                        className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl px-6 h-10 flex items-center gap-2 transition-all shadow-md active:scale-95 text-xs font-bold ml-2"
+                        className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl px-6 h-10 flex items-center gap-2 transition-all shadow-md active:scale-95 text-xs font-bold"
                     >
                         <Icon icon="solar:add-circle-bold" className="w-4 h-4" />
                         <span>Log</span>

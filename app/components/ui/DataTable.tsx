@@ -22,6 +22,11 @@ interface DataTableProps<T> {
     searchPlaceholder?: string;
     title?: string;
     onRowClick?: (item: T) => void;
+    // Pagination props
+    total?: number;
+    currentPage?: number;
+    perPage?: number;
+    onPageChange?: (page: number) => void;
 }
 
 export const DataTable = <T extends { [key: string]: any }>({
@@ -29,7 +34,11 @@ export const DataTable = <T extends { [key: string]: any }>({
     columns,
     isLoading = false,
     searchPlaceholder = "Search records...",
-    onRowClick
+    onRowClick,
+    total,
+    currentPage = 1,
+    perPage = 20,
+    onPageChange
 }: DataTableProps<T>) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null });
@@ -242,20 +251,32 @@ export const DataTable = <T extends { [key: string]: any }>({
             {/* Pagination / Summary Footer */}
             <div className="p-6 bg-zinc-50/30 border-t border-zinc-50 flex items-center justify-between">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                    Showing <span className="text-zinc-900">{sortedData.length}</span> of <span className="text-zinc-900">{data.length}</span> entries
+                    Showing <span className="text-zinc-900">{total ? Math.min((currentPage - 1) * perPage + 1, total) : 1}</span> to <span className="text-zinc-900">{total ? Math.min(currentPage * perPage, total) : sortedData.length}</span> of <span className="text-zinc-900">{total || data.length}</span> entries
                 </span>
 
-                <div className="flex items-center gap-1">
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100">
-                        <Icon icon="solar:alt-arrow-left-linear" className="w-4 h-4" />
-                    </button>
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-blue-600 font-black text-xs border border-zinc-100 shadow-sm">
-                        1
+                {onPageChange && total && total > perPage && (
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100 disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                            <Icon icon="solar:alt-arrow-left-linear" className="w-4 h-4" />
+                        </button>
+
+                        <div className="px-3 h-8 rounded-lg bg-white flex items-center justify-center text-blue-600 font-black text-xs border border-zinc-100 shadow-sm min-w-[32px]">
+                            {currentPage} / {Math.ceil(total / perPage)}
+                        </div>
+
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === Math.ceil(total / perPage)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100 disabled:opacity-30 disabled:pointer-events-none"
+                        >
+                            <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4" />
+                        </button>
                     </div>
-                    <button className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-white hover:text-zinc-900 transition-all border border-transparent hover:border-zinc-100">
-                        <Icon icon="solar:alt-arrow-right-linear" className="w-4 h-4" />
-                    </button>
-                </div>
+                )}
             </div>
         </div>
     );

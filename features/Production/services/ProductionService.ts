@@ -99,4 +99,21 @@ export class ProductionService {
             throw error;
         }
     }
+
+    static async importExcel(file: File) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${this.baseUrl}/${this.resource}/import`, {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error importing production excel:', error);
+            throw error;
+        }
+    }
 }
