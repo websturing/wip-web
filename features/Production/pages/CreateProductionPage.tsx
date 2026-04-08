@@ -114,21 +114,38 @@ export default function CreateProductionPage() {
         }
 
         const newItems = [...formData.items];
+        const sizes = sizeBreakdown ? sizeBreakdown.map(s => ({
+            size_name: s.size,
+            cut_qty: parseInt(s.cut_qty) || 0,
+            recorded_input: Number(recordedSummary[s.size]?.total_input || 0),
+            recorded_output: Number(recordedSummary[s.size]?.total_output || 0),
+            qty_input: 0,
+            qty_output: 0
+        })) : newItems[itemIdx].sizes.map(s => ({
+            ...s,
+            recorded_input: Number(recordedSummary[s.size_name]?.total_input || 0),
+            recorded_output: Number(recordedSummary[s.size_name]?.total_output || 0)
+        }));
+
+        // If bulk mode is enabled, ensure a TOTAL entry exists
+        if ((item as any).is_bulk) {
+            const totalEntry = sizes.find(s => s.size_name === 'TOTAL');
+            if (!totalEntry) {
+                sizes.push({
+                    size_name: 'TOTAL',
+                    qty_input: 0,
+                    qty_output: 0,
+                    cut_qty: 0, // This will be aggregated in UI
+                    recorded_input: 0,
+                    recorded_output: 0
+                });
+            }
+        }
+
         newItems[itemIdx] = {
             ...newItems[itemIdx],
             color: color,
-            sizes: sizeBreakdown ? sizeBreakdown.map(s => ({
-                size_name: s.size,
-                cut_qty: parseInt(s.cut_qty) || 0,
-                recorded_input: Number(recordedSummary[s.size]?.total_input || 0),
-                recorded_output: Number(recordedSummary[s.size]?.total_output || 0),
-                qty_input: 0,
-                qty_output: 0
-            })) : newItems[itemIdx].sizes.map(s => ({
-                ...s,
-                recorded_input: Number(recordedSummary[s.size_name]?.total_input || 0),
-                recorded_output: Number(recordedSummary[s.size_name]?.total_output || 0)
-            }))
+            sizes: sizes
         };
         setFormData({ ...formData, items: newItems });
     };
@@ -160,7 +177,23 @@ export default function CreateProductionPage() {
 
         setIsLoading(true);
         try {
-            await ProductionService.create(formData);
+            // Clean up data based on bulk mode
+            const cleanedItems = formData.items.map(item => {
+                if ((item as any).is_bulk) {
+                    const totalEntry = item.sizes.find(s => s.size_name === 'TOTAL');
+                    return {
+                        ...item,
+                        sizes: totalEntry ? [totalEntry] : []
+                    };
+                }
+                // For non-bulk, remove any temporary TOTAL entry if it exists
+                return {
+                    ...item,
+                    sizes: item.sizes.filter(s => s.size_name !== 'TOTAL')
+                };
+            });
+
+            await ProductionService.create({ ...formData, items: cleanedItems });
             router.push('/admin/production');
         } catch (error) {
             console.error('Failed to save:', error);
@@ -228,10 +261,10 @@ export default function CreateProductionPage() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-end">
                                 <Select
-                                    label="Lot Configuration"
-                                    placeholder="Search Lot Code..."
+                                    label="GL Number"
+                                    placeholder="Search GL Code..."
                                     options={lots}
                                     value={item.lot_id}
                                     onChange={(val) => {
@@ -245,8 +278,32 @@ export default function CreateProductionPage() {
                                     }}
                                 />
                                 {item.lot_id && (
-                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Color Variant</label>
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <div className="flex items-end justify-between ml-1">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Color Variant</label>
+                                            <button
+                                                onClick={() => {
+                                                    const newItems = [...formData.items];
+                                                    const isBulk = !(newItems[iIdx] as any).is_bulk;
+                                                    (newItems[iIdx] as any).is_bulk = isBulk;
+
+                                                    // Trigger color update again to reset sizes appropriately
+                                                    setFormData({ ...formData, items: newItems });
+                                                    if (newItems[iIdx].color) {
+                                                        const colorData = lotDetails[iIdx]?.find(c => c.color === newItems[iIdx].color);
+                                                        updateItemColor(iIdx, newItems[iIdx].color, colorData?.size_breakdown);
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border",
+                                                    (item as any).is_bulk
+                                                        ? "bg-blue-600 text-white border-blue-600"
+                                                        : "bg-zinc-50 text-zinc-400 border-zinc-100 hover:border-blue-200"
+                                                )}
+                                            >
+                                                {(item as any).is_bulk ? '📍 Bulk Entry Enabeld' : '📏 Per Size Entry'}
+                                            </button>
+                                        </div>
                                         {lotDetails[iIdx] ? (
                                             <Select
                                                 placeholder="Choose Color..."
@@ -270,17 +327,92 @@ export default function CreateProductionPage() {
                             </div>
 
                             {item.lot_id && item.sizes.length > 0 && (
-                                <div className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
-                                    <>
-                                        <div className="grid grid-cols-5 gap-4 mb-6 text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] px-2">
-                                            <div className="col-span-1">Size</div>
-                                            <div className="col-span-1 text-orange-500">To Cut Balance</div>
-                                            <div className="col-span-1 text-blue-600">Input (Assembly)</div>
-                                            <div className="col-span-1 text-green-600">Output (Finish)</div>
-                                            <div className="col-span-1 text-right">Progress (%)</div>
-                                        </div>
+                                <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
+                                    {/* Table Headers */}
+                                    <div className="grid grid-cols-5 gap-4 mb-6 text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] px-2">
+                                        <div className="col-span-1">Mode / Size</div>
+                                        <div className="col-span-1 text-orange-500">To Cut Balance</div>
+                                        <div className="col-span-1 text-blue-600">Input (Assembly)</div>
+                                        <div className="col-span-1 text-green-600">Output (Finish)</div>
+                                        <div className="col-span-1 text-right">Progress (%)</div>
+                                    </div>
+
+                                    {/* Bulk Mode View */}
+                                    {(item as any).is_bulk ? (
                                         <div className="space-y-4">
-                                            {item.sizes.map((size: any, sIdx: number) => {
+                                            {(() => {
+                                                const totalCut = item.sizes.reduce((sum: number, s: any) => sum + (s.cut_qty || 0), 0);
+                                                const totalRecordedIn = item.sizes.reduce((sum: number, s: any) => sum + (s.recorded_input || 0), 0);
+                                                const totalRecordedOut = item.sizes.reduce((sum: number, s: any) => sum + (s.recorded_output || 0), 0);
+
+                                                // Create a pseudo-size for bulk storage
+                                                const bulkInput = item.sizes.find(s => s.size_name === 'TOTAL')?.qty_input || 0;
+                                                const bulkOutput = item.sizes.find(s => s.size_name === 'TOTAL')?.qty_output || 0;
+
+                                                const totalOutputNow = totalRecordedOut + bulkOutput;
+                                                const progress = totalCut > 0 ? (totalOutputNow / totalCut) * 100 : 0;
+                                                const remainingToCut = totalCut - totalOutputNow;
+
+                                                return (
+                                                    <div className="grid grid-cols-5 gap-4 items-center p-4 bg-blue-50/30 rounded-2xl border border-blue-100/50">
+                                                        <div className="font-black text-blue-700 flex flex-col">
+                                                            <span className="text-[11px] uppercase tracking-widest">Total Bulk</span>
+                                                            <span className="text-[8px] opacity-60">Sum of All Quantities</span>
+                                                        </div>
+                                                        <div className={cn(
+                                                            "text-center font-black text-[13px] h-10 flex items-center justify-center rounded-xl bg-orange-50 border border-orange-100/50",
+                                                            remainingToCut < 0 ? "text-red-500" : "text-orange-600"
+                                                        )}>
+                                                            {remainingToCut}
+                                                        </div>
+                                                        <input
+                                                            type="number"
+                                                            className="bg-white border border-blue-200 h-10 rounded-xl text-center font-bold text-[13px] focus:ring-2 focus:ring-blue-500/20"
+                                                            value={bulkInput || ''}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                const newItems = [...formData.items];
+                                                                // In bulk mode, we store everything in a 'TOTAL' size entry
+                                                                let totalSizeIdx = newItems[iIdx].sizes.findIndex(s => s.size_name === 'TOTAL');
+                                                                if (totalSizeIdx === -1) {
+                                                                    newItems[iIdx].sizes.push({ size_name: 'TOTAL', qty_input: val, qty_output: 0 });
+                                                                } else {
+                                                                    newItems[iIdx].sizes[totalSizeIdx].qty_input = val;
+                                                                }
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            className="bg-white border border-green-200 h-10 rounded-xl text-center font-bold text-[13px] focus:ring-2 focus:ring-green-500/20"
+                                                            value={bulkOutput || ''}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                const newItems = [...formData.items];
+                                                                let totalSizeIdx = newItems[iIdx].sizes.findIndex(s => s.size_name === 'TOTAL');
+                                                                if (totalSizeIdx === -1) {
+                                                                    newItems[iIdx].sizes.push({ size_name: 'TOTAL', qty_input: 0, qty_output: val });
+                                                                } else {
+                                                                    newItems[iIdx].sizes[totalSizeIdx].qty_output = val;
+                                                                }
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                        />
+                                                        <div className="text-right flex flex-col items-end pr-2">
+                                                            <span className="text-[11px] font-black text-zinc-900">{progress.toFixed(1)}%</span>
+                                                            <div className="w-16 h-1 bg-zinc-100 rounded-full mt-1 overflow-hidden">
+                                                                <div className="h-full bg-blue-500" style={{ width: `${Math.min(progress, 100)}%` }} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest text-center">Note: Per sizing data will be cleared and replaced with TOTAL entry on save.</p>
+                                        </div>
+                                    ) : (
+                                        /* Per Size Mode view */
+                                        <div className="space-y-4">
+                                            {item.sizes.filter(s => s.size_name !== 'TOTAL').map((size: any, sIdx: number) => {
                                                 const totalOutput = (size.recorded_output || 0) + (size.qty_output || 0);
                                                 const progress = size.cut_qty > 0 ? (totalOutput / size.cut_qty) * 100 : 0;
                                                 const remainingToCut = size.cut_qty - totalOutput;
@@ -290,15 +422,12 @@ export default function CreateProductionPage() {
                                                         <div className="font-black text-zinc-900 bg-zinc-50 h-10 flex items-center px-4 rounded-xl border border-zinc-100 tracking-widest text-[11px] transition-colors group-hover/row:bg-zinc-100">
                                                             {size.size_name}
                                                         </div>
-
-                                                        {/* Balance To Cut (Based on Output per user request) */}
                                                         <div className={cn(
                                                             "text-center font-black text-[13px] h-10 flex items-center justify-center rounded-xl bg-orange-50/50 border border-orange-100/50",
                                                             remainingToCut < 0 ? "text-red-500" : "text-orange-600"
                                                         )}>
                                                             {remainingToCut}
                                                         </div>
-
                                                         <input
                                                             type="number"
                                                             tabIndex={(iIdx + 1) * 100 + sIdx}
@@ -321,27 +450,19 @@ export default function CreateProductionPage() {
                                                                 setFormData({ ...formData, items: newItems });
                                                             }}
                                                         />
-
-                                                        {/* Progress Percentage */}
                                                         <div className="text-right flex flex-col items-end pr-2">
-                                                            <div className={cn(
-                                                                "text-[11px] font-black",
-                                                                progress >= 100 ? "text-green-600" : "text-zinc-400"
-                                                            )}>
+                                                            <div className={cn("text-[11px] font-black", progress >= 100 ? "text-green-600" : "text-zinc-400")}>
                                                                 {progress.toFixed(1)}%
                                                             </div>
                                                             <div className="w-16 h-1 bg-zinc-100 rounded-full mt-1 overflow-hidden">
-                                                                <div
-                                                                    className={cn("h-full transition-all duration-500", progress >= 100 ? "bg-green-500" : "bg-blue-500")}
-                                                                    style={{ width: `${Math.min(progress, 100)}%` }}
-                                                                />
+                                                                <div className={cn("h-full transition-all duration-500", progress >= 100 ? "bg-green-500" : "bg-blue-500")} style={{ width: `${Math.min(progress, 100)}%` }} />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 );
                                             })}
                                         </div>
-                                    </>
+                                    )}
                                 </div>
                             )}
                         </div>
