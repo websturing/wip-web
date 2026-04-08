@@ -35,6 +35,12 @@ export const Reference = () => {
 
     const columns: Column<any>[] = [
         {
+            header: '#',
+            accessorKey: 'index',
+            className: 'w-10 text-zinc-400 font-bold',
+            cell: (_, idx) => idx + 1
+        },
+        {
             header: 'Customer',
             accessorKey: 'customer_name',
             filterable: true,
@@ -161,7 +167,7 @@ export const Reference = () => {
     };
 
     return (
-        <div className="p-8">
+        <div className="">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                 <div className="flex items-center gap-4">
                     <div className="bg-zinc-900 p-3 rounded-2xl text-white shadow-xl shadow-zinc-200">
@@ -207,7 +213,7 @@ export const Reference = () => {
             </div>
 
             {importSummary && (
-                <div className="mb-8 p-6 bg-emerald-50/50 border border-emerald-100 rounded-3xl animate-in fade-in slide-in-from-top-4">
+                <div className="mb-8 p-6 bg-emerald-50/50 border border-emerald-100 rounded-sm animate-in fade-in slide-in-from-top-4">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-emerald-600">
                             <Icon icon="solar:check-circle-bold-duotone" className="w-5 h-5" />

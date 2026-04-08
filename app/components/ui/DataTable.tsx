@@ -9,7 +9,7 @@ export interface Column<T> {
     header: string;
     accessorKey: keyof T | string;
     className?: string;
-    cell?: (item: T) => React.ReactNode;
+    cell?: (item: T, index: number) => React.ReactNode;
     sortable?: boolean;
     filterable?: boolean;
     filterType?: 'text' | 'select'; // New: flexible filter type
@@ -87,7 +87,7 @@ export const DataTable = <T extends { [key: string]: any }>({
     };
 
     return (
-        <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="bg-white rounded-xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
             {/* Toolbar */}
             <div className="p-6 md:p-8 border-b border-zinc-50 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
@@ -229,7 +229,7 @@ export const DataTable = <T extends { [key: string]: any }>({
                                 >
                                     {columns.map((col, colIdx) => (
                                         <td key={colIdx} className={cn("px-8 py-6 text-zinc-600 text-sm font-medium", col.className)}>
-                                            {col.cell ? col.cell(item) : item[col.accessorKey]}
+                                            {col.cell ? col.cell(item, rowIdx) : item[col.accessorKey]}
                                         </td>
                                     ))}
                                 </tr>

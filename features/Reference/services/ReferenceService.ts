@@ -14,6 +14,18 @@ export class ReferenceService {
         }
     }
 
+    static async getLotList() {
+        try {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/lots/list`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching lot list:', error);
+            throw error;
+        }
+    }
+
     static async importExcel(file: File) {
         try {
             const formData = new FormData();
