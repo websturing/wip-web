@@ -43,11 +43,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         {
             title: 'Sewing - Production',
             items: [
-                { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
-                { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-bold-duotone', badge: null }
+                { name: 'Production Output', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
+                { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-bold-duotone', badge: null },
+                { name: 'Productivity', path: '/admin/productivity', icon: 'solar:tablet-bold-duotone', badge: null }
             ],
             badgeSection: '404'
         },
+
         {
             title: 'Industrial Engineering',
             items: [
