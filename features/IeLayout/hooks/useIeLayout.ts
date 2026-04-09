@@ -39,6 +39,7 @@ export const useIeLayout = () => {
         isLoading,
         error,
         fetchData,
+        refresh: fetchData,
         deleteLayout
     };
-};
+}

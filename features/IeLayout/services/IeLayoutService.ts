@@ -3,41 +3,79 @@ import { IeLayout } from '../types';
 export class IeLayoutService {
     private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-    static async getAll(): Promise<IeLayout[]> {
-        const response = await fetch(`${this.baseUrl}/ielayout`);
+    private static async request(path: string, options: RequestInit = {}) {
+        const url = `${this.baseUrl}${path}`;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...(options.headers || {}),
+        };
+
+        const response = await fetch(url, { ...options, headers });
         const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'API Request Failed');
+        }
+
+        return result;
+    }
+
+    static async getAll(): Promise<IeLayout[]> {
+        const result = await this.request('/ielayout');
         return result.data;
     }
 
     static async getById(id: number | string): Promise<IeLayout> {
-        const response = await fetch(`${this.baseUrl}/ielayout/${id}`);
-        const result = await response.json();
+        const result = await this.request(`/ielayout/${id}`);
         return result.data;
     }
 
     static async create(data: Partial<IeLayout>): Promise<IeLayout> {
-        const response = await fetch(`${this.baseUrl}/ielayout`, {
+        const result = await this.request('/ielayout', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
-        const result = await response.json();
         return result.data;
     }
 
     static async update(id: number | string, data: Partial<IeLayout>): Promise<IeLayout> {
-        const response = await fetch(`${this.baseUrl}/ielayout/${id}`, {
+        const result = await this.request(`/ielayout/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
-        const result = await response.json();
         return result.data;
     }
 
     static async delete(id: number | string): Promise<void> {
-        await fetch(`${this.baseUrl}/ielayout/${id}`, {
+        await this.request(`/ielayout/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // Operations
+    static async getOperations(): Promise<any[]> {
+        const result = await this.request('/ielayout/operations');
+        return result?.data || [];
+    }
+
+    // GL Numbers
+    static async getGlNumbers(): Promise<any[]> {
+        const result = await this.request('/reference/gl-groups');
+        return result?.data?.data || []; // Handle pagination structure
+    }
+
+    // Daily Manpower
+    static async getDailyManpower(layoutId: number | string): Promise<any[]> {
+        const result = await this.request(`/ielayout/manpower?ie_layout_id=${layoutId}`);
+        return result?.data || [];
+    }
+
+    static async saveDailyManpower(data: any): Promise<any> {
+        const result = await this.request('/ielayout/manpower', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return result?.data;
     }
 }

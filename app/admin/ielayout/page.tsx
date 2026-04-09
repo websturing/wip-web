@@ -1,4 +1,4 @@
-import IeLayoutPage from '@/features/IeLayout/IeLayoutPage';
+import { IeLayoutPage } from '@/features/IeLayout';
 
 export const metadata = {
     title: 'IE Layouts - Admin',

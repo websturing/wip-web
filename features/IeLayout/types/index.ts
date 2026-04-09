@@ -5,6 +5,11 @@ export interface IeLayout {
     is_gl_number: boolean;
     gl_number: string | null;
     department: string;
+    total_smv: number;
+    man_power_sewer: number;
+    man_power_matching: number;
+    man_power_qc: number;
+    man_power_others: number;
     created_by_id: number | null;
     updated_by_id: number | null;
     created_at: string;
