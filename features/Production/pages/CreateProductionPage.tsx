@@ -48,17 +48,23 @@ export default function CreateProductionPage() {
         // Fetch Lines
         ProductionService.getLines().then(res => {
             if (res && res.status === 'success') {
-                setLines(res.data.map((l: any) => ({ id: l.id, label: l.name })));
+                const sorted = res.data
+                    .map((l: any) => ({ id: l.id, label: l.name }))
+                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
+                setLines(sorted);
             }
         });
 
         // Fetch Lots
         ReferenceService.getLotList().then(res => {
             if (res && res.status === 'success') {
-                setLots(res.data.map((l: any) => ({
-                    id: l.id,
-                    label: (l.lot_code || '').replace(/^0+/, '')
-                })));
+                const sorted = res.data
+                    .map((l: any) => ({
+                        id: l.id,
+                        label: (l.lot_code || '').replace(/^0+/, '')
+                    }))
+                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
+                setLots(sorted);
             }
         });
     }, []);

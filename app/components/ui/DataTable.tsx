@@ -179,7 +179,7 @@ export const DataTable = <T extends { [key: string]: any }>({
             </div>
 
             {/* Table Container */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-zinc-50/50">

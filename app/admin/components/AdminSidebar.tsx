@@ -12,7 +12,7 @@ import {
 import { Icon } from '@/app/components/ui/Icon';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
 import { cn } from '@/lib/utils';
-import { AlertTriangle, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -76,7 +76,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto pt-6 pb-6 hover-scrollbar-dark scroll-smooth">
+            <div className="flex-1 overflow-y-auto pt-6 pb-6 no-scrollbar scroll-smooth">
                 <nav className="space-y-0.5">
                     {sections.map((section, sIdx) => (
                         <div key={sIdx} className="mb-4">
