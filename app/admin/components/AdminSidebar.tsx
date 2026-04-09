@@ -45,7 +45,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             items: [
                 { name: 'Production Output', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
                 { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-bold-duotone', badge: null },
-                { name: 'Productivity', path: '/admin/productivity', icon: 'solar:tablet-bold-duotone', badge: null }
+                { name: 'Productivity', path: '/admin/productivity', icon: 'solar:graph-up-bold-duotone', badge: null }
             ],
             badgeSection: '404'
         },
