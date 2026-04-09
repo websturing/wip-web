@@ -1,9 +1,13 @@
 export interface IeLayout {
     id: number;
     name: string;
+    lot_id: string | null;
+    lot?: {
+        id: string;
+        lot_code: string;
+        lot_number: string;
+    };
     price: number;
-    is_gl_number: boolean;
-    gl_number: string | null;
     department: string;
     total_smv: number;
     man_power_sewer: number;

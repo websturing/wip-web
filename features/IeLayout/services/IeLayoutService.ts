@@ -31,6 +31,12 @@ export class IeLayoutService {
         return result.data;
     }
 
+    static async getByLotId(lotId: string): Promise<IeLayout | null> {
+        const result = await this.request(`/ielayout?lot_id=${lotId}`);
+        // The index endpoint should support filtering by lot_id and return the first match or null
+        return result.data?.length > 0 ? result.data[0] : null;
+    }
+
     static async create(data: Partial<IeLayout>): Promise<IeLayout> {
         const result = await this.request('/ielayout', {
             method: 'POST',
@@ -63,6 +69,12 @@ export class IeLayoutService {
     static async getGlNumbers(): Promise<any[]> {
         const result = await this.request('/reference/gl-groups');
         return result?.data?.data || []; // Handle pagination structure
+    }
+
+    // Lots
+    static async getLots(): Promise<any[]> {
+        const result = await this.request('/reference/lots/list');
+        return result?.data || [];
     }
 
     // Daily Manpower

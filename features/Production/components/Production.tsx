@@ -240,16 +240,14 @@ export const Production = () => {
                 </div>
 
                 {/* Production Display */}
-                <div className={cn(
-                    viewMode === 'cards' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start" : "w-full overflow-hidden"
-                )}>
+                <div className="w-full">
                     {Object.keys(groupedData).length === 0 ? (
-                        <div className="col-span-full py-32 bg-zinc-50 rounded-[3rem] border border-dashed border-zinc-200 flex flex-col items-center justify-center text-zinc-400">
+                        <div className="py-32 bg-zinc-50 rounded-[3rem] border border-dashed border-zinc-200 flex flex-col items-center justify-center text-zinc-400">
                             <Icon icon="solar:ghost-bold-duotone" className="w-12 h-12 opacity-10 mb-6" />
                             <p className="text-xs font-black uppercase tracking-[0.2em]">No data matching filters</p>
                         </div>
                     ) : viewMode === 'cards' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                             {Object.entries(groupedData).map(([key, data]: [string, any]) => (
                                 <div key={key} className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm overflow-hidden transition-all duration-500 hover:shadow-xl h-fit">
                                     {/* Card Header (GL + Lot) */}
@@ -273,12 +271,18 @@ export const Production = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between w-full p-4 bg-white rounded-2xl border border-zinc-100 shadow-sm">
-                                            <div className="flex flex-col items-start border-r border-zinc-100 pr-6 flex-1">
+                                        <div className="flex items-center justify-between w-full p-4 bg-white rounded-2xl border border-zinc-100 shadow-sm gap-2">
+                                            <div className="flex flex-col items-start border-r border-zinc-100 pr-4 flex-1">
                                                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Total In</span>
                                                 <span className="text-sm font-black text-zinc-900">{data.total_in}</span>
                                             </div>
-                                            <div className="flex flex-col items-end pl-6 flex-1">
+                                            <div className="flex flex-col items-center border-r border-zinc-100 px-4 flex-1">
+                                                <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">MP</span>
+                                                <span className="text-sm font-black text-emerald-600">
+                                                    {data.entries.reduce((sum: number, p: any) => sum + (p.man_power_sewer || 0) + (p.man_power_matching || 0) + (p.man_power_qc || 0) + (p.man_power_others || 0), 0) / data.entries.length}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-end pl-4 flex-1">
                                                 <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 text-right">Total Out</span>
                                                 <span className="text-sm font-black text-blue-600">{data.total_out}</span>
                                             </div>
@@ -298,9 +302,29 @@ export const Production = () => {
                                                             <div className="bg-zinc-900 px-2.5 py-1 rounded-md text-[9px] font-black text-white">
                                                                 {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-zinc-900 uppercase tracking-widest leading-none mb-1">{p.line?.name}</span>
-                                                                <span className="text-[8px] font-bold text-zinc-400 uppercase leading-none">{p.creator?.name?.split(' ')[0]}</span>
+                                                            <div className="bg-blue-600 px-2.5 py-1 rounded-md text-[9px] font-black text-white uppercase italic">
+                                                                {p.line?.name}
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 ml-1">
+                                                                <span className="text-[8px] font-black text-emerald-500 uppercase">MP:</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="flex items-center gap-0.5" title="Sewers">
+                                                                        <span className="text-[7px] font-bold text-zinc-400">S</span>
+                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_sewer || 0}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-0.5" title="Matching">
+                                                                        <span className="text-[7px] font-bold text-zinc-400">M</span>
+                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_matching || 0}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-0.5" title="QC">
+                                                                        <span className="text-[7px] font-bold text-zinc-400">Q</span>
+                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_qc || 0}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-0.5" title="Others">
+                                                                        <span className="text-[7px] font-bold text-zinc-400">O</span>
+                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_others || 0}</span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50">
@@ -342,6 +366,7 @@ export const Production = () => {
                                         <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Garment Info</th>
                                         <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Lot Group</th>
                                         <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Colors & Lines</th>
+                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Average MP</th>
                                         <th className="px-6 py-5 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest">Total Qty</th>
                                         <th className="px-6 py-5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest">Activities</th>
                                     </tr>
@@ -385,6 +410,19 @@ export const Production = () => {
                                                                     {l}
                                                                 </span>
                                                             ))}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-8">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                                            <Icon icon="solar:users-group-rounded-bold-duotone" className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-black text-zinc-900">
+                                                                {(data.entries.reduce((sum: number, p: any) => sum + (p.man_power_sewer || 0) + (p.man_power_matching || 0) + (p.man_power_qc || 0) + (p.man_power_others || 0), 0) / data.entries.length).toFixed(1)}
+                                                            </span>
+                                                            <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">People</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -447,42 +485,61 @@ export const Production = () => {
                                     <div className="flex-1 overflow-y-auto p-10 space-y-4 font-sans no-scrollbar">
                                         {groupedData[selectedGroupKey].entries.map((p: any, pIdx: number) => (
                                             <div key={pIdx} className="bg-zinc-50/50 rounded-3xl border border-zinc-100 p-6 hover:border-blue-100 transition-colors">
-                                                <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-zinc-900 text-white px-3 py-1.5 rounded-xl text-[10px] font-black">
-                                                            {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                <div className="flex flex-col gap-6 mb-6 pb-6 border-b border-zinc-100">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="bg-zinc-900 text-white px-3 py-1.5 rounded-xl text-[10px] font-black">
+                                                                {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-black text-zinc-900 uppercase tracking-widest leading-none mb-1">{p.line?.name}</p>
+                                                                <p className="text-[10px] font-bold text-zinc-400 uppercase leading-none italic">Standard Manpower</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs font-black text-zinc-900 uppercase tracking-widest leading-none mb-1">{p.line?.name}</p>
-                                                            <p className="text-[10px] font-bold text-zinc-400 uppercase leading-none">Logged by {p.creator?.name}</p>
+                                                        <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
+                                                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
                                                         </div>
                                                     </div>
-                                                    <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
-                                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
-                                                    </div>
-                                                </div>
 
-                                                <div className="grid grid-cols-2 gap-8">
-                                                    <div>
-                                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block mb-4">Size Breakdown (OUT)</span>
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            {p.item_details.map((d: any, dIdx: number) => (
-                                                                <div key={dIdx} className="bg-white border border-zinc-100 p-3 rounded-2xl flex justify-between items-center shadow-sm">
-                                                                    <span className="text-[10px] font-black text-zinc-400">{d.size_name}</span>
-                                                                    <span className="text-xs font-black text-blue-600">{d.qty_output}</span>
+                                                    <div className="grid grid-cols-4 gap-4 bg-white/50 p-4 rounded-2xl border border-zinc-100">
+                                                        {[
+                                                            { label: 'SEWER', val: p.man_power_sewer, color: 'text-blue-500', bg: 'bg-blue-50/50' },
+                                                            { label: 'MATCH', val: p.man_power_matching, color: 'text-purple-500', bg: 'bg-purple-50/50' },
+                                                            { label: 'QC', val: p.man_power_qc, color: 'text-emerald-500', bg: 'bg-emerald-50/50' },
+                                                            { label: 'OTHER', val: p.man_power_others, color: 'text-orange-500', bg: 'bg-orange-50/50' },
+                                                        ].map((mp, i) => (
+                                                            <div key={i} className="flex flex-col items-center">
+                                                                <span className="text-[8px] font-black text-zinc-300 uppercase tracking-widest mb-1">{mp.label}</span>
+                                                                <div className={cn("px-3 py-1 rounded-lg font-black text-sm", mp.bg, mp.color)}>
+                                                                    {mp.val || 0}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Size Breakdown */}
+                                                    <div className="space-y-3">
+                                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block px-1">Size Breakdown (PK)</span>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                            {p.item_details?.map((d: any, dIdx: number) => (
+                                                                <div key={dIdx} className="bg-white border border-zinc-100 p-3 rounded-2xl flex flex-col items-center shadow-sm">
+                                                                    <span className="text-[10px] font-black text-zinc-400 uppercase leading-none mb-1">{d.size_name}</span>
+                                                                    <span className="text-sm font-black text-blue-600 leading-none">{d.qty_output}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col justify-end gap-3">
-                                                        <div className="bg-zinc-100/50 p-4 rounded-3xl flex justify-between items-center">
-                                                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Total Input</span>
-                                                            <span className="text-lg font-black text-zinc-900">{p.qty_in}</span>
-                                                        </div>
-                                                        <div className="bg-blue-600 p-4 rounded-3xl flex justify-between items-center text-white">
-                                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Total Output</span>
-                                                            <span className="text-lg font-black">{p.qty_out}</span>
-                                                        </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1 leading-none">Input Yield</span>
+                                                        <span className="text-lg font-black text-zinc-900 leading-none">{p.qty_in} <span className="text-[10px] font-bold text-zinc-300 italic">PCS</span></span>
+                                                    </div>
+                                                    <div className="w-12 h-px bg-zinc-100 hidden sm:block"></div>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 leading-none">Output Finish</span>
+                                                        <span className="text-xl font-black text-blue-600 leading-none">{p.qty_out} <span className="text-[10px] font-bold text-blue-200 italic">PCS</span></span>
                                                     </div>
                                                 </div>
                                             </div>

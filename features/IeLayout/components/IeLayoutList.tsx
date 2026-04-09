@@ -109,23 +109,44 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                                                 </div>
                                             </td>
                                             <td className="px-6 py-6">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                                        <Icon icon="solar:users-group-rounded-bold-duotone" className="w-4 h-4" />
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
+                                                            <Icon icon="solar:users-group-rounded-bold-duotone" className="w-3 h-3" />
+                                                        </div>
+                                                        <span className="text-sm font-black text-zinc-900">
+                                                            {(layout.man_power_sewer || 0) +
+                                                                (layout.man_power_matching || 0) +
+                                                                (layout.man_power_qc || 0) +
+                                                                (layout.man_power_others || 0)}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-zinc-300 uppercase italic">MP</span>
                                                     </div>
-                                                    <span className="text-sm font-black text-zinc-900">
-                                                        {(layout.man_power_sewer || 0) +
-                                                            (layout.man_power_matching || 0) +
-                                                            (layout.man_power_qc || 0) +
-                                                            (layout.man_power_others || 0)}
-                                                    </span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[8px] font-black text-zinc-300 uppercase">S</span>
+                                                            <span className="text-[10px] font-black text-zinc-600">{layout.man_power_sewer || 0}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[8px] font-black text-zinc-300 uppercase">M</span>
+                                                            <span className="text-[10px] font-black text-zinc-600">{layout.man_power_matching || 0}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[8px] font-black text-zinc-300 uppercase">Q</span>
+                                                            <span className="text-[10px] font-black text-zinc-600">{layout.man_power_qc || 0}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[8px] font-black text-zinc-300 uppercase">O</span>
+                                                            <span className="text-[10px] font-black text-zinc-600">{layout.man_power_others || 0}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-6">
-                                                {layout.gl_number ? (
+                                                {layout.lot ? (
                                                     <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest italic border border-blue-100/50">
                                                         <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
-                                                        {layout.gl_number}
+                                                        {layout.lot.lot_code}
                                                     </span>
                                                 ) : (
                                                     <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest italic">Not Linked</span>
@@ -205,23 +226,43 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                                             <span className="text-lg font-black">{(layout.total_smv || 0).toFixed(2)}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-zinc-50/50 p-4 rounded-xl border border-zinc-100 transition-all hover:bg-white hover:border-blue-50">
-                                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block mb-1 opacity-60">Workers</span>
-                                        <div className="flex items-center gap-2 text-zinc-900">
-                                            <Icon icon="solar:users-group-rounded-bold-duotone" className="w-3.5 h-3.5 text-emerald-500" />
-                                            <span className="text-lg font-black">
-                                                {(layout.man_power_sewer || 0) +
-                                                    (layout.man_power_matching || 0) +
-                                                    (layout.man_power_qc || 0) +
-                                                    (layout.man_power_others || 0)}
-                                            </span>
+                                    <div className="bg-zinc-50/50 p-4 rounded-xl border border-zinc-100 transition-all hover:bg-white hover:border-blue-50 col-span-2">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block opacity-60">Manpower Details</span>
+                                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500 rounded text-[8px] font-black text-white uppercase italic">
+                                                <Icon icon="solar:users-group-rounded-bold-duotone" className="w-2.5 h-2.5" />
+                                                <span>
+                                                    {(layout.man_power_sewer || 0) +
+                                                        (layout.man_power_matching || 0) +
+                                                        (layout.man_power_qc || 0) +
+                                                        (layout.man_power_others || 0)} MP
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            <div className="flex flex-col">
+                                                <span className="text-[7px] font-black text-zinc-300 uppercase">Sewer</span>
+                                                <span className="text-xs font-black text-zinc-900">{layout.man_power_sewer || 0}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[7px] font-black text-zinc-300 uppercase">Match</span>
+                                                <span className="text-xs font-black text-zinc-900">{layout.man_power_matching || 0}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[7px] font-black text-zinc-300 uppercase">QC</span>
+                                                <span className="text-xs font-black text-zinc-900">{layout.man_power_qc || 0}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[7px] font-black text-zinc-300 uppercase">Other</span>
+                                                <span className="text-xs font-black text-zinc-900">{layout.man_power_others || 0}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="bg-zinc-50/50 p-4 rounded-xl border border-zinc-100 transition-all hover:bg-white hover:border-blue-50">
-                                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block mb-1 opacity-60">GL Link</span>
+                                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block mb-1 opacity-60">GL-Lot Link</span>
                                         <div className="flex items-center gap-2 text-zinc-900">
                                             <Icon icon="solar:verified-check-bold-duotone" className="w-3.5 h-3.5 text-blue-500" />
-                                            <span className="text-[10px] font-black text-blue-900 uppercase italic truncate">{layout.gl_number || 'N/A'}</span>
+                                            <span className="text-[10px] font-black text-blue-900 uppercase italic truncate">{layout.lot?.lot_code || 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>

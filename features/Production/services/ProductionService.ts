@@ -26,6 +26,18 @@ export class ProductionService {
         }
     }
 
+    static async getLatestManpower(lineId: string, lotId: string, date: string) {
+        try {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/latest-manpower?line_id=${lineId}&lot_id=${lotId}&date=${date}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching latest manpower:', error);
+            throw error;
+        }
+    }
+
     static async getAll(date?: string) {
         try {
             const url = new URL(`${this.baseUrl}/${this.resource}`);

@@ -5,7 +5,6 @@ import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Select } from '@/app/components/ui/Select';
-import { cn } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { IeLayoutService } from '../services/IeLayoutService';
@@ -20,13 +19,13 @@ export const IeLayoutFormPage = () => {
     const [isFetching, setIsFetching] = useState(false);
     const [operations, setOperations] = useState<Operation[]>([]);
     const [glGroups, setGlGroups] = useState<any[]>([]);
+    const [lots, setLots] = useState<any[]>([]);
 
     const [formData, setFormData] = useState<Partial<IeLayout>>({
         name: '',
+        lot_id: '',
         price: 0,
         department: 'Sewing',
-        is_gl_number: true,
-        gl_number: '',
         total_smv: 0,
         man_power_sewer: 0,
         man_power_matching: 0,
@@ -45,6 +44,7 @@ export const IeLayoutFormPage = () => {
     useEffect(() => {
         fetchOperations();
         fetchGlGroups();
+        fetchLots();
         if (id) {
             fetchLayout(id as string);
         }
@@ -65,6 +65,15 @@ export const IeLayoutFormPage = () => {
             setGlGroups(data);
         } catch (error) {
             console.error('Failed to fetch GL groups:', error);
+        }
+    };
+
+    const fetchLots = async () => {
+        try {
+            const data = await IeLayoutService.getLots();
+            setLots(data);
+        } catch (error) {
+            console.error('Failed to fetch lots:', error);
         }
     };
 
@@ -202,31 +211,29 @@ export const IeLayoutFormPage = () => {
                             </div>
 
                             <div className="pt-6 border-t border-zinc-100 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Use GL Serial</label>
-                                    <button
-                                        onClick={() => setFormData(prev => ({ ...prev, is_gl_number: !prev.is_gl_number }))}
-                                        className={cn(
-                                            "w-10 h-6 rounded-full transition-all relative",
-                                            formData.is_gl_number ? "bg-blue-600" : "bg-zinc-200"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
-                                            formData.is_gl_number ? "right-1" : "left-1"
-                                        )} />
-                                    </button>
-                                </div>
-                                {formData.is_gl_number && (
-                                    <div className="animate-in slide-in-from-top-2 duration-300">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 ml-1">GL-Lot Bound</label>
                                         <Select
-                                            placeholder="SEARCH GL NUMBER..."
-                                            options={glGroups.map(g => ({ id: g.gl_number, label: g.gl_number }))}
-                                            value={formData.gl_number || ''}
-                                            onChange={(val) => setFormData(prev => ({ ...prev, gl_number: String(val) }))}
+                                            placeholder="SELECT GL & LOT REFERENCE..."
+                                            options={lots.map(l => ({
+                                                id: l.id,
+                                                label: l.lot_code || `${l.gl_number}-${l.lot_number}`,
+                                                gl: l.gl_number
+                                            }))}
+                                            value={formData.lot_id || ''}
+                                            onChange={(val) => {
+                                                const selectedLot = lots.find(l => l.id === val);
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    lot_id: String(val),
+                                                    // If name is empty, auto-fill with lot code
+                                                    name: prev.name ? prev.name : (selectedLot?.lot_code || '')
+                                                }));
+                                            }}
                                         />
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
