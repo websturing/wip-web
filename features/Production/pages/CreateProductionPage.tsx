@@ -66,7 +66,8 @@ export default function CreateProductionPage() {
                 const sorted = res.data
                     .map((l: any) => ({
                         id: l.id,
-                        label: (l.lot_code || '').replace(/^0+/, '')
+                        label: (l.lot_code || '').replace(/^0+/, ''),
+                        lot_code: l.lot_code || ''
                     }))
                     .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
                 setLots(sorted);
@@ -119,19 +120,12 @@ export default function CreateProductionPage() {
     }, [formData.line_id, formData.items[0]?.lot_id, formData.production_date]);
 
     const fetchLotDetails = async (lotId: string, itemIdx: number) => {
-        const lot = lots.find(l => l.id === lotId);
+        // Find in local state instead of calling API again
+        const lot = lots.find(l => String(l.id) === String(lotId));
         if (!lot) return;
 
-        // Ensure we use the formatted lot code for the external API if needed, 
-        // but the API example used '65834-00'. 
-        // Our 'l.lot_code' in database is '000065834-00'. 
-        // Let's get the original lot_code if possible, or just re-add leading zeros if needed.
-        // Actually, let's fetch the original lot from the list.
-        const originalLot = (await ReferenceService.getLotList()).data.find((l: any) => l.id === lotId);
-        if (!originalLot) return;
-
         try {
-            const resp = await fetch(`http://cutting.glaindonesia.lan/api/summary-by-gl?gl_number=${originalLot.lot_code.replace(/^0+/, '')}`);
+            const resp = await fetch(`http://cutting.glaindonesia.lan/api/summary-by-gl?gl_number=${lot.lot_code.replace(/^0+/, '')}`);
             const json = await resp.json();
 
             if (json.status === 200 && json.data.summary_by_color) {
@@ -287,45 +281,6 @@ export default function CreateProductionPage() {
                     />
                 </div>
 
-                {/* Line Manpower Section */}
-                <div className="bg-zinc-900 rounded-[2rem] p-8 md:p-10 mb-12 text-white relative overflow-hidden shadow-2xl shadow-zinc-200">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-blue-400">
-                                <Icon icon="solar:users-group-rounded-bold-duotone" className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Line Manpower</h3>
-                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Daily headcount for productivity calculation</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            {[
-                                { label: 'Sewers', key: 'man_power_sewer', icon: 'solar:programming-bold-duotone', color: 'text-blue-400' },
-                                { label: 'Matching', key: 'man_power_matching', icon: 'solar:layers-bold-duotone', color: 'text-purple-400' },
-                                { label: 'QC', key: 'man_power_qc', icon: 'solar:verified-check-bold-duotone', color: 'text-emerald-400' },
-                                { label: 'Others', key: 'man_power_others', icon: 'solar:users-group-rounded-bold-duotone', color: 'text-orange-400' },
-                            ].map((mp) => (
-                                <div key={mp.key} className="space-y-3">
-                                    <div className="flex items-center gap-2 ml-1">
-                                        <Icon icon={mp.icon} className={cn("w-3 h-3", mp.color)} />
-                                        <label className="text-[9px] font-black uppercase tracking-[0.15em] text-white/30">{mp.label}</label>
-                                    </div>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        className="w-full bg-white/5 border border-white/10 h-14 rounded-2xl px-5 focus:outline-none focus:bg-white/10 focus:border-blue-500/50 transition-all font-black text-lg"
-                                        value={(formData as any)[mp.key]}
-                                        onChange={(e) => setFormData({ ...formData, [mp.key]: Number(e.target.value) })}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
                 <div className="space-y-12">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-400">Production Item List</h3>
@@ -367,22 +322,6 @@ export default function CreateProductionPage() {
                                         // Reset color and sizes when lot changes
                                         newItems[iIdx].color = '';
                                         newItems[iIdx].sizes = [];
-
-                                        // Auto-fetch Manpower if first item
-                                        if (iIdx === 0 && String(val)) {
-                                            const ieLayout = await IeLayoutService.getByLotId(String(val));
-                                            if (ieLayout) {
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    items: newItems,
-                                                    man_power_sewer: ieLayout.man_power_sewer || 0,
-                                                    man_power_matching: ieLayout.man_power_matching || 0,
-                                                    man_power_qc: ieLayout.man_power_qc || 0,
-                                                    man_power_others: ieLayout.man_power_others || 0,
-                                                }));
-                                                return; // setFormData already called
-                                            }
-                                        }
 
                                         setFormData({ ...formData, items: newItems });
                                         fetchLotDetails(String(val), iIdx);
@@ -579,6 +518,48 @@ export default function CreateProductionPage() {
                         </div>
                     ))}
                 </div>
+
+
+
+                {/* Line Manpower Section */}
+                <div className="bg-zinc-700 rounded-[2rem] p-8 md:p-10 mt-12 text-white relative overflow-hidden shadow-2xl shadow-zinc-200">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-blue-400">
+                                <Icon icon="solar:users-group-rounded-bold-duotone" className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Line Manpower</h3>
+                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Daily headcount for productivity calculation</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {[
+                                { label: 'Sewers', key: 'man_power_sewer', icon: 'solar:programming-bold-duotone', color: 'text-blue-400' },
+                                { label: 'Matching', key: 'man_power_matching', icon: 'solar:layers-bold-duotone', color: 'text-purple-400' },
+                                { label: 'QC', key: 'man_power_qc', icon: 'solar:verified-check-bold-duotone', color: 'text-emerald-400' },
+                                { label: 'Others', key: 'man_power_others', icon: 'solar:users-group-rounded-bold-duotone', color: 'text-orange-400' },
+                            ].map((mp) => (
+                                <div key={mp.key} className="space-y-3">
+                                    <div className="flex items-center gap-2 ml-1">
+                                        <Icon icon={mp.icon} className={cn("w-3 h-3", mp.color)} />
+                                        <label className="text-[9px] font-black uppercase tracking-[0.15em] text-white/30">{mp.label}</label>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        className="w-full bg-white/5 border border-white/10 h-14 rounded-2xl px-5 focus:outline-none focus:bg-white/10 focus:border-blue-500/50 transition-all font-black text-lg"
+                                        value={(formData as any)[mp.key]}
+                                        onChange={(e) => setFormData({ ...formData, [mp.key]: Number(e.target.value) })}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
 
                 <div className="mt-12 flex flex-col md:flex-row gap-4">
                     <button
