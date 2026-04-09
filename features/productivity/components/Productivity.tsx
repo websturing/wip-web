@@ -41,7 +41,7 @@ export const Productivity = () => {
     };
 
     return (
-        <div className="p-10 max-w-[1400px] mx-auto animate-in fade-in duration-700">
+        <div className="max-w-[1400px]  animate-in fade-in duration-700">
             {/* Minimalist Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                 <div>

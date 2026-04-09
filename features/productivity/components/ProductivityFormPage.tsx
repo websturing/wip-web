@@ -127,7 +127,7 @@ export const ProductivityFormPage = () => {
                     defaults = {
                         smv: res.data.smv || 0,
                         last_step: 0,
-                        target_plan: 0, // User requested 0, no auto-fill for target_plan
+                        target_plan: 0,
                         plan_manpower: res.data.plan_manpower || 0
                     };
 
@@ -135,7 +135,6 @@ export const ProductivityFormPage = () => {
                         ...prev,
                         plan_manpower: prev.plan_manpower === 0 ? defaults.plan_manpower : prev.plan_manpower,
                         smv: (prev.is_smv_merged && prev.smv === 0) ? defaults.smv : prev.smv,
-                        // target_plan: 0 per user requirement
                     }));
                 }
             } catch (e) { }
@@ -145,7 +144,7 @@ export const ProductivityFormPage = () => {
                 label: lotInfo?.label,
                 smv: defaults.smv,
                 last_step: defaults.last_step,
-                target_plan: 0 // Default to 0 as requested
+                target_plan: 0
             });
         }
         setFormData(prev => ({ ...prev, lot_configs: finalConfigs }));
@@ -203,69 +202,80 @@ export const ProductivityFormPage = () => {
     );
 
     return (
-        <div className="p-4 lg:p-10 max-w-[1800px] mx-auto space-y-6 animate-in fade-in duration-700">
-            {/* Header */}
-            <div className="flex items-center justify-between sticky top-0 z-20 bg-zinc-50/90 backdrop-blur-xl py-6 border-b border-zinc-200 -mx-4 lg:-mx-10 px-4 lg:px-10">
+        <div className="max-w-[1800px] mx-auto space-y-6 animate-in fade-in duration-700">
+            {/* Standard Page Header */}
+            <div className="flex items-center justify-between gap-6 pb-2">
                 <div className="flex items-center gap-6">
-                    <button onClick={() => router.back()} className="w-10 h-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-900 transition-all shadow-sm active:scale-90">
-                        <Icon icon="solar:round-arrow-left-bold" className="w-6 h-6" />
-                    </button>
+                    <div className="bg-zinc-900 p-4 rounded-[1.5rem] text-white shadow-2xl">
+                        <Icon icon="solar:chart-square-bold-duotone" className="w-8 h-8" />
+                    </div>
                     <div>
-                        <h1 className="text-2xl font-black text-zinc-900 tracking-tighter uppercase leading-none">Performance Entry</h1>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
-                            Full Spectrum Workforce Management
-                            <span className="w-1 h-1 rounded-full bg-zinc-200"></span>
-                            v2.2
-                        </p>
+                        <h1 className="text-2xl font-black text-zinc-900 tracking-tight uppercase leading-none">Productivity Form</h1>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-none">Resource Allocation & Performance Log</p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                    <div className="flex flex-col items-end px-6 border-r border-zinc-200">
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Total Daily Target</span>
-                        <span className="text-3xl font-black text-zinc-900 tracking-tighter tabular-nums leading-none">
-                            {currentTargetSum}
-                        </span>
-                    </div>
-                    <Button onClick={handleSave} disabled={isSaving} className="h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl px-14 text-xs font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">
-                        {isSaving ? "Syncing..." : "Publish Record"}
-                    </Button>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => router.back()} className="h-12 px-6 bg-white border border-zinc-200 text-zinc-500 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 transition-all active:scale-95 shadow-sm">
+                        <Icon icon="solar:undo-left-bold" className="w-4 h-4" />
+                        <span>Cancel</span>
+                    </button>
+                    {(formData.id || currentTargetSum > 0) && (
+                        <div className="flex flex-col items-end px-6 border-l border-zinc-200 py-1">
+                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Target Sum</span>
+                            <span className="text-2xl font-black text-zinc-900 tracking-tighter tabular-nums leading-none mt-1">{currentTargetSum}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 gap-8">
                 {/* Identification & Core Resources */}
-                <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-10 relative">
-                    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-10">
-                        <div className="space-y-3">
+                <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 relative">
+                    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                        <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Event Date</label>
-                            <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-5 text-sm font-bold outline-none focus:border-zinc-900 transition-all font-mono" />
+                            <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-2xl px-5 text-sm font-bold outline-none focus:border-zinc-900 transition-all font-mono" />
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Assigned Line</label>
-                            <Select options={lines} value={formData.line_id} onChange={(val) => setFormData({ ...formData, line_id: String(val) })} placeholder="Select Center" />
+                            <Select
+                                options={lines}
+                                value={formData.line_id}
+                                onChange={(val) => setFormData({ ...formData, line_id: String(val) })}
+                                placeholder="Select Center"
+                            />
                         </div>
-                        <div className="space-y-3 lg:col-span-2">
-                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Style Reference Queue</label>
-                            <MultiSelect options={lots} value={formData.lot_configs.map(c => c.lot_id)} onChange={handleLotSelection} placeholder="Search & Add Multiple Lots..." />
+                        <div className="space-y-2 lg:col-span-2">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">GL (Style Reference)</label>
+                            <MultiSelect
+                                options={lots}
+                                value={formData.lot_configs.map(c => c.lot_id)}
+                                onChange={handleLotSelection}
+                                placeholder="Search GL..."
+                            />
                         </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">Actual Manpower</label>
-                            <input type="number" value={formData.manpower} onChange={(e) => setFormData({ ...formData, manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-blue-50/50 border border-blue-100 h-14 rounded-2xl px-6 text-lg font-black text-blue-700 outline-none shadow-sm focus:border-blue-400" />
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">Actual MP</label>
+                            <input type="number" value={formData.manpower} onChange={(e) => setFormData({ ...formData, manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-blue-50/50 border border-blue-100 h-12 rounded-2xl px-6 text-lg font-black text-blue-700 outline-none shadow-sm focus:border-blue-400" />
                         </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Planned Manpower</label>
-                            <input type="number" value={formData.plan_manpower} onChange={(e) => setFormData({ ...formData, plan_manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 text-lg font-bold text-zinc-900 outline-none focus:border-zinc-900" />
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Planned MP</label>
+                            <input type="number" value={formData.plan_manpower} onChange={(e) => setFormData({ ...formData, plan_manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-2xl px-6 text-lg font-bold text-zinc-900 outline-none focus:border-zinc-900" />
                         </div>
                     </div>
                 </div>
 
                 {/* Intelligence & Global Controls */}
-                <div className="bg-zinc-900 rounded-[3rem] p-10 text-white grid grid-cols-1 lg:grid-cols-12 gap-12 items-center border border-white/5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden">
+                <div className="bg-zinc-900 rounded-[3rem] p-8 text-white border border-white/5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full -mr-64 -mt-64 blur-[120px]"></div>
 
-                    <div className="lg:col-span-3 space-y-6 relative z-10 lg:border-r lg:border-white/10 pr-10">
-                        <div className="flex items-center gap-4">
+
+                    <div className="space-y-6 relative z-10 lg:border-r lg:border-white/10 pr-10 grid grid-cols-12 lg:grid-cols-12 gap-12 items-center">
+                        <div className="flex items-center gap-4 col-span-8">
                             <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
                                 <Icon icon="solar:programming-bold-duotone" className="w-7 h-7 text-emerald-400" />
                             </div>
@@ -274,7 +284,7 @@ export const ProductivityFormPage = () => {
                                 <p className="text-[8px] text-white/30 font-bold uppercase tracking-[0.3em] mt-2">Data Synchronization Active</p>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2.5">
+                        <div className="flex flex-wrap gap-2.5 col-span-4">
                             <button onClick={() => setFormData(p => ({ ...p, is_smv_merged: !p.is_smv_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_smv_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>SMV</button>
                             <button onClick={() => setFormData(p => ({ ...p, is_last_step_merged: !p.is_last_step_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_last_step_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Step</button>
                             <button onClick={() => setFormData(p => ({ ...p, is_target_merged: !p.is_target_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_target_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Target</button>
@@ -424,6 +434,23 @@ export const ProductivityFormPage = () => {
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                {/* Final Submit Button at Bottom */}
+                <div className="flex items-center justify-end gap-6 pt-12 border-t border-zinc-100">
+                    <button onClick={() => router.back()} className="h-16 px-10 text-zinc-400 text-xs font-black uppercase tracking-widest hover:text-zinc-900 transition-colors">
+                        Discard Changes
+                    </button>
+                    <Button onClick={handleSave} disabled={isSaving} className="h-16 px-20 bg-zinc-900 hover:bg-black text-white rounded-[1.5rem] shadow-2xl active:scale-95 transition-all text-sm font-black uppercase tracking-widest group flex items-center gap-3">
+                        {isSaving ? (
+                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <>
+                                <Icon icon="solar:cloud-upload-bold-duotone" className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                                <span>Save Productivity Record</span>
+                            </>
+                        )}
+                    </Button>
                 </div>
             </div>
         </div>
