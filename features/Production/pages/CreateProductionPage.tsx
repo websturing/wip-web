@@ -9,7 +9,6 @@ import { ReferenceService } from '@/features/Reference/services/ReferenceService
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { IeLayoutService } from '../../IeLayout/services/IeLayoutService';
 import { ProductionService } from '../services/ProductionService';
 
 export default function CreateProductionPage() {
@@ -29,10 +28,6 @@ export default function CreateProductionPage() {
     const [formData, setFormData] = useState({
         production_date: new Date().toISOString().split('T')[0],
         line_id: '',
-        man_power_sewer: 0,
-        man_power_matching: 0,
-        man_power_qc: 0,
-        man_power_others: 0,
         items: [
             {
                 lot_id: '',
@@ -74,50 +69,6 @@ export default function CreateProductionPage() {
             }
         });
     }, []);
-
-    // Effect to fetch suggested manpower (Last entry for Line+Lot, else IE Standard)
-    useEffect(() => {
-        const fetchSuggestedManpower = async () => {
-            const firstLotId = formData.items[0]?.lot_id;
-            if (!formData.line_id || !firstLotId) return;
-
-            try {
-                // 1. Try to get the latest actual manpower used today for this specific Line + Lot
-                const latestRes = await ProductionService.getLatestManpower(
-                    formData.line_id,
-                    firstLotId,
-                    formData.production_date
-                );
-
-                if (latestRes && latestRes.status === 'success' && latestRes.data) {
-                    setFormData(prev => ({
-                        ...prev,
-                        man_power_sewer: latestRes.data.man_power_sewer,
-                        man_power_matching: latestRes.data.man_power_matching,
-                        man_power_qc: latestRes.data.man_power_qc,
-                        man_power_others: latestRes.data.man_power_others,
-                    }));
-                    return;
-                }
-
-                // 2. Fallback to IE Layout Standard if no actual entry exists yet
-                const standard = await IeLayoutService.getByLotId(firstLotId);
-                if (standard) {
-                    setFormData(prev => ({
-                        ...prev,
-                        man_power_sewer: standard.man_power_sewer || 0,
-                        man_power_matching: standard.man_power_matching || 0,
-                        man_power_qc: standard.man_power_qc || 0,
-                        man_power_others: standard.man_power_others || 0,
-                    }));
-                }
-            } catch (error) {
-                console.error('Failed to fetch manpower defaults:', error);
-            }
-        };
-
-        fetchSuggestedManpower();
-    }, [formData.line_id, formData.items[0]?.lot_id, formData.production_date]);
 
     const fetchLotDetails = async (lotId: string, itemIdx: number) => {
         // Find in local state instead of calling API again
@@ -518,49 +469,6 @@ export default function CreateProductionPage() {
                         </div>
                     ))}
                 </div>
-
-
-
-                {/* Line Manpower Section */}
-                <div className="bg-zinc-700 rounded-[2rem] p-8 md:p-10 mt-12 text-white relative overflow-hidden shadow-2xl shadow-zinc-200">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-blue-400">
-                                <Icon icon="solar:users-group-rounded-bold-duotone" className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Line Manpower</h3>
-                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Daily headcount for productivity calculation</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            {[
-                                { label: 'Sewers', key: 'man_power_sewer', icon: 'solar:programming-bold-duotone', color: 'text-blue-400' },
-                                { label: 'Matching', key: 'man_power_matching', icon: 'solar:layers-bold-duotone', color: 'text-purple-400' },
-                                { label: 'QC', key: 'man_power_qc', icon: 'solar:verified-check-bold-duotone', color: 'text-emerald-400' },
-                                { label: 'Others', key: 'man_power_others', icon: 'solar:users-group-rounded-bold-duotone', color: 'text-orange-400' },
-                            ].map((mp) => (
-                                <div key={mp.key} className="space-y-3">
-                                    <div className="flex items-center gap-2 ml-1">
-                                        <Icon icon={mp.icon} className={cn("w-3 h-3", mp.color)} />
-                                        <label className="text-[9px] font-black uppercase tracking-[0.15em] text-white/30">{mp.label}</label>
-                                    </div>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        className="w-full bg-white/5 border border-white/10 h-14 rounded-2xl px-5 focus:outline-none focus:bg-white/10 focus:border-blue-500/50 transition-all font-black text-lg"
-                                        value={(formData as any)[mp.key]}
-                                        onChange={(e) => setFormData({ ...formData, [mp.key]: Number(e.target.value) })}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-
                 <div className="mt-12 flex flex-col md:flex-row gap-4">
                     <button
                         onClick={addItem}

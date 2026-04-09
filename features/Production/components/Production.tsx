@@ -276,12 +276,6 @@ export const Production = () => {
                                                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Total In</span>
                                                 <span className="text-sm font-black text-zinc-900">{data.total_in}</span>
                                             </div>
-                                            <div className="flex flex-col items-center border-r border-zinc-100 px-4 flex-1">
-                                                <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">MP</span>
-                                                <span className="text-sm font-black text-emerald-600">
-                                                    {data.entries.reduce((sum: number, p: any) => sum + (p.man_power_sewer || 0) + (p.man_power_matching || 0) + (p.man_power_qc || 0) + (p.man_power_others || 0), 0) / data.entries.length}
-                                                </span>
-                                            </div>
                                             <div className="flex flex-col items-end pl-4 flex-1">
                                                 <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1 text-right">Total Out</span>
                                                 <span className="text-sm font-black text-blue-600">{data.total_out}</span>
@@ -304,27 +298,6 @@ export const Production = () => {
                                                             </div>
                                                             <div className="bg-blue-600 px-2.5 py-1 rounded-md text-[9px] font-black text-white uppercase italic">
                                                                 {p.line?.name}
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 ml-1">
-                                                                <span className="text-[8px] font-black text-emerald-500 uppercase">MP:</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="flex items-center gap-0.5" title="Sewers">
-                                                                        <span className="text-[7px] font-bold text-zinc-400">S</span>
-                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_sewer || 0}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-0.5" title="Matching">
-                                                                        <span className="text-[7px] font-bold text-zinc-400">M</span>
-                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_matching || 0}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-0.5" title="QC">
-                                                                        <span className="text-[7px] font-bold text-zinc-400">Q</span>
-                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_qc || 0}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-0.5" title="Others">
-                                                                        <span className="text-[7px] font-bold text-zinc-400">O</span>
-                                                                        <span className="text-[9px] font-black text-zinc-700">{p.man_power_others || 0}</span>
-                                                                    </div>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50">
@@ -366,7 +339,6 @@ export const Production = () => {
                                         <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Garment Info</th>
                                         <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Lot Group</th>
                                         <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Colors & Lines</th>
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Average MP</th>
                                         <th className="px-6 py-5 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest">Total Qty</th>
                                         <th className="px-6 py-5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest">Activities</th>
                                     </tr>
@@ -410,19 +382,6 @@ export const Production = () => {
                                                                     {l}
                                                                 </span>
                                                             ))}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-8">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                                            <Icon icon="solar:users-group-rounded-bold-duotone" className="w-4 h-4" />
-                                                        </div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-black text-zinc-900">
-                                                                {(data.entries.reduce((sum: number, p: any) => sum + (p.man_power_sewer || 0) + (p.man_power_matching || 0) + (p.man_power_qc || 0) + (p.man_power_others || 0), 0) / data.entries.length).toFixed(1)}
-                                                            </span>
-                                                            <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">People</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -493,28 +452,11 @@ export const Production = () => {
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs font-black text-zinc-900 uppercase tracking-widest leading-none mb-1">{p.line?.name}</p>
-                                                                <p className="text-[10px] font-bold text-zinc-400 uppercase leading-none italic">Standard Manpower</p>
                                                             </div>
                                                         </div>
                                                         <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
                                                             <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
                                                         </div>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-4 gap-4 bg-white/50 p-4 rounded-2xl border border-zinc-100">
-                                                        {[
-                                                            { label: 'SEWER', val: p.man_power_sewer, color: 'text-blue-500', bg: 'bg-blue-50/50' },
-                                                            { label: 'MATCH', val: p.man_power_matching, color: 'text-purple-500', bg: 'bg-purple-50/50' },
-                                                            { label: 'QC', val: p.man_power_qc, color: 'text-emerald-500', bg: 'bg-emerald-50/50' },
-                                                            { label: 'OTHER', val: p.man_power_others, color: 'text-orange-500', bg: 'bg-orange-50/50' },
-                                                        ].map((mp, i) => (
-                                                            <div key={i} className="flex flex-col items-center">
-                                                                <span className="text-[8px] font-black text-zinc-300 uppercase tracking-widest mb-1">{mp.label}</span>
-                                                                <div className={cn("px-3 py-1 rounded-lg font-black text-sm", mp.bg, mp.color)}>
-                                                                    {mp.val || 0}
-                                                                </div>
-                                                            </div>
-                                                        ))}
                                                     </div>
 
                                                     {/* Size Breakdown */}
