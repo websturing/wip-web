@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useWip } from '../hooks/useWip';
 import { Icon } from '@/app/components/ui/Icon';
+import { useWip } from '../hooks/useWip';
 
 export const Wip = () => {
     const { data, isLoading } = useWip();
@@ -14,7 +13,7 @@ export const Wip = () => {
     );
 
     return (
-        <div className="p-8 bg-white rounded-2xl border border-zinc-100 transition-all">
+        <div className="bg-white rounded-2xl border border-zinc-100 transition-all">
             <div className="flex items-center gap-4 mb-6 text-[#111827]">
                 <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
                     <Icon icon="solar:bolt-bold-duotone" className="w-6 h-6" />
@@ -24,7 +23,7 @@ export const Wip = () => {
                     <p className="text-zinc-500 text-xs font-medium">Part of Wip module</p>
                 </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Content Placeholder */}
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">

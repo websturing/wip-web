@@ -1,4 +1,4 @@
-export interface Wip {
+export interface WipData {
     id: number;
     name: string;
     created_at?: string;
@@ -6,7 +6,7 @@ export interface Wip {
 }
 
 export interface WipState {
-    data: Wip[];
+    data: WipData[];
     loading: boolean;
     error: string | null;
 }

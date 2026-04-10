@@ -1,6 +1,5 @@
-import React from 'react';
-import { PageHeader } from '@/app/components/ui/PageHeader';
 import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
+import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Wip } from '../components/Wip';
 
 export default function WipPage() {
@@ -11,7 +10,7 @@ export default function WipPage() {
 
     return (
         <div className="animate-in fade-in duration-700">
-            <PageHeader 
+            <PageHeader
                 items={breadcrumbItems}
                 title="Wip"
                 subtitle="Management"

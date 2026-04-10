@@ -1,1 +1,11 @@
-export { default } from '@/features/Wip/pages/WipPage';
+'use client';
+
+import WipReportTable from '@/features/Wip/components/WipReportTable';
+
+export default function WipPage() {
+    return (
+        <main className="">
+            <WipReportTable />
+        </main>
+    );
+}
