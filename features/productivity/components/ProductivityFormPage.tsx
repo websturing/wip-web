@@ -35,6 +35,8 @@ export const ProductivityFormPage = () => {
         date: new Date().toISOString().split('T')[0],
         manpower: 0,
         plan_manpower: 0,
+        sewer: 0,
+        plan_sewer: 0,
         working_hour: 8,
         smv: 0,
         last_step: 0,
@@ -45,10 +47,11 @@ export const ProductivityFormPage = () => {
         lot_configs: [] as LotConfig[]
     });
 
-    // Formula-based target suggestion
+    // Formula-based target suggestion (Using Manpower)
     const formulaTarget = useMemo(() => {
-        if (formData.plan_manpower > 0 && formData.working_hour > 0 && formData.smv > 0) {
-            return Math.round((formData.plan_manpower * formData.working_hour * 60) / formData.smv);
+        const activeMp = formData.plan_manpower;
+        if (activeMp > 0 && formData.working_hour > 0 && formData.smv > 0) {
+            return Math.round((activeMp * formData.working_hour * 60) / formData.smv);
         }
         return 0;
     }, [formData.plan_manpower, formData.working_hour, formData.smv]);
@@ -97,10 +100,12 @@ export const ProductivityFormPage = () => {
                         date: item.date ? (typeof item.date === 'string' ? item.date.split('T')[0] : new Date(item.date).toISOString().split('T')[0]) : '',
                         manpower: item.manpower,
                         plan_manpower: item.plan_manpower || 0,
+                        sewer: item.sewer || 0,
+                        plan_sewer: item.plan_sewer || 0,
                         working_hour: item.working_hour,
                         smv: item.smv || configs[0]?.smv || 0,
                         last_step: item.last_step || configs[0]?.last_step || 0,
-                        target_plan: item.target_plan || configs.reduce((a, b) => a + b.target_plan, 0) || 0,
+                        target_plan: item.target_plan || configs.reduce((a: number, b: any) => a + b.target_plan, 0) || 0,
                         is_smv_merged: !anyDiffSmv,
                         is_last_step_merged: !anyDiffStep,
                         is_target_merged: !anyDiffTarget,
@@ -119,7 +124,7 @@ export const ProductivityFormPage = () => {
 
         for (const lotId of addedIds) {
             const lotInfo = lots.find(l => l.id === lotId);
-            let defaults = { smv: 0, last_step: 0, target_plan: 0, plan_manpower: 0 };
+            let defaults = { smv: 0, last_step: 0, target_plan: 0, plan_manpower: 0, sewer: 0, plan_sewer: 0 };
 
             try {
                 const res = await ProductivityService.getLastInfo(String(lotId));
@@ -127,14 +132,17 @@ export const ProductivityFormPage = () => {
                     defaults = {
                         smv: res.data.smv || 0,
                         last_step: 0,
-                        target_plan: 0,
-                        plan_manpower: res.data.plan_manpower || 0
+                        target_plan: res.data.target_plan || 0,
+                        plan_manpower: res.data.plan_manpower || 0,
+                        sewer: res.data.sewer || 0,
+                        plan_sewer: 0
                     };
 
                     setFormData(prev => ({
                         ...prev,
-                        plan_manpower: prev.plan_manpower === 0 ? defaults.plan_manpower : prev.plan_manpower,
+                        plan_manpower: (prev.plan_manpower === 0) ? defaults.plan_manpower : prev.plan_manpower,
                         smv: (prev.is_smv_merged && prev.smv === 0) ? defaults.smv : prev.smv,
+                        target_plan: (prev.is_target_merged && prev.target_plan === 0) ? defaults.target_plan : prev.target_plan
                     }));
                 }
             } catch (e) { }
@@ -144,7 +152,7 @@ export const ProductivityFormPage = () => {
                 label: lotInfo?.label,
                 smv: defaults.smv,
                 last_step: defaults.last_step,
-                target_plan: 0
+                target_plan: defaults.target_plan
             });
         }
         setFormData(prev => ({ ...prev, lot_configs: finalConfigs }));
@@ -202,7 +210,7 @@ export const ProductivityFormPage = () => {
     );
 
     return (
-        <div className="max-w-[1800px] mx-auto space-y-6 animate-in fade-in duration-700">
+        <div className="max-w-[1800px] mx-auto space-y-6 animate-in fade-in duration-700 ">
             {/* Standard Page Header */}
             <div className="flex items-center justify-between gap-6 pb-2">
                 <div className="flex items-center gap-6">
@@ -235,7 +243,7 @@ export const ProductivityFormPage = () => {
             <div className="grid grid-cols-1 gap-8">
                 {/* Identification & Core Resources */}
                 <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 relative">
-                    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    <div className="flex gap-6 mb-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Event Date</label>
                             <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-2xl px-5 text-sm font-bold outline-none focus:border-zinc-900 transition-all font-mono" />
@@ -249,7 +257,7 @@ export const ProductivityFormPage = () => {
                                 placeholder="Select Center"
                             />
                         </div>
-                        <div className="space-y-2 lg:col-span-2">
+                        <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">GL (Style Reference)</label>
                             <MultiSelect
                                 options={lots}
@@ -258,40 +266,54 @@ export const ProductivityFormPage = () => {
                                 placeholder="Search GL..."
                             />
                         </div>
+                    </div>
+
+                    {/* Separate MP and Matching Girl sections */}
+                    <div className="flex gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">Actual MP</label>
-                            <input type="number" value={formData.manpower} onChange={(e) => setFormData({ ...formData, manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-blue-50/50 border border-blue-100 h-12 rounded-2xl px-6 text-lg font-black text-blue-700 outline-none shadow-sm focus:border-blue-400" />
+                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] ml-1">Plan Man Power</label>
+                            <input type="number" step="0.5" value={formData.plan_manpower} onChange={(e) => setFormData({ ...formData, plan_manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-500 outline-none focus:border-zinc-900" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Planned MP</label>
-                            <input type="number" value={formData.plan_manpower} onChange={(e) => setFormData({ ...formData, plan_manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-2xl px-6 text-lg font-bold text-zinc-900 outline-none focus:border-zinc-900" />
+                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Actual Man Power
+                            </label>
+                            <input type="number" step="0.5" value={formData.manpower} onChange={(e) => setFormData({ ...formData, manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-blue-50/30 border border-blue-100 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none shadow-sm focus:border-blue-400" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Actual Matching Girl
+                            </label>
+                            <input type="number" step="0.5" value={formData.sewer} onChange={(e) => setFormData({ ...formData, sewer: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-emerald-50/30 border border-emerald-100 h-14 rounded-2xl px-5 text-lg font-black text-emerald-700 outline-none shadow-sm focus:border-emerald-400" />
                         </div>
                     </div>
                 </div>
 
                 {/* Intelligence & Global Controls */}
-                <div className="bg-zinc-900 rounded-[3rem] p-8 text-white border border-white/5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden">
+                <div className="bg-zinc-900 rounded-[3rem] p-10 text-white grid grid-cols-1 lg:grid-cols-12 gap-12 items-center border border-white/5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full -mr-64 -mt-64 blur-[120px]"></div>
 
+                    <div className="lg:col-span-12 space-y-6 relative z-10 lg:border-r lg:border-white/10 pr-10">
+                        <div className="flex justify-between items-center gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
+                                    <Icon icon="solar:programming-bold-duotone" className="w-7 h-7 text-emerald-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] leading-none">Logic Optimization</h3>
+                                    <p className="text-[8px] text-white/30 font-bold uppercase tracking-[0.3em] mt-2">Data Synchronization Active</p>
+                                </div>
+                            </div>
 
-                    <div className="space-y-6 relative z-10 lg:border-r lg:border-white/10 pr-10 grid grid-cols-12 lg:grid-cols-12 gap-12 items-center">
-                        <div className="flex items-center gap-4 col-span-8">
-                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
-                                <Icon icon="solar:programming-bold-duotone" className="w-7 h-7 text-emerald-400" />
+                            <div className="flex flex-wrap gap-2.5">
+                                <button onClick={() => setFormData(p => ({ ...p, is_smv_merged: !p.is_smv_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_smv_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>SMV</button>
+                                <button onClick={() => setFormData(p => ({ ...p, is_last_step_merged: !p.is_last_step_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_last_step_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Step</button>
+                                <button onClick={() => setFormData(p => ({ ...p, is_target_merged: !p.is_target_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_target_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Target</button>
                             </div>
-                            <div>
-                                <h3 className="text-xs font-black uppercase tracking-[0.2em] leading-none">Logic Optimization</h3>
-                                <p className="text-[8px] text-white/30 font-bold uppercase tracking-[0.3em] mt-2">Data Synchronization Active</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2.5 col-span-4">
-                            <button onClick={() => setFormData(p => ({ ...p, is_smv_merged: !p.is_smv_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_smv_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>SMV</button>
-                            <button onClick={() => setFormData(p => ({ ...p, is_last_step_merged: !p.is_last_step_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_last_step_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Step</button>
-                            <button onClick={() => setFormData(p => ({ ...p, is_target_merged: !p.is_target_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_target_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Target</button>
                         </div>
                     </div>
 
-                    <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-4 gap-10 items-end relative z-10">
+                    <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-10 items-end relative z-10">
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Shift Duration</label>
                             <input type="number" step="0.5" value={formData.working_hour} onChange={(e) => setFormData({ ...formData, working_hour: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-white/5 border border-white/10 h-14 rounded-2xl px-6 text-sm font-black text-white outline-none focus:bg-white/10 focus:border-white/20 transition-all font-mono" />

@@ -51,7 +51,7 @@ export const MultiSelect = ({
                     <button
                         type="button"
                         className={cn(
-                            "w-full bg-zinc-50 border border-zinc-100 min-h-[44px] py-1.5 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
+                            "w-full bg-zinc-50 border border-zinc-100 h-12 py-1.5 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
                             "hover:border-zinc-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200",
                             open && "border-blue-200 ring-2 ring-blue-500/20 bg-white"
                         )}

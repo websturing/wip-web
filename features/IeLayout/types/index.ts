@@ -9,6 +9,8 @@ export interface IeLayout {
     };
     price: number;
     department: string;
+    is_gl_number?: boolean;
+    gl_number?: string;
     total_smv: number;
     man_power_sewer: number;
     man_power_matching: number;
