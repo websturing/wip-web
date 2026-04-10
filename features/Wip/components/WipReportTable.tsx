@@ -33,12 +33,13 @@ export default function WipReportTable() {
             if (res.status === 'success') {
                 setData(res.data);
                 if (res.gl_options) {
-                    // Extract unique GL parts for the filter options
-                    const uniqueGls = Array.from(new Set(res.gl_options.map((code: string) =>
-                        code.includes('-') ? code.split('-')[0] : code
-                    ))) as string[];
+                    // Use full lot codes for filter options as requested
+                    const options = res.gl_options.map((code: string) => ({
+                        id: code,
+                        label: code
+                    }));
 
-                    setGlOptions(uniqueGls.sort().map(gl => ({ id: gl, label: gl })));
+                    setGlOptions(options);
                 }
             }
             setIsLoading(false);
