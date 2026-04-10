@@ -238,7 +238,25 @@ export default function WipReportTable() {
                                                     formatNum(row.export_qty || 0)
                                                 )}
                                             </td>
-                                            <td className="px-0.5 text-[7px] font-medium text-blue-700 border border-zinc-400 italic truncate max-w-[80px]">NO PACK YET</td>
+                                            <td className="px-0.5 text-[7px] font-medium text-blue-700 border border-zinc-400 italic truncate max-w-[80px]">
+                                                {(() => {
+                                                    const packing = packAcc || 0;
+                                                    const exportQty = row.export_qty || 0;
+                                                    const orderQty = order || 0;
+
+                                                    if (packing === 0) return "NO PACK YET";
+
+                                                    if (packing === exportQty) {
+                                                        if (packing === orderQty) return "FINISH GOOD SHIP ALREADY";
+                                                        if (packing < orderQty) return `SHORT SHIP - ${orderQty - packing} pcs`;
+                                                        if (packing > orderQty) return `OVER SHIP - ${packing - orderQty} pcs`;
+                                                    }
+
+                                                    if (exportQty === 0 && packing > 0) return "PACK ALREADY, NOT SHIP YET";
+
+                                                    return "NEED TO CHECK";
+                                                })()}
+                                            </td>
                                         </tr>
                                     );
                                 })
