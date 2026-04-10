@@ -51,6 +51,14 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         },
 
         {
+            title: 'Warehouse - Logistics',
+            items: [
+                { name: 'Packing Feed', path: '/admin/packing', icon: 'solar:box-bold-duotone', badge: null }
+            ],
+            badgeSection: 'NEW'
+        },
+
+        {
             title: 'Industrial Engineering',
             items: [
                 { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
