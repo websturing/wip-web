@@ -92,7 +92,7 @@ export const MultiSelect = ({
                                 <Icon icon="solar:magnifer-linear" className="absolute left-3 w-4 h-4 text-zinc-400" />
                                 <input
                                     className="w-full bg-zinc-50 rounded-xl py-2.5 pl-9 pr-4 text-[13px] font-medium outline-none placeholder:text-zinc-400"
-                                    placeholder="Search styles..."
+                                    placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     autoFocus

@@ -3,14 +3,16 @@
 import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
+import { MultiSelect } from '@/app/components/ui/MultiSelect';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { WipReportService } from '../services/WipReportService';
 
 export default function WipReportTable() {
     const [data, setData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedGls, setSelectedGls] = useState<(string | number)[]>([]);
 
     const breadcrumbItems: BreadcrumbItem[] = [
         { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
@@ -29,6 +31,16 @@ export default function WipReportTable() {
 
     const formatNum = (num: number) => new Intl.NumberFormat().format(num);
 
+    const glOptions = useMemo(() => {
+        const gls = Array.from(new Set(data.map(item => item.gl_lot))).filter(Boolean);
+        return gls.map(gl => ({ id: gl as string, label: gl as string }));
+    }, [data]);
+
+    const filteredData = useMemo(() => {
+        if (selectedGls.length === 0) return data;
+        return data.filter(item => selectedGls.includes(item.gl_lot));
+    }, [data, selectedGls]);
+
     return (
         <div className="animate-in fade-in duration-700">
             <PageHeader
@@ -39,14 +51,24 @@ export default function WipReportTable() {
             />
 
             <div className="">
-                <div className="flex items-center justify-end justify-between mb-4 px-2">
+                <div className="flex items-center justify-between mb-4 px-2 gap-4">
+                    <div className="flex-1 max-w-[400px]">
+                        {!isLoading && data.length > 0 && (
+                            <MultiSelect
+                                options={glOptions}
+                                value={selectedGls}
+                                onChange={setSelectedGls}
+                                placeholder="Filter GL Numbers..."
+                            />
+                        )}
+                    </div>
 
                     <div className="flex gap-2">
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => window.location.reload()}
-                            className="bg-zinc-50 border border-zinc-100 text-zinc-600 hover:bg-white hover:border-blue-200 transition-all text-[9px] font-bold gap-1 px-3 py-1 rounded-lg h-7"
+                            className="bg-zinc-50 border border-zinc-100 text-zinc-600 hover:bg-white hover:border-blue-200 transition-all text-[9px] font-bold gap-1 px-3 py-1 rounded-lg h-12"
                         >
                             <Icon icon="solar:refresh-line-duotone" className="w-3 h-3" />
                             Refresh
@@ -118,8 +140,8 @@ export default function WipReportTable() {
                                         ))}
                                     </tr>
                                 ))
-                            ) : data.length > 0 ? (
-                                data.map((row, idx) => {
+                            ) : filteredData.length > 0 ? (
+                                filteredData.map((row, idx) => {
                                     const cutAcc = row.cutting_acc_output || 0;
                                     const sewAcc = row.sewing_acc_output || 0;
                                     const packAcc = row.packing_acc_output || 0;
@@ -182,30 +204,30 @@ export default function WipReportTable() {
                             )}
                         </tbody>
                         {/* FOOTER TOTALS */}
-                        {data.length > 0 && (
+                        {filteredData.length > 0 && (
                             <tfoot className="bg-white font-bold text-[#002060]">
                                 <tr className="border-t-2 border-zinc-400 h-8">
                                     <td className="px-0.5 text-[8px] border border-zinc-400 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">TOTAL</td>
                                     <td className="px-0.5 border border-zinc-400"></td>
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[7px]">{data.length}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[7px]">{filteredData.length}</td>
                                     <td className="px-0.5 border border-zinc-400"></td>
                                     <td className="px-0.5 border border-zinc-400"></td>
                                     <td className="px-0.5 border border-zinc-400"></td>
                                     <td className="px-0.5 border border-zinc-400"></td>
                                     <td className="px-0.5 border border-zinc-400 text-right text-[8px]">0</td>
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px]">{formatNum(data.reduce((sum, r) => sum + Math.round((r.order_qty_pcs || 0) / 12), 0))}</td>
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] font-black">{formatNum(data.reduce((sum, r) => sum + (r.order_qty_pcs || 0), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px]">{formatNum(filteredData.reduce((sum, r) => sum + Math.round((r.order_qty_pcs || 0) / 12), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] font-black">{formatNum(filteredData.reduce((sum, r) => sum + (r.order_qty_pcs || 0), 0))}</td>
 
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] text-blue-800 bg-[#c6e0b4]">{formatNum(data.reduce((sum, r) => sum + (r.cutting_acc_output || 0), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] text-blue-800 bg-[#c6e0b4]">{formatNum(filteredData.reduce((sum, r) => sum + (r.cutting_acc_output || 0), 0))}</td>
                                     <td className="px-0.5 border border-zinc-400 bg-[#c6e0b4]"></td>
                                     <td className="px-0.5 border border-zinc-400 bg-[#c6e0b4]"></td>
 
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] text-blue-800 bg-[#bdd7ee] font-black">{formatNum(data.reduce((sum, r) => sum + (r.sewing_acc_output || 0), 0))}</td>
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] bg-[#bdd7ee] text-red-600">-{formatNum(data.reduce((sum, r) => sum + (r.order_qty_pcs || 0) - (r.sewing_acc_output || 0), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] text-blue-800 bg-[#bdd7ee] font-black">{formatNum(filteredData.reduce((sum, r) => sum + (r.sewing_acc_output || 0), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] bg-[#bdd7ee] text-red-600">-{formatNum(filteredData.reduce((sum, r) => sum + (r.order_qty_pcs || 0) - (r.sewing_acc_output || 0), 0))}</td>
                                     <td className="px-0.5 border border-zinc-400 bg-[#bdd7ee]"></td>
 
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] text-blue-800 bg-[#e4dfec] font-black">{formatNum(data.reduce((sum, r) => sum + (r.packing_acc_output || 0), 0))}</td>
-                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] bg-[#e4dfec] text-red-600">-{formatNum(data.reduce((sum, r) => sum + (r.order_qty_pcs || 0) - (r.packing_acc_output || 0), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] text-blue-800 bg-[#e4dfec] font-black">{formatNum(filteredData.reduce((sum, r) => sum + (r.packing_acc_output || 0), 0))}</td>
+                                    <td className="px-0.5 border border-zinc-400 text-center text-[9px] bg-[#e4dfec] text-red-600">-{formatNum(filteredData.reduce((sum, r) => sum + (r.order_qty_pcs || 0) - (r.packing_acc_output || 0), 0))}</td>
                                     <td className="px-0.5 border border-zinc-400 bg-[#e4dfec]"></td>
 
                                     <td className="px-0.5 border border-zinc-400"></td>
