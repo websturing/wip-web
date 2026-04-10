@@ -26,6 +26,21 @@ export class ProductionService {
         }
     }
 
+    static async getBulkSummary(lotIds: string[]) {
+        try {
+            const params = new URLSearchParams();
+            lotIds.forEach(id => params.append('lot_ids[]', id));
+
+            const response = await fetch(`${this.baseUrl}/${this.resource}/bulk-summary?${params.toString()}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching bulk summary:', error);
+            throw error;
+        }
+    }
+
     static async getLatestManpower(lineId: string, lotId: string, date: string) {
         try {
             const response = await fetch(`${this.baseUrl}/${this.resource}/latest-manpower?line_id=${lineId}&lot_id=${lotId}&date=${date}`, {

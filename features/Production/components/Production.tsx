@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/app/components/ui/Button';
+import { DatePicker } from '@/app/components/ui/DatePicker';
 import {
     Dialog,
     DialogContent,
@@ -144,11 +145,10 @@ export const Production = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-[2rem] border border-zinc-100 shadow-sm">
-                        <input
-                            type="date"
+                        <DatePicker
                             value={viewDate}
-                            onChange={(e) => setViewDate(e.target.value)}
-                            className="bg-zinc-50 border-none rounded-2xl px-4 py-2 text-xs font-bold outline-none ring-0 h-10"
+                            onChange={(val) => setViewDate(val)}
+                            className="w-[180px]"
                         />
 
                         <div className="w-40">

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/app/components/ui/Button';
+import { DatePicker } from '@/app/components/ui/DatePicker';
 import { Icon } from '@/app/components/ui/Icon';
 import { MultiSelect } from '@/app/components/ui/MultiSelect';
 import { Select } from '@/app/components/ui/Select';
@@ -49,16 +49,17 @@ export const ProductivityFormPage = () => {
 
     // Formula-based target suggestion (Using Manpower)
     const formulaTarget = useMemo(() => {
-        const activeMp = formData.plan_manpower;
-        if (activeMp > 0 && formData.working_hour > 0 && formData.smv > 0) {
-            return Math.round((activeMp * formData.working_hour * 60) / formData.smv);
+        const activeMp = Number(formData.plan_manpower);
+        const smv = Number(formData.smv);
+        if (activeMp > 0 && formData.working_hour > 0 && smv > 0) {
+            return Math.round((activeMp * formData.working_hour * 60) / smv);
         }
         return 0;
     }, [formData.plan_manpower, formData.working_hour, formData.smv]);
 
     // Current sum of individual lot targets
     const currentTargetSum = useMemo(() => {
-        return formData.lot_configs.reduce((sum, c) => sum + (c.target_plan || 0), 0);
+        return formData.lot_configs.reduce((sum, c) => sum + (Number(c.target_plan) || 0), 0);
     }, [formData.lot_configs]);
 
     useEffect(() => {
@@ -90,9 +91,9 @@ export const ProductivityFormPage = () => {
                     const configs = item.lots ? item.lots.map((l: any) => ({
                         lot_id: l.id,
                         label: `${l.gl_group?.gl_number || ''} / ${(l.lot_code || '').replace(/^0+/, '')}`,
-                        smv: l.pivot?.smv || 0,
-                        last_step: l.pivot?.last_step || 0,
-                        target_plan: l.pivot?.target_plan || 0
+                        smv: parseFloat(l.pivot?.smv || 0),
+                        last_step: parseFloat(l.pivot?.last_step || 0),
+                        target_plan: parseFloat(l.pivot?.target_plan || 0)
                     })) : [];
 
                     const anyDiffSmv = configs.some((c: any) => c.smv !== configs[0]?.smv);
@@ -103,14 +104,14 @@ export const ProductivityFormPage = () => {
                         id: item.id,
                         line_id: item.line_id,
                         date: item.date ? (typeof item.date === 'string' ? item.date.split('T')[0] : new Date(item.date).toISOString().split('T')[0]) : '',
-                        manpower: item.manpower,
-                        plan_manpower: item.plan_manpower || 0,
-                        sewer: item.sewer || 0,
-                        plan_sewer: item.plan_sewer || 0,
-                        working_hour: item.working_hour,
-                        smv: item.smv || configs[0]?.smv || 0,
-                        last_step: item.last_step || configs[0]?.last_step || 0,
-                        target_plan: item.target_plan || configs.reduce((a: number, b: any) => a + b.target_plan, 0) || 0,
+                        manpower: parseFloat(item.manpower || 0),
+                        plan_manpower: parseFloat(item.plan_manpower || 0),
+                        sewer: parseFloat(item.sewer || 0),
+                        plan_sewer: parseFloat(item.plan_sewer || 0),
+                        working_hour: parseFloat(item.working_hour || 8),
+                        smv: parseFloat(item.smv || configs[0]?.smv || 0),
+                        last_step: parseFloat(item.last_step || configs[0]?.last_step || 0),
+                        target_plan: parseFloat(item.target_plan || configs.reduce((a: number, b: any) => a + b.target_plan, 0) || 0),
                         is_smv_merged: !anyDiffSmv,
                         is_last_step_merged: !anyDiffStep,
                         is_target_merged: !anyDiffTarget,
@@ -135,11 +136,11 @@ export const ProductivityFormPage = () => {
                 const res = await ProductivityService.getLastInfo(String(lotId));
                 if (res.status === 'success' && res.data) {
                     defaults = {
-                        smv: res.data.smv || 0,
+                        smv: parseFloat(res.data.smv || 0),
                         last_step: 0,
-                        target_plan: res.data.target_plan || 0,
-                        plan_manpower: res.data.plan_manpower || 0,
-                        sewer: res.data.sewer || 0,
+                        target_plan: parseFloat(res.data.target_plan || 0),
+                        plan_manpower: parseFloat(res.data.plan_manpower || 0),
+                        sewer: parseFloat(res.data.sewer || 0),
                         plan_sewer: 0
                     };
 
@@ -199,7 +200,7 @@ export const ProductivityFormPage = () => {
 
             const payload = { ...formData, lot_data: lotData };
             const res = await ProductivityService.save(payload);
-            if (res.status === 'success') router.push('/admin/productivity');
+            if (res.status === 'success') router.push(`/admin/productivity?date=${formData.date}`);
         } catch (error) {
             console.error('Failed to save:', error);
             alert('Error saving data.');
@@ -248,10 +249,14 @@ export const ProductivityFormPage = () => {
             <div className="grid grid-cols-1 gap-8">
                 {/* Identification & Core Resources */}
                 <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 relative">
-                    <div className="flex gap-6 mb-6">
+                    <div className="flex flex-wrap gap-6 mb-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Event Date</label>
-                            <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-2xl px-5 text-sm font-bold outline-none focus:border-zinc-900 transition-all font-mono" />
+                            <DatePicker
+                                value={formData.date}
+                                onChange={(val) => setFormData({ ...formData, date: val })}
+                                className="w-[200px]"
+                            />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Assigned Line</label>
@@ -274,22 +279,52 @@ export const ProductivityFormPage = () => {
                     </div>
 
                     {/* Separate MP and Matching Girl sections */}
-                    <div className="flex gap-6">
+                    <div className="flex flex-wrap gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] ml-1">Plan Man Power</label>
-                            <input type="number" step="0.5" value={formData.plan_manpower} onChange={(e) => setFormData({ ...formData, plan_manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-500 outline-none focus:border-zinc-900" />
+                            <input
+                                type="text"
+                                value={formData.plan_manpower}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                    setFormData({ ...formData, plan_manpower: val as any });
+                                }}
+                                onBlur={() => setFormData(p => ({ ...p, plan_manpower: Number(p.plan_manpower) || 0 }))}
+                                onFocus={(e) => e.target.select()}
+                                className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-500 outline-none focus:border-zinc-900"
+                            />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Actual Man Power
                             </label>
-                            <input type="number" step="0.5" value={formData.manpower} onChange={(e) => setFormData({ ...formData, manpower: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-blue-50/30 border border-blue-100 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none shadow-sm focus:border-blue-400" />
+                            <input
+                                type="text"
+                                value={formData.manpower}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                    setFormData({ ...formData, manpower: val as any });
+                                }}
+                                onBlur={() => setFormData(p => ({ ...p, manpower: Number(p.manpower) || 0 }))}
+                                onFocus={(e) => e.target.select()}
+                                className="w-full bg-blue-50/30 border border-blue-100 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none shadow-sm focus:border-blue-400"
+                            />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Actual Matching Girl
                             </label>
-                            <input type="number" step="0.5" value={formData.sewer} onChange={(e) => setFormData({ ...formData, sewer: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-emerald-50/30 border border-emerald-100 h-14 rounded-2xl px-5 text-lg font-black text-emerald-700 outline-none shadow-sm focus:border-emerald-400" />
+                            <input
+                                type="text"
+                                value={formData.sewer}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                    setFormData({ ...formData, sewer: val as any });
+                                }}
+                                onBlur={() => setFormData(p => ({ ...p, sewer: Number(p.sewer) || 0 }))}
+                                onFocus={(e) => e.target.select()}
+                                className="w-full bg-emerald-50/30 border border-emerald-100 h-14 rounded-2xl px-5 text-lg font-black text-emerald-700 outline-none shadow-sm focus:border-emerald-400"
+                            />
                         </div>
                     </div>
                 </div>
@@ -298,186 +333,196 @@ export const ProductivityFormPage = () => {
                 <div className="bg-zinc-900 rounded-[3rem] p-10 text-white grid grid-cols-1 lg:grid-cols-12 gap-12 items-center border border-white/5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full -mr-64 -mt-64 blur-[120px]"></div>
 
-                    <div className="lg:col-span-12 space-y-6 relative z-10 lg:border-r lg:border-white/10 pr-10">
-                        <div className="flex justify-between items-center gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
-                                    <Icon icon="solar:programming-bold-duotone" className="w-7 h-7 text-emerald-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] leading-none">Logic Optimization</h3>
-                                    <p className="text-[8px] text-white/30 font-bold uppercase tracking-[0.3em] mt-2">Data Synchronization Active</p>
-                                </div>
+                    <div className="lg:col-span-4 space-y-4 relative z-10">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                                <Icon icon="solar:programming-bold-duotone" className="w-5 h-5 text-emerald-400" />
                             </div>
-
-                            <div className="flex flex-wrap gap-2.5">
-                                <button onClick={() => setFormData(p => ({ ...p, is_smv_merged: !p.is_smv_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_smv_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>SMV</button>
-                                <button onClick={() => setFormData(p => ({ ...p, is_last_step_merged: !p.is_last_step_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_last_step_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Step</button>
-                                <button onClick={() => setFormData(p => ({ ...p, is_target_merged: !p.is_target_merged }))} className={cn("px-4 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all flex items-center gap-2", formData.is_target_merged ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.1)]" : "bg-white/5 border-white/10 text-white/30 hover:bg-white/10")}>Target</button>
-                            </div>
+                            <h3 className="text-lg font-black tracking-tight uppercase">Master Intelligence</h3>
                         </div>
+                        <p className="text-zinc-400 text-xs leading-relaxed font-medium">Define parameters across all styles. Toggle merge to apply values globally or drill down for individual styling.</p>
                     </div>
 
-                    <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-10 items-end relative z-10">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">Shift Duration</label>
-                            <input type="number" step="0.5" value={formData.working_hour} onChange={(e) => setFormData({ ...formData, working_hour: Number(e.target.value) })} onFocus={(e) => e.target.select()} className="w-full bg-white/5 border border-white/10 h-14 rounded-2xl px-6 text-sm font-black text-white outline-none focus:bg-white/10 focus:border-white/20 transition-all font-mono" />
+                    <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                        {/* Global SMV */}
+                        <div className={cn(
+                            "group p-6 rounded-[2rem] border transition-all duration-500",
+                            formData.is_smv_merged ? "bg-white/5 border-white/10" : "bg-zinc-800/10 border-zinc-800/20 opacity-40 shadow-inner"
+                        )}>
+                            <div className="flex justify-between items-start mb-4">
+                                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global SMV</label>
+                                <button
+                                    onClick={() => setFormData({ ...formData, is_smv_merged: !formData.is_smv_merged })}
+                                    className={cn(
+                                        "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all",
+                                        formData.is_smv_merged ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white/10 text-white/40"
+                                    )}
+                                >
+                                    {formData.is_smv_merged ? 'Merged' : 'Split'}
+                                </button>
+                            </div>
+                            <input
+                                type="text"
+                                disabled={!formData.is_smv_merged}
+                                value={formData.smv}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                    setFormData({ ...formData, smv: val as any });
+                                }}
+                                onBlur={() => setFormData(p => ({ ...p, smv: Number(p.smv) || 0 }))}
+                                className="bg-transparent text-2xl font-black outline-none w-full tabular-nums"
+                            />
                         </div>
 
-                        <div className="space-y-3">
-                            <label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1 transition-colors", formData.is_target_merged ? "text-emerald-400" : "text-white/20")}>Global Target Plan</label>
-                            <div className="relative group">
+                        {/* Global Last Step */}
+                        <div className={cn(
+                            "group p-6 rounded-[2rem] border transition-all duration-500",
+                            formData.is_last_step_merged ? "bg-white/5 border-white/10" : "bg-zinc-800/10 border-zinc-800/20 opacity-40 shadow-inner"
+                        )}>
+                            <div className="flex justify-between items-start mb-4">
+                                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Last Step</label>
+                                <button
+                                    onClick={() => setFormData({ ...formData, is_last_step_merged: !formData.is_last_step_merged })}
+                                    className={cn(
+                                        "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all",
+                                        formData.is_last_step_merged ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white/10 text-white/40"
+                                    )}
+                                >
+                                    {formData.is_last_step_merged ? 'Merged' : 'Split'}
+                                </button>
+                            </div>
+                            <input
+                                type="number"
+                                disabled={!formData.is_last_step_merged}
+                                value={formData.last_step}
+                                onChange={(e) => setFormData({ ...formData, last_step: Number(e.target.value) })}
+                                className="bg-transparent text-2xl font-black outline-none w-full tabular-nums"
+                            />
+                        </div>
+
+                        {/* Global Target */}
+                        <div className={cn(
+                            "group p-6 rounded-[2rem] border transition-all duration-500",
+                            formData.is_target_merged ? "bg-emerald-500 shadow-2xl shadow-emerald-500/20 border-transparent text-white" : "bg-zinc-800/10 border-zinc-800/20 opacity-40 shadow-inner"
+                        )}>
+                            <div className="flex justify-between items-start mb-4 text-white/50">
+                                <label className="text-[10px] font-black uppercase tracking-widest">Global Target</label>
+                                <button
+                                    onClick={() => setFormData({ ...formData, is_target_merged: !formData.is_target_merged })}
+                                    className={cn(
+                                        "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all",
+                                        formData.is_target_merged ? "bg-white/20 text-white" : "bg-white/10 text-white/40"
+                                    )}
+                                >
+                                    {formData.is_target_merged ? 'Merged' : 'Split'}
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-2">
                                 <input
                                     type="number"
-                                    value={formData.is_target_merged ? formData.target_plan : currentTargetSum}
-                                    onChange={(e) => applyGlobalTarget(Number(e.target.value))}
-                                    onFocus={(e) => e.target.select()}
                                     disabled={!formData.is_target_merged}
-                                    className={cn("w-full h-14 rounded-2xl px-6 text-lg font-black outline-none transition-all placeholder:text-white/10", formData.is_target_merged ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400" : "bg-white/5 border-white/5 text-white/20 cursor-not-allowed")}
+                                    value={formData.target_plan}
+                                    onChange={(e) => applyGlobalTarget(Number(e.target.value))}
+                                    className="bg-transparent text-2xl font-black outline-none w-full tabular-nums text-white"
                                 />
-                                {formData.is_target_merged && (
+                                {formData.is_target_merged && formulaTarget > 0 && (
                                     <button
                                         onClick={() => applyGlobalTarget(formulaTarget)}
-                                        className="absolute right-2 top-2 h-10 px-3 bg-emerald-500 hover:bg-emerald-400 text-white text-[9px] font-black rounded-xl transition-all flex items-center gap-2 shadow-2xl active:scale-90"
+                                        className="p-2 rounded-xl bg-white/10 hover:bg-white text-white hover:text-emerald-500 transition-all shadow-sm"
+                                        title={`Apply suggested: ${formulaTarget}`}
                                     >
-                                        <Icon icon="solar:calculator-bold" className="w-4 h-4" />
-                                        <span>Use {formulaTarget}</span>
+                                        <Icon icon="solar:magic-stick-3-bold" className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
                         </div>
-
-                        <div className="space-y-3">
-                            <label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1 transition-colors", formData.is_smv_merged ? "text-emerald-400" : "text-white/20")}>Consolidated SMV</label>
-                            <input
-                                type="number"
-                                step="0.001"
-                                value={formData.smv}
-                                onChange={(e) => setFormData({ ...formData, smv: Number(e.target.value) })}
-                                onFocus={(e) => e.target.select()}
-                                disabled={!formData.is_smv_merged}
-                                className={cn("w-full h-14 rounded-2xl px-6 text-lg font-black outline-none transition-all", formData.is_smv_merged ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400" : "bg-white/5 border-white/5 text-white/20 cursor-not-allowed")}
-                            />
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className={cn("text-[10px] font-black uppercase tracking-[0.2em] ml-1 transition-colors", formData.is_last_step_merged ? "text-emerald-400" : "text-white/20")}>Global Seq Step</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={formData.last_step}
-                                onChange={(e) => setFormData({ ...formData, last_step: Number(e.target.value) })}
-                                onFocus={(e) => e.target.select()}
-                                disabled={!formData.is_last_step_merged}
-                                className={cn("w-full h-14 rounded-2xl px-6 text-lg font-black outline-none transition-all", formData.is_last_step_merged ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400" : "bg-white/5 border-white/5 text-white/20 cursor-not-allowed")}
-                            />
-                        </div>
                     </div>
                 </div>
 
-                {/* Grid of Styles */}
-                <div className="bg-white rounded-[3rem] border border-zinc-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
-                    <div className="p-8 border-b border-zinc-50 bg-zinc-50/50 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-2.5 h-8 bg-purple-500 rounded-full"></div>
-                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Garment Style Breakdown</h3>
+                {/* Individual Styles Drill-down */}
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4">
+                        <div className="flex items-center gap-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-900"></span>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Operational Breakdown</h3>
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-zinc-50/30">
-                                    <th className="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest w-1/4">Style Orientation</th>
-                                    <th className="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Style Target</th>
-                                    <th className="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Specific SMV</th>
-                                    <th className="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Sequence Step</th>
-                                    <th className="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right">Delete</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {formData.lot_configs.map((config, idx) => (
-                                    <tr key={config.lot_id} className="border-t border-zinc-50 hover:bg-zinc-50/50 transition-all group">
-                                        <td className="px-10 py-8">
-                                            <div className="flex items-center gap-6">
-                                                <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-xs font-black text-zinc-400 group-hover:bg-purple-600 group-hover:text-white group-hover:rotate-12 transition-all duration-500">
-                                                    {idx + 1}
-                                                </div>
-                                                <span className="text-sm font-black text-zinc-900 uppercase tracking-tight">{config.label}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-10 py-8 text-center">
-                                            <div className="relative inline-block">
-                                                <input
-                                                    type="number"
-                                                    value={config.target_plan}
-                                                    onChange={(e) => updateLotConfig(config.lot_id, 'target_plan', Number(e.target.value))}
-                                                    onFocus={(e) => e.target.select()}
-                                                    className={cn("w-36 h-12 rounded-2xl px-4 text-center text-sm font-black outline-none border transition-all", formData.is_target_merged ? "bg-zinc-50 border-zinc-100 text-zinc-300" : "bg-white border-zinc-200 text-zinc-900 focus:border-zinc-900 focus:shadow-lg")}
-                                                />
-                                                {formData.is_target_merged && <div className="absolute top-0 right-0 -mr-2 -mt-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in-0"><Icon icon="solar:check-read-bold" className="w-3 h-3 text-white" /></div>}
-                                            </div>
-                                        </td>
-                                        <td className="px-10 py-8 text-center">
-                                            <input
-                                                type="number"
-                                                step="0.001"
-                                                value={config.smv}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'smv', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                disabled={formData.is_smv_merged}
-                                                className={cn("w-32 h-12 rounded-2xl px-4 text-center text-sm font-black outline-none border transition-all", formData.is_smv_merged ? "bg-zinc-50 border-zinc-100 text-zinc-300" : "bg-white border-zinc-200 text-blue-600 focus:border-blue-500 focus:shadow-lg")}
-                                            />
-                                        </td>
-                                        <td className="px-10 py-8 text-center">
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={config.last_step}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'last_step', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                disabled={formData.is_last_step_merged}
-                                                className={cn("w-32 h-12 rounded-2xl px-4 text-center text-sm font-black outline-none border transition-all", formData.is_last_step_merged ? "bg-zinc-50 border-zinc-100 text-zinc-300" : "bg-white border-zinc-200 text-emerald-600 focus:border-emerald-500 focus:shadow-lg")}
-                                            />
-                                        </td>
-                                        <td className="px-10 py-8 text-right">
-                                            <button
-                                                onClick={() => handleLotSelection(formData.lot_configs.map(c => c.lot_id).filter(id => id !== config.lot_id))}
-                                                className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 active:scale-75"
-                                            >
-                                                <Icon icon="solar:trash-bin-trash-bold" className="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {formData.lot_configs.length === 0 && (
-                                    <tr>
-                                        <td colSpan={5} className="py-32 text-center opacity-10">
-                                            <Icon icon="solar:box-minimalistic-bold-duotone" className="w-20 h-20 mx-auto mb-6" />
-                                            <p className="text-[12px] font-black uppercase tracking-[0.5em]">No Styles in Pipeline</p>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {formData.lot_configs.map((config) => (
+                            <div key={config.lot_id} className="bg-white rounded-[2rem] border border-zinc-100 p-8 shadow-sm group hover:border-zinc-900 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => setFormData({ ...formData, lot_configs: formData.lot_configs.filter(c => c.lot_id !== config.lot_id) })} className="text-zinc-500 hover:text-red-500">
+                                        <Icon icon="solar:trash-bin-trash-bold" className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className="mb-8">
+                                    <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1 italic">Lot Configuration</p>
+                                    <h4 className="text-lg font-black text-zinc-900 tracking-tight leading-none truncate">{config.label}</h4>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6 relative z-10">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">SMV</label>
+                                        <input
+                                            type="text"
+                                            disabled={formData.is_smv_merged}
+                                            value={formData.is_smv_merged ? formData.smv : config.smv}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                                updateLotConfig(config.lot_id, 'smv', val as any);
+                                            }}
+                                            onBlur={() => {
+                                                if (!formData.is_smv_merged) updateLotConfig(config.lot_id, 'smv', Number(config.smv) || 0);
+                                            }}
+                                            className={cn("w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold tabular-nums outline-none", !formData.is_smv_merged ? "focus:border-zinc-900 border border-zinc-100" : "opacity-40 cursor-not-allowed")}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Last Step</label>
+                                        <input
+                                            type="number"
+                                            disabled={formData.is_last_step_merged}
+                                            value={formData.is_last_step_merged ? formData.last_step : config.last_step}
+                                            onChange={(e) => updateLotConfig(config.lot_id, 'last_step', Number(e.target.value))}
+                                            className={cn("w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold tabular-nums outline-none", !formData.is_last_step_merged ? "focus:border-zinc-900 border border-zinc-100" : "opacity-40 cursor-not-allowed")}
+                                        />
+                                    </div>
+                                    <div className="col-span-2 space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center justify-between">
+                                            <span>Target Plan (PCS)</span>
+                                            {!formData.is_target_merged && (
+                                                <Icon icon="solar:pen-bold" className="w-3 h-3 text-emerald-500" />
+                                            )}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            disabled={formData.is_target_merged}
+                                            value={formData.is_target_merged ? Math.round(formData.target_plan / formData.lot_configs.length) : config.target_plan}
+                                            onChange={(e) => updateLotConfig(config.lot_id, 'target_plan', Number(e.target.value))}
+                                            className={cn("w-full bg-emerald-50/20 h-16 rounded-2xl px-6 text-xl font-black text-emerald-600 tabular-nums outline-none", !formData.is_target_merged ? "focus:border-emerald-500 border border-emerald-100 shadow-sm" : "opacity-40 cursor-not-allowed")}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Final Submit Button at Bottom */}
-                <div className="flex items-center justify-end gap-6 pt-12 border-t border-zinc-100">
-                    <button onClick={() => router.back()} className="h-16 px-10 text-zinc-400 text-xs font-black uppercase tracking-widest hover:text-zinc-900 transition-colors">
-                        Discard Changes
-                    </button>
-                    <Button onClick={handleSave} disabled={isSaving} className="h-16 px-20 bg-zinc-900 hover:bg-black text-white rounded-[1.5rem] shadow-2xl active:scale-95 transition-all text-sm font-black uppercase tracking-widest group flex items-center gap-3">
+                <div className="pt-8 flex justify-end">
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="h-16 px-12 bg-zinc-900 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-zinc-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-4 disabled:opacity-50"
+                    >
                         {isSaving ? (
-                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                         ) : (
-                            <>
-                                <Icon icon="solar:cloud-upload-bold-duotone" className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                                <span>Save Productivity Record</span>
-                            </>
+                            <Icon icon="solar:diskette-bold" className="w-5 h-5" />
                         )}
-                    </Button>
+                        <span>{formData.id ? 'Authorize Updates' : 'Commit Intelligence'}</span>
+                    </button>
                 </div>
             </div>
         </div>
