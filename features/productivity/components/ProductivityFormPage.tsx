@@ -64,16 +64,21 @@ export const ProductivityFormPage = () => {
     useEffect(() => {
         ProductionService.getLines().then(res => {
             if (res.status === 'success') {
-                const sortedLines = res.data.map((l: any) => ({ id: l.id, label: l.name }));
+                const sortedLines = res.data
+                    .map((l: any) => ({ id: l.id, label: l.name }))
+                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
                 setLines(sortedLines);
             }
         });
         ReferenceService.getLotList().then(res => {
             if (res.status === 'success') {
-                setLots(res.data.map((l: any) => ({
-                    id: l.id,
-                    label: `${l.gl_group?.gl_number || ''} / ${(l.lot_code || '').replace(/^0+/, '')}`
-                })));
+                const sortedLots = res.data
+                    .map((l: any) => ({
+                        id: l.id,
+                        label: `${l.gl_group?.gl_number || ''} / ${(l.lot_code || '').replace(/^0+/, '')}`
+                    }))
+                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
+                setLots(sortedLots);
             }
         });
 
