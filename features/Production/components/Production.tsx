@@ -19,7 +19,7 @@ import { ProductionService } from '../services/ProductionService';
 
 export const Production = () => {
     const router = useRouter();
-    const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+    const [viewDate, setViewDate] = useState(new Date(Date.now() - 86400000).toISOString().split('T')[0]);
     const { data: productions, isLoading, refresh } = useProduction({ date: viewDate });
 
     // Filters
@@ -65,8 +65,19 @@ export const Production = () => {
         const groups: Record<string, any> = {};
 
         productions.forEach((p: any) => {
+            const lineName = p.line?.name || 'Unknown Line';
+
             // Apply Line Filter
-            if (filterLine !== 'ALL' && p.line?.name !== filterLine) return;
+            if (filterLine !== 'ALL' && lineName !== filterLine) return;
+
+            if (!groups[lineName]) {
+                groups[lineName] = {
+                    lineName,
+                    total_in: 0,
+                    total_out: 0,
+                    entries: []
+                };
+            }
 
             p.items?.forEach((item: any) => {
                 const glNoRaw = item.lot?.gl_group?.gl_number || 'Unknown GL';
@@ -78,34 +89,31 @@ export const Production = () => {
                 if (filterLot !== 'ALL' && lotCode !== filterLot) return;
 
                 const glNo = formatGL(glNoRaw);
-                const groupKey = `${glNo}-${lotCode}`;
-
-                if (!groups[groupKey]) {
-                    groups[groupKey] = {
-                        glNo,
-                        lotCode,
-                        lotClean,
-                        total_in: 0,
-                        total_out: 0,
-                        entries: []
-                    };
-                }
-
                 const entry = {
                     ...p,
+                    glNo,
+                    lotCode,
+                    lotClean,
                     qty_in: item.details.reduce((sum: number, d: any) => sum + d.qty_input, 0),
                     qty_out: item.details.reduce((sum: number, d: any) => sum + d.qty_output, 0),
                     color: item.color,
                     item_details: item.details
                 };
 
-                groups[groupKey].total_in += entry.qty_in;
-                groups[groupKey].total_out += entry.qty_out;
-                groups[groupKey].entries.push(entry);
+                groups[lineName].total_in += entry.qty_in;
+                groups[lineName].total_out += entry.qty_out;
+                groups[lineName].entries.push(entry);
             });
         });
 
-        return groups;
+        // Sort keys numerically (A1, A2, A10)
+        const sortedKeys = Object.keys(groups).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+        const sortedGroups: Record<string, any> = {};
+        sortedKeys.forEach(k => {
+            sortedGroups[k] = groups[k];
+        });
+
+        return sortedGroups;
     }, [productions, filterLine, filterGL, filterLot, formatGL]);
 
     const toggleCard = (key: string) => {
@@ -130,28 +138,28 @@ export const Production = () => {
         <>
             <div className="p-8 max-w-[1600px] mx-auto">
                 {/* Header Actions */}
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-12">
-                    <div className="flex items-center gap-5">
+                <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-12">
+                    <div className="flex items-start gap-5">
                         <div className="bg-zinc-900 p-4 rounded-[1.5rem] text-white shadow-2xl">
                             <Icon icon="solar:filters-bold-duotone" className="w-8 h-8" />
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-zinc-900 tracking-tight uppercase">Production Feed</h2>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-start gap-2 mt-1">
                                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Today's Performance Overview</p>
+                                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Showing previous day's production by default</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-[2rem] border border-zinc-100 shadow-sm">
+                    <div className="flex flex-wrap items-start gap-3 bg-white p-3 rounded-[2rem] border border-zinc-100 shadow-sm">
                         <DatePicker
                             value={viewDate}
                             onChange={(val) => setViewDate(val)}
-                            className="w-[180px]"
+                            className="w-[200px]"
                         />
 
-                        <div className="w-40">
+                        <div className="w-30">
                             <Select
                                 options={filterOptions.lines.map(l => ({ id: l, label: l === 'ALL' ? 'All Lines' : l, value: l }))}
                                 value={filterLine}
@@ -160,7 +168,7 @@ export const Production = () => {
                             />
                         </div>
 
-                        <div className="w-48">
+                        <div className="w-35">
                             <Select
                                 options={filterOptions.gls.map(g => ({ id: g, label: g === 'ALL' ? 'All GLs' : formatGL(g), value: g }))}
                                 value={filterGL}
@@ -257,13 +265,13 @@ export const Production = () => {
                                     >
                                         <div className="flex items-center justify-between w-full mb-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-2xl bg-zinc-900 text-white flex flex-col items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                                    <span className="text-[10px] font-black leading-none mb-0.5">LOT</span>
-                                                    <span className="text-sm font-black leading-none">{data.lotClean}</span>
+                                                <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex flex-col items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                                    <span className="text-[10px] font-black leading-none mb-0.5">LINE</span>
+                                                    <span className="text-sm font-black leading-none">{data.lineName}</span>
                                                 </div>
                                                 <div className="text-left">
-                                                    <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Garment Reference</h3>
-                                                    <p className="text-sm font-black text-zinc-900 uppercase tracking-tight">GL: {data.glNo}</p>
+                                                    <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Production Center</h3>
+                                                    <p className="text-sm font-black text-zinc-900 uppercase tracking-tight">Daily Feed Overview</p>
                                                 </div>
                                             </div>
                                             <div className={cn("p-2 rounded-xl bg-white border border-zinc-200 transition-transform duration-500 shadow-sm", expandedCards[key] && "rotate-180")}>
@@ -336,9 +344,9 @@ export const Production = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="bg-zinc-50/50 border-b border-zinc-100">
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Garment Info</th>
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Lot Group</th>
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Colors & Lines</th>
+                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Production Line</th>
+                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Capacity & Status</th>
+                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Associated Lots & Colors</th>
                                         <th className="px-6 py-5 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest">Total Qty</th>
                                         <th className="px-6 py-5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest">Activities</th>
                                     </tr>
@@ -352,18 +360,17 @@ export const Production = () => {
                                             <tr key={key} className="hover:bg-zinc-50/30 transition-colors group">
                                                 <td className="px-6 py-8">
                                                     <div className="flex flex-col">
-                                                        <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">GL NUMBER</span>
-                                                        <span className="text-zinc-900 font-black tracking-tight">{data.glNo}</span>
+                                                        <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LINE CENTER</span>
+                                                        <span className="text-zinc-900 font-black tracking-tight">{data.lineName}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-8">
                                                     <div className="flex flex-col">
-                                                        <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LOT CODE</span>
+                                                        <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LOG ENTRIES</span>
                                                         <div className="flex items-center gap-2">
                                                             <div className="bg-zinc-900 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm">
-                                                                {data.lotClean}
+                                                                {data.entries.length} LOGS
                                                             </div>
-                                                            <span className="text-zinc-500 font-bold text-xs uppercase">{data.lotCode}</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -377,9 +384,9 @@ export const Production = () => {
                                                             ))}
                                                         </div>
                                                         <div className="flex flex-wrap gap-1">
-                                                            {allLines.map((l: any, i: number) => (
+                                                            {Array.from(new Set(data.entries.map((e: any) => e.glNo))).map((gl: any, i: number) => (
                                                                 <span key={i} className="bg-zinc-100 text-zinc-500 text-[9px] font-black px-2 py-0.5 rounded border border-zinc-200 uppercase tracking-widest">
-                                                                    {l}
+                                                                    GL: {gl}
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -420,16 +427,16 @@ export const Production = () => {
                         <DialogOverlay className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm z-50 animate-in fade-in duration-300" />
                         <DialogContent className="w-full max-w-2xl min-h-[50vh] max-h-[90vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden outline-none border-none">
                             {selectedGroupKey && groupedData[selectedGroupKey] && (
-                                <div className="h-full flex flex-col">
-                                    <div className="p-10 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+                                <>
+                                    <div className="p-10 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between flex-shrink-0">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex flex-col items-center justify-center text-white shadow-xl">
-                                                <span className="text-[10px] font-black leading-none mb-1">LOT</span>
-                                                <span className="text-xl font-black leading-none">{groupedData[selectedGroupKey].lotClean}</span>
+                                            <div className="w-14 h-14 bg-blue-600 rounded-2xl flex flex-col items-center justify-center text-white shadow-xl">
+                                                <span className="text-[10px] font-black leading-none mb-1">LINE</span>
+                                                <span className="text-xl font-black leading-none">{groupedData[selectedGroupKey].lineName}</span>
                                             </div>
                                             <div>
                                                 <DialogTitle className="text-2xl font-black text-zinc-900 uppercase tracking-tight">
-                                                    GL: {groupedData[selectedGroupKey].glNo}
+                                                    Production Details
                                                 </DialogTitle>
                                                 <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] mt-1">ACTIVITY LOGS SUMMARY</p>
                                             </div>
@@ -441,7 +448,7 @@ export const Production = () => {
                                             <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
                                         </button>
                                     </div>
-                                    <div className="flex-1 overflow-y-auto p-10 space-y-4 font-sans no-scrollbar">
+                                    <div className="flex-1 overflow-y-auto p-10 space-y-4 font-sans hover-scrollbar">
                                         {groupedData[selectedGroupKey].entries.map((p: any, pIdx: number) => (
                                             <div key={pIdx} className="bg-zinc-50/50 rounded-3xl border border-zinc-100 p-6 hover:border-blue-100 transition-colors">
                                                 <div className="flex flex-col gap-6 mb-6 pb-6 border-b border-zinc-100">
@@ -451,7 +458,13 @@ export const Production = () => {
                                                                 {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs font-black text-zinc-900 uppercase tracking-widest leading-none mb-1">{p.line?.name}</p>
+                                                                <p className="text-sm font-black text-zinc-900 uppercase tracking-tight leading-none mb-1.5">GL: {p.glNo}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[9px] font-black bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded">LOT {p.lotClean}</span>
+                                                                    {p.remarks && (
+                                                                        <span className="text-[9px] font-bold text-orange-500 italic truncate max-w-[150px]">"{p.remarks}"</span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
@@ -487,7 +500,7 @@ export const Production = () => {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </>
                             )}
                         </DialogContent>
                     </DialogPortal>
@@ -497,7 +510,7 @@ export const Production = () => {
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
-            </div>
+            </div >
         </>
     );
 };

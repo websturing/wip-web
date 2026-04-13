@@ -82,6 +82,13 @@ export const Select = ({
                                     placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && filteredOptions.length > 0) {
+                                            onChange(filteredOptions[0].id);
+                                            setOpen(false);
+                                            setSearchTerm('');
+                                        }
+                                    }}
                                     autoFocus
                                 />
                             </div>

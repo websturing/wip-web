@@ -42,6 +42,8 @@ export const MultiSelect = ({
         } else {
             onChange([...value, id]);
         }
+        setSearchTerm('');
+        setOpen(false);
     };
 
     return (
@@ -95,6 +97,11 @@ export const MultiSelect = ({
                                     placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && filteredOptions.length > 0) {
+                                            toggleOption(filteredOptions[0].id);
+                                        }
+                                    }}
                                     autoFocus
                                 />
                             </div>

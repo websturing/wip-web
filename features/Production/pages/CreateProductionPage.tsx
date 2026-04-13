@@ -2,6 +2,7 @@
 
 import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { Button } from '@/app/components/ui/Button';
+import { DatePicker } from '@/app/components/ui/DatePicker';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Select } from '@/app/components/ui/Select';
@@ -26,7 +27,7 @@ export default function CreateProductionPage() {
 
     // Form State
     const [formData, setFormData] = useState({
-        production_date: new Date().toISOString().split('T')[0],
+        production_date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
         line_id: '',
         entry_mode: 'per-size', // Default to detailed per-size entry for Sewing
         remarks: '',
@@ -209,17 +210,10 @@ export default function CreateProductionPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10 items-end">
                     <div className="space-y-1.5 flex-1">
                         <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Production Date</label>
-                        <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
-                                <Icon icon="solar:calendar-bold-duotone" className="w-4 h-4" />
-                            </div>
-                            <input
-                                type="date"
-                                className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/30 transition-all font-bold text-[13px]"
-                                value={formData.production_date}
-                                onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
-                            />
-                        </div>
+                        <DatePicker
+                            value={formData.production_date}
+                            onChange={(val: string) => setFormData({ ...formData, production_date: val })}
+                        />
                     </div>
 
                     <div className="flex-1">
@@ -283,18 +277,16 @@ export default function CreateProductionPage() {
                                             <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Configuration breakdown</p>
                                         </div>
                                     </div>
-                                    {formData.items.length > 1 && (
-                                        <Button
-                                            variant="ghost"
-                                            onClick={() => {
-                                                const newItems = formData.items.filter((_, idx) => idx !== iIdx);
-                                                setFormData({ ...formData, items: newItems });
-                                            }}
-                                            className="text-red-500 hover:bg-red-50 w-10 h-10 rounded-xl transition-all"
-                                        >
-                                            <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-5 h-5" />
-                                        </Button>
-                                    )}
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => {
+                                            const newItems = formData.items.filter((_, idx) => idx !== iIdx);
+                                            setFormData({ ...formData, items: newItems });
+                                        }}
+                                        className="text-red-500 hover:bg-red-50 w-10 h-10 rounded-xl transition-all"
+                                    >
+                                        <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-5 h-5" />
+                                    </Button>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-end">
