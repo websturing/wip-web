@@ -6,6 +6,13 @@ import { DatePicker } from '@/app/components/ui/DatePicker';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Select } from '@/app/components/ui/Select';
+import {
+    Toast,
+    ToastDescription,
+    ToastProvider,
+    ToastTitle,
+    ToastViewport,
+} from '@/app/components/ui/Toast';
 import { ReferenceService } from '@/features/Reference/services/ReferenceService';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -13,10 +20,30 @@ import { useEffect, useState } from 'react';
 import { ProductionService } from '../services/ProductionService';
 
 export default function CreateProductionPage() {
+    return (
+        <ToastProvider swipeDirection="up" duration={5000}>
+            <CreateProductionForm />
+            <ToastViewport />
+        </ToastProvider>
+    );
+}
+
+function CreateProductionForm() {
     const router = useRouter();
     const [lines, setLines] = useState<any[]>([]);
     const [lots, setLots] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [toast, setToast] = useState<{ open: boolean; title: string, message: string; variant?: 'success' | 'destructive' }>({
+        open: false,
+        title: '',
+        message: '',
+        variant: 'success'
+    });
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+    const showToast = (title: string, message: string, variant: 'success' | 'destructive' = 'success') => {
+        setToast({ open: true, title, message, variant });
+    };
 
     const breadcrumbItems: BreadcrumbItem[] = [
         { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
@@ -172,8 +199,20 @@ export default function CreateProductionPage() {
     };
 
     const handleSave = async () => {
-        if (!formData.line_id || !formData.production_date) {
-            alert('Please fill in Date and Line.');
+        const newErrors: Record<string, boolean> = {};
+
+        if (!formData.production_date) newErrors.production_date = true;
+        if (!formData.line_id) newErrors.line_id = true;
+
+        // Validate items
+        formData.items.forEach((item, i) => {
+            if (!item.lot_id) newErrors[`item-${i}-lot_id`] = true;
+            if (!item.color) newErrors[`item-${i}-color`] = true;
+        });
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            showToast('Validation Error', 'Please complete all required fields highlighted in red.', 'destructive');
             return;
         }
 
@@ -188,10 +227,13 @@ export default function CreateProductionPage() {
             });
 
             await ProductionService.create({ ...formData, items: cleanedItems });
-            router.push('/admin/production');
-        } catch (error) {
+            showToast('Success', 'Production log saved successfully.', 'success');
+            setTimeout(() => {
+                router.push('/admin/production');
+            }, 1000);
+        } catch (error: any) {
             console.error('Failed to save:', error);
-            alert('Failed to save production log.');
+            showToast('Error', error.response?.data?.message || 'Failed to save production log.', 'destructive');
         } finally {
             setIsLoading(false);
         }
@@ -212,7 +254,11 @@ export default function CreateProductionPage() {
                         <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Production Date</label>
                         <DatePicker
                             value={formData.production_date}
-                            onChange={(val: string) => setFormData({ ...formData, production_date: val })}
+                            error={errors.production_date}
+                            onChange={(val: string) => {
+                                setFormData({ ...formData, production_date: val });
+                                if (errors.production_date) setErrors({ ...errors, production_date: false });
+                            }}
                         />
                     </div>
 
@@ -222,7 +268,15 @@ export default function CreateProductionPage() {
                             placeholder="Choose Production Line..."
                             options={lines}
                             value={formData.line_id}
-                            onChange={(val) => setFormData({ ...formData, line_id: String(val) })}
+                            error={errors.line_id}
+                            onChange={(val) => {
+                                setFormData({ ...formData, line_id: String(val) });
+                                if (errors.line_id) setErrors(prev => {
+                                    const next = { ...prev };
+                                    delete next.line_id;
+                                    return next;
+                                });
+                            }}
                         />
                     </div>
 
@@ -277,16 +331,18 @@ export default function CreateProductionPage() {
                                             <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Configuration breakdown</p>
                                         </div>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => {
-                                            const newItems = formData.items.filter((_, idx) => idx !== iIdx);
-                                            setFormData({ ...formData, items: newItems });
-                                        }}
-                                        className="text-red-500 hover:bg-red-50 w-10 h-10 rounded-xl transition-all"
-                                    >
-                                        <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-5 h-5" />
-                                    </Button>
+                                    {iIdx !== 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                const newItems = formData.items.filter((_, idx) => idx !== iIdx);
+                                                setFormData({ ...formData, items: newItems });
+                                            }}
+                                            className="text-red-500 hover:bg-red-50 flex items-center gap-2 px-3 h-10 rounded-xl transition-all"
+                                        >
+                                            <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4" />
+                                        </Button>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-end">
@@ -295,6 +351,7 @@ export default function CreateProductionPage() {
                                         placeholder="Search GL Code..."
                                         options={lots}
                                         value={item.lot_id}
+                                        error={errors[`item-${iIdx}-lot_id`]}
                                         onChange={async (val) => {
                                             const newItems = [...formData.items];
                                             newItems[iIdx].lot_id = String(val);
@@ -302,6 +359,13 @@ export default function CreateProductionPage() {
                                             newItems[iIdx].sizes = [];
                                             setFormData({ ...formData, items: newItems });
                                             fetchLotDetails(String(val), iIdx);
+                                            if (errors[`item-${iIdx}-lot_id`]) {
+                                                setErrors(prev => {
+                                                    const next = { ...prev };
+                                                    delete next[`item-${iIdx}-lot_id`];
+                                                    return next;
+                                                });
+                                            }
                                         }}
                                     />
                                     {item.lot_id && (
@@ -312,9 +376,17 @@ export default function CreateProductionPage() {
                                                     placeholder="Choose Color..."
                                                     options={lotDetails[iIdx].map(c => ({ id: c.color, label: c.color }))}
                                                     value={item.color}
+                                                    error={errors[`item-${iIdx}-color`]}
                                                     onChange={(val) => {
                                                         const colorData = lotDetails[iIdx].find(c => c.color === val);
                                                         updateItemColor(iIdx, String(val), colorData?.size_breakdown);
+                                                        if (errors[`item-${iIdx}-color`]) {
+                                                            setErrors(prev => {
+                                                                const next = { ...prev };
+                                                                delete next[`item-${iIdx}-color`];
+                                                                return next;
+                                                            });
+                                                        }
                                                     }}
                                                 />
                                             ) : (
@@ -541,6 +613,31 @@ export default function CreateProductionPage() {
                     </Button>
                 </div>
             </div>
+
+            <Toast
+                open={toast.open}
+                onOpenChange={(open) => setToast(prev => ({ ...prev, open }))}
+                variant={toast.variant}
+                className="data-state-open-animate-slide-in-top"
+            >
+                <div className="flex items-center gap-4">
+                    <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center border shrink-0",
+                        toast.variant === 'success' ? "bg-green-50 border-green-100" : "bg-white/10 border-white/20"
+                    )}>
+                        <Icon
+                            icon={toast.variant === 'success' ? "solar:check-circle-bold" : "solar:danger-triangle-bold"}
+                            className={cn("w-5 h-5", toast.variant === 'success' ? "text-green-600" : "text-white")}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                        <ToastTitle className={cn(toast.variant === 'destructive' && "text-white")}>{toast.title}</ToastTitle>
+                        <ToastDescription className={cn(toast.variant === 'destructive' && "text-white/90")}>
+                            {toast.message}
+                        </ToastDescription>
+                    </div>
+                </div>
+            </Toast>
         </div>
     );
 }

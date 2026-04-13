@@ -13,9 +13,10 @@ interface DatePickerProps {
     onChange?: (value: string) => void;
     className?: string;
     placeholder?: string;
+    error?: boolean;
 }
 
-export const DatePicker = ({ value, onChange, className, placeholder = 'Select date' }: DatePickerProps) => {
+export const DatePicker = ({ value, onChange, className, placeholder = 'Select date', error }: DatePickerProps) => {
     const [open, setOpen] = React.useState(false);
 
     // Convert string value (YYYY-MM-DD) to Date object
@@ -40,6 +41,7 @@ export const DatePicker = ({ value, onChange, className, placeholder = 'Select d
                 <button
                     className={cn(
                         "w-full bg-zinc-50 border border-zinc-100 h-12 rounded-2xl px-5 pl-11 text-sm font-bold outline-none focus:border-zinc-900 transition-all font-mono appearance-none items-center flex text-left relative",
+                        error && "border-red-500 bg-red-50/10 focus:border-red-500",
                         !value && "text-zinc-400",
                         className
                     )}

@@ -105,7 +105,9 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                             )}
                             <div className="">
                                 {section.items.map((item, iIdx) => {
-                                    const isActive = pathname === item.path;
+                                    const isActive = item.path === '/admin'
+                                        ? pathname === item.path
+                                        : pathname.startsWith(item.path);
                                     return (
                                         <Link
                                             key={iIdx}

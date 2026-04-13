@@ -17,6 +17,7 @@ interface SelectProps {
     placeholder?: string;
     label?: string;
     className?: string;
+    error?: boolean;
 }
 
 export const Select = ({
@@ -25,7 +26,8 @@ export const Select = ({
     onChange,
     placeholder = "Select an option...",
     label,
-    className
+    className,
+    error
 }: SelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +55,8 @@ export const Select = ({
                         className={cn(
                             "w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
                             "hover:border-zinc-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200",
-                            open && "border-blue-200 ring-2 ring-blue-500/20 bg-white"
+                            error && "border-red-500 bg-red-50/10 focus:ring-red-500/20 focus:border-red-500",
+                            open && !error && "border-blue-200 ring-2 ring-blue-500/20 bg-white"
                         )}
                     >
                         <span className={cn(
