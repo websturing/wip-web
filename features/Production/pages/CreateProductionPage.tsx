@@ -330,6 +330,12 @@ function CreateProductionForm() {
                                             <h3 className="text-xs font-black uppercase tracking-tight text-zinc-900">Garment Item Reference</h3>
                                             <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Configuration breakdown</p>
                                         </div>
+                                        {totalOutput > 0 && (
+                                            <div className="ml-6 flex flex-col items-start px-4 py-1.5 bg-blue-50/50 border border-blue-100 rounded-xl">
+                                                <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Total Output</span>
+                                                <span className="text-[13px] font-black text-blue-600">{totalOutput.toLocaleString()} PCS</span>
+                                            </div>
+                                        )}
                                     </div>
                                     {iIdx !== 0 && (
                                         <Button
