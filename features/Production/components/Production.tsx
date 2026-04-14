@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { useProduction } from '../hooks/useProduction';
+import { ProductionService } from '../services/ProductionService';
 
 export const Production = () => {
     const router = useRouter();
@@ -127,6 +128,31 @@ export const Production = () => {
 
     // Need expandedCards back for Card View
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+    const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: number | null; loading: boolean }>({
+        open: false,
+        id: null,
+        loading: false
+    });
+
+    const handleDelete = async () => {
+        if (!confirmDelete.id) return;
+
+        setConfirmDelete(prev => ({ ...prev, loading: true }));
+        try {
+            const result = await ProductionService.delete(confirmDelete.id);
+            if (result.status === 'success' || result.message?.toLowerCase().includes('success')) {
+                setConfirmDelete({ open: false, id: null, loading: false });
+                refresh();
+            } else {
+                alert(`Failed to delete: ${result.message || 'Unknown error'}`);
+                setConfirmDelete(prev => ({ ...prev, loading: false }));
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+            alert('An error occurred while deleting the record.');
+            setConfirmDelete(prev => ({ ...prev, loading: false }));
+        }
+    };
 
     if (isLoading) return (
         <div className="p-20 flex flex-col items-center justify-center gap-4">
@@ -200,43 +226,6 @@ export const Production = () => {
                                 <span>Cards</span>
                             </button>
                         </div>
-                        {/* 
-                        <input
-                            type="file"
-                            id="production-import"
-                            className="hidden"
-                            accept=".xlsx, .xls, .csv"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-
-                                const confirmed = confirm('Import production data from this Excel?');
-                                if (!confirmed) return;
-
-                                try {
-                                    const result = await ProductionService.importExcel(file);
-                                    if (result.status === 'success' && result.summary) {
-                                        alert(`Import Success!\nTotal: ${result.summary.total}\nInserted: ${result.summary.inserted}\nErrors: ${result.summary.errors.length}`);
-                                        refresh();
-                                    } else {
-                                        alert(`Import failed: ${result.message || 'Unknown error'}`);
-                                    }
-                                } catch (error) {
-                                    console.error('Import failed:', error);
-                                    alert('Failed to import production data.');
-                                } finally {
-                                    if (e.target) e.target.value = '';
-                                }
-                            }}
-                        />
-                        <Button
-                            variant="ghost"
-                            onClick={() => document.getElementById('production-import')?.click()}
-                            className="bg-white hover:bg-zinc-50 text-zinc-600 rounded-2xl px-4 h-10 flex items-center gap-2 transition-all border border-zinc-100 shadow-sm text-[10px] font-black uppercase tracking-widest"
-                        >
-                            <Icon icon="solar:file-send-bold-duotone" className="w-4 h-4 text-blue-500" />
-                            <span>Import</span>
-                        </Button> */}
 
                         <Button
                             onClick={() => router.push('/admin/production/create')}
@@ -363,7 +352,6 @@ export const Production = () => {
                                 <tbody className="divide-y divide-zinc-50">
                                     {Object.entries(groupedData).map(([key, data]: [string, any]) => {
                                         const allColors = Array.from(new Set(data.entries.map((e: any) => e.color)));
-                                        const allLines = Array.from(new Set(data.entries.map((e: any) => e.line?.name)));
 
                                         return (
                                             <tr key={key} className="hover:bg-zinc-50/30 transition-colors group">
@@ -496,8 +484,26 @@ export const Production = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
-                                                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
+                                                                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => router.push(`/admin/production/edit/${p.id}`)}
+                                                                    className="w-8 h-8 rounded-lg bg-white border border-zinc-100 hover:bg-zinc-900 hover:text-white flex items-center justify-center text-zinc-400 transition-all shadow-sm active:scale-95"
+                                                                    title="Edit Log"
+                                                                >
+                                                                    <Icon icon="solar:pen-bold-duotone" className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setConfirmDelete({ open: true, id: p.id, loading: false })}
+                                                                    className="w-8 h-8 rounded-lg bg-white border border-zinc-100 hover:bg-red-500 hover:text-white flex items-center justify-center text-zinc-400 transition-all shadow-sm active:scale-95 group/del"
+                                                                    title="Delete Log"
+                                                                >
+                                                                    <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4 group-hover/del:scale-110" />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
 

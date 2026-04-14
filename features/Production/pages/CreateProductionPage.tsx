@@ -19,17 +19,18 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ProductionService } from '../services/ProductionService';
 
-export default function CreateProductionPage() {
+export default function CreateProductionPage({ id }: { id?: string }) {
     return (
         <ToastProvider swipeDirection="up" duration={5000}>
-            <CreateProductionForm />
+            <CreateProductionForm id={id} />
             <ToastViewport />
         </ToastProvider>
     );
 }
 
-function CreateProductionForm() {
+function CreateProductionForm({ id }: { id?: string }) {
     const router = useRouter();
+    const isEdit = !!id;
     const [lines, setLines] = useState<any[]>([]);
     const [lots, setLots] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -75,30 +76,67 @@ function CreateProductionForm() {
     const [lotDetails, setLotDetails] = useState<Record<number, any[]>>({});
 
     useEffect(() => {
-        // Fetch Lines
-        ProductionService.getLines().then(res => {
-            if (res && res.status === 'success') {
-                const sorted = res.data
+        const init = async () => {
+            // Fetch Lines
+            const linesRes = await ProductionService.getLines();
+            if (linesRes?.status === 'success') {
+                setLines(linesRes.data
                     .map((l: any) => ({ id: l.id, label: l.name }))
-                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
-                setLines(sorted);
+                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' })));
             }
-        });
 
-        // Fetch Lots
-        ReferenceService.getLotList().then(res => {
-            if (res && res.status === 'success') {
-                const sorted = res.data
+            // Fetch Lots
+            const lotsRes = await ReferenceService.getLotList();
+            if (lotsRes?.status === 'success') {
+                setLots(lotsRes.data
                     .map((l: any) => ({
                         id: l.id,
                         label: (l.lot_code || '').replace(/^0+/, ''),
                         lot_code: l.lot_code || ''
                     }))
-                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
-                setLots(sorted);
+                    .sort((a: any, b: any) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' })));
             }
-        });
-    }, []);
+
+            // If Edit Mode, fetch record
+            if (id) {
+                const res = await ProductionService.getById(id);
+                if (res?.status === 'success') {
+                    const p = res.data;
+
+                    // Map items to form structure
+                    const mappedItems = p.items.map((item: any) => ({
+                        id: item.id, // Keep ID for potential server-side mapping
+                        lot_id: String(item.lot_id),
+                        color: item.color,
+                        sizes: item.details.map((d: any) => ({
+                            size_name: d.size_name,
+                            qty_input: d.qty_input,
+                            qty_output: d.qty_output,
+                            order_mi: 0, // Will be hydrated when lot is fetched
+                            cut_qty: 0,
+                            recorded_input: 0,
+                            recorded_output: 0
+                        }))
+                    }));
+
+                    setFormData({
+                        production_date: p.production_date,
+                        line_id: String(p.line_id),
+                        entry_mode: p.items[0]?.details.length === 1 && p.items[0]?.details[0].size_name === 'TOTAL' ? 'output' : 'per-size',
+                        remarks: p.remarks || '',
+                        items: mappedItems
+                    });
+
+                    // Trigger hydration for each item
+                    mappedItems.forEach((item: any, idx: number) => {
+                        fetchLotDetails(item.lot_id, idx);
+                    });
+                }
+            }
+        };
+
+        init();
+    }, [id]);
 
     const fetchLotDetails = async (lotId: string, itemIdx: number) => {
         const lot = lots.find(l => String(l.id) === String(lotId));
@@ -231,8 +269,13 @@ function CreateProductionForm() {
                 return { ...item, sizes: item.sizes.filter(s => s.size_name !== 'TOTAL') };
             });
 
-            await ProductionService.create({ ...formData, items: cleanedItems });
-            showToast('Success', 'Production log saved successfully.', 'success');
+            if (isEdit) {
+                await ProductionService.update(id, { ...formData, items: cleanedItems });
+                showToast('Success', 'Production log updated successfully.', 'success');
+            } else {
+                await ProductionService.create({ ...formData, items: cleanedItems });
+                showToast('Success', 'Production log saved successfully.', 'success');
+            }
             setTimeout(() => {
                 router.push('/admin/production');
             }, 1000);
@@ -252,9 +295,9 @@ function CreateProductionForm() {
         <div className="animate-in fade-in duration-700">
             <PageHeader
                 items={breadcrumbItems}
-                title="Create Production Log"
+                title={isEdit ? "Update Production Log" : "Create Production Log"}
                 subtitle="Sewing Department"
-                description="Daily assembly input and output tracking."
+                description={isEdit ? `ID: #${id}` : "Daily assembly input and output tracking."}
                 action={
                     <Button
                         variant="ghost"
@@ -642,7 +685,7 @@ function CreateProductionForm() {
                     >
                         <Icon icon={isLoading ? "solar:refresh-line-duotone" : "solar:check-circle-bold-duotone"} className={cn("w-6 h-6", isLoading && "animate-spin")} />
                         <span className="text-[10px] font-black uppercase tracking-widest">
-                            {isLoading ? 'Saving...' : 'Save Production'}
+                            {isLoading ? 'Saving...' : isEdit ? 'Update Production' : 'Save Production'}
                         </span>
                     </Button>
                 </div>
