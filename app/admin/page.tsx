@@ -44,7 +44,7 @@ export default function AdminDashboard() {
 
     return (
         <ToastProvider swipeDirection="up" duration={5000}>
-            <div className="relative animate-in fade-in duration-700 min-h-screen bg-[#f3f4f9] pb-20">
+            <div className="relative animate-in fade-in duration-700 min-h-screen pb-20">
                 <Toast open={isToastOpen} onOpenChange={setIsToastOpen} className="data-state-open-animate-slide-in-top">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center border border-green-100 shrink-0">
@@ -58,6 +58,27 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </Toast>
+
+                {/* Professional Loading Overlay */}
+                {isLoading && (
+                    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/60 backdrop-blur-[4px] animate-in fade-in duration-300">
+                        <div className="relative group">
+                            <div className="absolute -inset-4 bg-indigo-500/20 rounded-full blur-xl group-hover:bg-indigo-500/30 transition-all duration-500 animate-pulse"></div>
+                            <div className="relative w-16 h-16 border-4 border-zinc-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-2 h-2 bg-indigo-600 rounded-full animate-ping"></div>
+                            </div>
+                        </div>
+                        <div className="mt-8 flex flex-col items-center gap-2">
+                            <h2 className="text-[11px] font-black text-zinc-900 uppercase tracking-[0.2em] animate-pulse">Synchronizing Data</h2>
+                            <div className="flex gap-1">
+                                <span className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="w-1 h-1 bg-indigo-600 rounded-full animate-bounce"></span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Top Header & Breadcrumb */}
                 <div className="bg-white border-b border-zinc-200 px-8 py-4 mb-6">
@@ -168,7 +189,6 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="flex bg-zinc-100 p-1 rounded-lg">
                                             {[
-                                                { label: '1D', val: 1 },
                                                 { label: '7D', val: 7 },
                                                 { label: '1M', val: 30 },
                                                 { label: '3M', val: 90 }
@@ -279,8 +299,8 @@ export default function AdminDashboard() {
                                                             </div>
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                                                                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Total Output</span>
+                                                                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                                                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Total Output</span>
                                                                 </div>
                                                                 <span className="text-[10px] font-black text-zinc-900 font-mono">{hoveredData.total_output}</span>
                                                             </div>

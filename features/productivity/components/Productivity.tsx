@@ -17,7 +17,8 @@ export const Productivity = () => {
     const [productionData, setProductionData] = useState<any[]>([]);
     const [cumulativeSummaries, setCumulativeSummaries] = useState<Record<string, any>>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'daily' | 'target'>('daily');
+    const [activeTab, setActiveTab] = useState<'daily' | 'target' | 'chart'>('daily');
+    const [hoveredNode, setHoveredNode] = useState<{ index: number; x: number; y: number } | null>(null);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -172,6 +173,16 @@ export const Productivity = () => {
                 >
                     <Icon icon="solar:target-bold-duotone" className="w-3.5 h-3.5" />
                     Target Output
+                </button>
+                <button
+                    onClick={() => setActiveTab('chart')}
+                    className={cn(
+                        "px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                        activeTab === 'chart' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
+                    )}
+                >
+                    <Icon icon="solar:chart-square-bold-duotone" className="w-3.5 h-3.5" />
+                    Chart Day
                 </button>
             </div>
 
@@ -344,7 +355,7 @@ export const Productivity = () => {
                                         );
                                     });
                                 })
-                            ) : (
+                            ) : activeTab === 'target' ? (
                                 data.map((item: any) => {
                                     const lots = item.lots && item.lots.length > 0 ? item.lots : [item.lot];
 
@@ -448,6 +459,230 @@ export const Productivity = () => {
                                         );
                                     });
                                 })
+                            ) : (
+                                <tr>
+                                    <td colSpan={20} className="p-0">
+                                        <div className="p-8 bg-zinc-50/50 min-h-[600px]">
+                                            <div className="flex items-center justify-between mb-8">
+                                                <div>
+                                                    <h3 className="text-xl font-black text-zinc-900 tracking-tighter uppercase">Daily Performance: Target vs Output</h3>
+                                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Side-by-side comparative volume analysis per production node</p>
+                                                </div>
+                                                <div className="flex gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-3 bg-blue-500 rounded-sm"></div>
+                                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-blue-600">Target</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-3 bg-emerald-500 rounded-sm"></div>
+                                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-emerald-600">Actual Output</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white p-10 rounded-[2rem] border border-zinc-200/50 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.05)] overflow-hidden relative">
+                                                <div className="relative h-[400px]">
+                                                    {(() => {
+                                                        const chartData = data.map(item => {
+                                                            const lots = item.lots && item.lots.length > 0 ? item.lots : [item.lot];
+                                                            const lineOutput = productionData
+                                                                .filter(p => p.line_id === item.line_id)
+                                                                .flatMap(p => p.items)
+                                                                .reduce((sum, pi) => {
+                                                                    const sizeMap = new Map<string, number>();
+                                                                    pi.details?.forEach((d: any) => sizeMap.set(d.size_name, d.qty_output || 0));
+                                                                    return sum + Array.from(sizeMap.values()).reduce((s, v) => s + v, 0);
+                                                                }, 0);
+
+                                                            const lineTarget = lots.reduce((sum: number, l: any) => {
+                                                                const smv = Number(l.pivot?.smv || 0);
+                                                                const pMp = Number(l.pivot?.manpower || item.manpower || 0);
+                                                                const pSewer = Number(l.pivot?.sewer || item.sewer || 0);
+                                                                const pWH = Number(l.pivot?.working_hour || item.working_hour || 8);
+                                                                return sum + (smv > 0 ? Math.round(((pMp + pSewer) * pWH * 60) / smv) : 0);
+                                                            }, 0);
+
+                                                            return { name: item.line?.name || '?', target: lineTarget, actual: lineOutput };
+                                                        });
+
+                                                        if (chartData.length === 0) return null;
+
+                                                        const maxQty = Math.max(...chartData.flatMap(d => [d.target, d.actual]), 100) * 1.2;
+                                                        const width = 1000;
+                                                        const height = 400;
+                                                        const padding = 80;
+                                                        const chartW = width - (padding * 2);
+                                                        const chartH = height - (padding * 2);
+
+                                                        const getX = (i: number) => padding + (i / (chartData.length - 1 || 1)) * chartW;
+                                                        const getY = (val: number) => height - padding - (val / maxQty) * chartH;
+
+                                                        return (
+                                                            <>
+                                                                <svg
+                                                                    viewBox={`0 0 ${width} ${height}`}
+                                                                    className="w-full h-full overflow-visible"
+                                                                    onMouseLeave={() => setHoveredNode(null)}
+                                                                >
+                                                                    {/* Grid Lines */}
+                                                                    {[0, 0.25, 0.5, 0.75, 1].map(p => (
+                                                                        <g key={p}>
+                                                                            <line
+                                                                                x1={padding} y1={height - padding - (p * chartH)}
+                                                                                x2={width - padding} y2={height - padding - (p * chartH)}
+                                                                                stroke="#f8f8fa" strokeWidth="1"
+                                                                            />
+                                                                            <text x={padding - 15} y={height - padding - (p * chartH) + 4} textAnchor="end" className="text-[10px] font-black fill-zinc-300 font-mono">
+                                                                                {Math.round(p * maxQty)}
+                                                                            </text>
+                                                                        </g>
+                                                                    ))}
+
+                                                                    {/* Grouped Bars */}
+                                                                    {chartData.map((d, i) => (
+                                                                        <g
+                                                                            key={`group-${i}`}
+                                                                            onMouseEnter={() => {
+                                                                                setHoveredNode({ index: i, x: getX(i), y: getY(Math.max(d.actual, d.target)) });
+                                                                            }}
+                                                                        >
+                                                                            {/* Target Bar - Blue */}
+                                                                            <rect
+                                                                                x={getX(i) - 18}
+                                                                                y={getY(d.target)}
+                                                                                width="16"
+                                                                                height={Math.max(2, height - padding - getY(d.target))}
+                                                                                className={cn(
+                                                                                    "fill-blue-500/90 transition-all duration-300 rounded-sm",
+                                                                                    hoveredNode?.index === i ? "fill-blue-600" : "fill-blue-500/90"
+                                                                                )}
+                                                                            />
+                                                                            {/* Actual Bar - Green */}
+                                                                            <rect
+                                                                                x={getX(i) + 2}
+                                                                                y={getY(d.actual)}
+                                                                                width="16"
+                                                                                height={Math.max(2, height - padding - getY(d.actual))}
+                                                                                className={cn(
+                                                                                    "fill-emerald-500/90 transition-all duration-300 rounded-sm",
+                                                                                    hoveredNode?.index === i ? "fill-emerald-600" : "fill-emerald-500/90"
+                                                                                )}
+                                                                            />
+                                                                            {/* Invisible trigger area - Wider for easier interaction */}
+                                                                            <rect
+                                                                                x={getX(i) - 40}
+                                                                                y={0}
+                                                                                width="80"
+                                                                                height={height}
+                                                                                className="fill-transparent cursor-pointer"
+                                                                            />
+                                                                            {/* X Label */}
+                                                                            <text
+                                                                                x={getX(i)}
+                                                                                y={height - padding + 25}
+                                                                                textAnchor="middle"
+                                                                                className={cn(
+                                                                                    "text-[10px] font-black tracking-tighter uppercase transition-colors",
+                                                                                    hoveredNode?.index === i ? "fill-blue-600" : "fill-zinc-400"
+                                                                                )}
+                                                                            >
+                                                                                {d.name.match(/\d+/)?.[0] || d.name}
+                                                                            </text>
+                                                                        </g>
+                                                                    ))}
+                                                                </svg>
+
+                                                                {/* Hover Card with High-Precision Alignment */}
+                                                                {hoveredNode !== null && (
+                                                                    <div
+                                                                        className="absolute z-50 pointer-events-none"
+                                                                        style={{
+                                                                            left: `${(hoveredNode.x / width) * 100}%`,
+                                                                            top: `${(hoveredNode.y / height) * 100}%`,
+                                                                            transform: 'translate(-50%, -100%)',
+                                                                            marginTop: '-20px'
+                                                                        }}
+                                                                    >
+                                                                        <div className="bg-zinc-900/95 text-white p-4 rounded-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-xl min-w-[200px] animate-in fade-in zoom-in-95 duration-200">
+                                                                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <div className="w-6 h-6 rounded-lg bg-blue-500 flex items-center justify-center font-black text-[10px]">
+                                                                                        {chartData[hoveredNode.index].name.match(/\d+/)?.[0] || 'L'}
+                                                                                    </div>
+                                                                                    <span className="text-[10px] font-black uppercase tracking-widest">{chartData[hoveredNode.index].name}</span>
+                                                                                </div>
+                                                                                <div className="px-2 py-0.5 rounded bg-white/10 text-[8px] font-black uppercase text-zinc-400">
+                                                                                    Details
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="space-y-3">
+                                                                                <div className="flex justify-between items-center bg-white/5 p-2 rounded-xl">
+                                                                                    <div className="flex flex-col">
+                                                                                        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Target Capacity</span>
+                                                                                        <span className="text-sm font-black text-blue-400 mt-1">{chartData[hoveredNode.index].target.toLocaleString()}</span>
+                                                                                    </div>
+                                                                                    <div className="flex flex-col text-right">
+                                                                                        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Actual Flow</span>
+                                                                                        <span className="text-sm font-black text-emerald-400 mt-1">{chartData[hoveredNode.index].actual.toLocaleString()}</span>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                                                        <div
+                                                                                            className={cn(
+                                                                                                "h-full transition-all duration-500",
+                                                                                                (chartData[hoveredNode.index].actual / chartData[hoveredNode.index].target * 100) >= 100 ? "bg-emerald-500" : "bg-blue-500"
+                                                                                            )}
+                                                                                            style={{ width: `${Math.min(100, (chartData[hoveredNode.index].actual / chartData[hoveredNode.index].target * 100))}%` }}
+                                                                                        />
+                                                                                    </div>
+                                                                                    <span className={cn(
+                                                                                        "text-[10px] font-black",
+                                                                                        (chartData[hoveredNode.index].actual / chartData[hoveredNode.index].target * 100) >= 100 ? "text-emerald-400" : "text-blue-400"
+                                                                                    )}>
+                                                                                        {chartData[hoveredNode.index].target > 0 ? Math.round(chartData[hoveredNode.index].actual / chartData[hoveredNode.index].target * 100) : 0}%
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        {/* Precision Arrow Pointer */}
+                                                                        <div className="w-4 h-4 bg-zinc-900 border-r border-b border-white/10 rotate-45 mx-auto -mt-2 shadow-xl"></div>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )
+                                                    })()}
+                                                </div>
+                                                {data.map((item) => {
+                                                    const lots = item.lots && item.lots.length > 0 ? item.lots : [item.lot];
+                                                    const lineOutput = productionData
+                                                        .filter(p => p.line_id === item.line_id)
+                                                        .flatMap(p => p.items)
+                                                        .reduce((sum, pi) => {
+                                                            const sizeMap = new Map<string, number>();
+                                                            pi.details?.forEach((d: any) => sizeMap.set(d.size_name, d.qty_output || 0));
+                                                            return sum + Array.from(sizeMap.values()).reduce((s, v) => s + v, 0);
+                                                        }, 0);
+
+                                                    const lineTarget = lots.reduce((sum: number, l: any) => {
+                                                        const smv = Number(l.pivot?.smv || 0);
+                                                        const pMp = Number(l.pivot?.manpower || item.manpower || 0);
+                                                        const pSewer = Number(l.pivot?.sewer || item.sewer || 0);
+                                                        const pWH = Number(l.pivot?.working_hour || item.working_hour || 8);
+                                                        return sum + (smv > 0 ? Math.round(((pMp + pSewer) * pWH * 60) / smv) : 0);
+                                                    }, 0);
+
+                                                    const achv = lineTarget > 0 ? Math.round((lineOutput / lineTarget) * 100) : 0;
+
+                                                    return (
+                                                        "-"
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
                             )}
                         </tbody>
                     </table>
@@ -455,7 +690,7 @@ export const Productivity = () => {
             </div>
 
             {/* Global Stats Footer */}
-            {activeTab === 'daily' && data.length > 0 && (
+            {data.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white p-4 rounded-xl border border-zinc-100 shadow-sm relative overflow-hidden group">
                         <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-1 relative z-10">Lines</p>
