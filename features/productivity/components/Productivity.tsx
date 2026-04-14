@@ -181,35 +181,35 @@ export const Productivity = () => {
                         <thead>
                             {activeTab === 'daily' ? (
                                 <tr className="bg-zinc-50/50 border-b border-zinc-100">
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Line</th>
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Buyer & Style</th>
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">GL / Lot</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MP (Act/Pln)</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Sewer</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">WH</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">SMV</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Target</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Output</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Achv</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Bal</th>
-                                    <th className="px-6 py-4 text-right text-[8px] font-black text-zinc-400 uppercase tracking-widest">Action</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Line</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">Buyer & Style</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">GL / Lot</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MP (Act/Pln)</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MG</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">WH</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">SMV</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Target</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Output</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Achv</th>
+                                    <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Bal</th>
+                                    <th className="px-3 py-3 text-right text-[8px] font-black text-zinc-400 uppercase tracking-widest">Action</th>
                                 </tr>
                             ) : (
                                 <tr className="bg-zinc-50/50 border-b border-zinc-100">
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[100px]">Line</th>
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[150px]">Buyer & Style</th>
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">GL / Lot</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Plan</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Tgt Plan</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Act</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center bg-zinc-50/50">Tgt Act</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">DO (Output)</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Last Step</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center whitespace-nowrap">Diff L-Step</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center border-l border-zinc-100 whitespace-nowrap">Diff T.Act</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">% T.Act</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center border-l border-zinc-100 whitespace-nowrap">Diff T.Pln</th>
-                                    <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">% T.Pln</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[80px]">Line</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">Buyer & Style</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[110px]">GL / Lot</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Plan</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Tgt Plan</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Act</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center bg-zinc-50/50">Tgt Act</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">DO (Output)</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Last Step</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center whitespace-nowrap">Diff L-Step</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center border-l border-zinc-100 whitespace-nowrap">Diff T.Act</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">% T.Act</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center border-l border-zinc-100 whitespace-nowrap">Diff T.Pln</th>
+                                    <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">% T.Pln</th>
                                 </tr>
                             )}
                         </thead>
@@ -272,70 +272,70 @@ export const Productivity = () => {
                                                 "group hover:bg-zinc-50/50 transition-colors",
                                                 lIdx > 0 ? "border-t border-zinc-50/30" : "border-t border-zinc-100 bg-zinc-50/10"
                                             )}>
-                                                <td className="px-6 py-3">
+                                                <td className="px-3 py-2">
                                                     {lIdx === 0 ? (
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-black text-[10px] shadow-sm">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-black text-[9px] shadow-sm">
                                                                 {item.line?.name.match(/\d+/)?.[0] || 'L'}
                                                             </div>
-                                                            <span className="text-[11px] font-black text-zinc-900 tracking-tight">{item.line?.name}</span>
+                                                            <span className="text-[10px] font-black text-zinc-900 tracking-tight">{item.line?.name}</span>
                                                         </div>
                                                     ) : null}
                                                 </td>
-                                                <td className="px-6 py-3">
+                                                <td className="px-3 py-2">
                                                     <div className="flex flex-col leading-tight">
-                                                        <span className="text-[11px] font-black text-zinc-900 uppercase truncate max-w-[150px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
-                                                        <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[150px]">{l.style_no || 'Unknown Style'}</span>
+                                                        <span className="text-[10px] font-black text-zinc-900 uppercase truncate max-w-[130px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
+                                                        <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[130px]">{l.style_no || 'Unknown Style'}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[11px] font-bold text-zinc-700">{glNumber}</span>
-                                                        <span className="text-[8px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
+                                                <td className="px-3 py-2">
+                                                    <div className="flex flex-col scale-95 origin-left">
+                                                        <span className="text-[10px] font-bold text-zinc-700">{glNumber}</span>
+                                                        <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-bold text-blue-600">
-                                                        {Number(l.pivot?.manpower || (lIdx === 0 ? item.manpower : 0))} <span className="text-zinc-300 mx-0.5 text-[9px]">/</span> <span className="text-zinc-400 font-medium">{Number(l.pivot?.plan_manpower || (lIdx === 0 ? item.plan_manpower : 0))}</span>
+                                                <td className="px-3 py-2 text-center">
+                                                    <span className="text-[10px] font-bold text-blue-600">
+                                                        {Number(l.pivot?.manpower || (lIdx === 0 ? item.manpower : 0))} <span className="text-zinc-300 mx-0.5 text-[8px]">/</span> <span className="text-zinc-400 font-medium">{Number(l.pivot?.plan_manpower || (lIdx === 0 ? item.plan_manpower : 0))}</span>
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-bold text-emerald-600">{Number(l.pivot?.sewer || (lIdx === 0 ? item.sewer : 0))}</span>
+                                                <td className="px-3 py-2 text-center">
+                                                    <span className="text-[10px] font-black text-emerald-600">{Number(l.pivot?.sewer || (lIdx === 0 ? item.sewer : 0))}</span>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-bold text-zinc-500">{Number(l.pivot?.working_hour || (lIdx === 0 ? item.working_hour : 8))}H</span>
+                                                <td className="px-3 py-2 text-center">
+                                                    <span className="text-[10px] font-bold text-zinc-500">{Number(l.pivot?.working_hour || (lIdx === 0 ? item.working_hour : 8))}H</span>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="text-[10px] font-black text-zinc-400">{Number(smv)}</span>
+                                                <td className="px-3 py-2 text-center">
+                                                    <span className="text-[9px] font-black text-zinc-400">{Number(smv)}</span>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-bold text-zinc-800 tabular-nums">{Number(dailyTarget)}</span>
+                                                <td className="px-3 py-2 text-center">
+                                                    <span className="text-[10px] font-bold text-zinc-800 tabular-nums">{Number(dailyTarget)}</span>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-extrabold text-blue-600 tabular-nums">{Number(lineOutput)}</span>
+                                                <td className="px-3 py-2 text-center">
+                                                    <span className="text-[10px] font-extrabold text-blue-600 tabular-nums">{Number(lineOutput)}</span>
                                                 </td>
-                                                <td className="px-6 py-3 text-center">
+                                                <td className="px-3 py-2 text-center">
                                                     <div className={cn(
-                                                        "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-black tracking-widest uppercase",
+                                                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[7px] font-black tracking-widest uppercase",
                                                         achieved >= 100 ? "bg-emerald-100 text-emerald-700" : achieved >= 80 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
                                                     )}>
                                                         {achieved}%
                                                     </div>
                                                 </td>
                                                 <td className={cn(
-                                                    "px-6 py-3 text-center text-[10px] font-bold tabular-nums",
+                                                    "px-3 py-2 text-center text-[9px] font-bold tabular-nums",
                                                     balance > 0 ? "text-zinc-500" : "text-emerald-500"
                                                 )}>
                                                     {balance}
                                                 </td>
-                                                <td className="px-6 py-3 text-right">
+                                                <td className="px-3 py-2 text-right">
                                                     {lIdx === 0 ? (
-                                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1.5 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
-                                                                <Icon icon="solar:pen-bold-duotone" className="w-4 h-4" />
+                                                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
+                                                                <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
                                                             </button>
-                                                            <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg bg-zinc-100 text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90">
-                                                                <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4" />
+                                                            <button onClick={() => handleDelete(item.id)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90">
+                                                                <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
                                                             </button>
                                                         </div>
                                                     ) : null}
@@ -398,47 +398,47 @@ export const Productivity = () => {
                                                 "group hover:bg-zinc-50/50 transition-colors",
                                                 lIdx > 0 ? "border-t border-zinc-50/30" : "border-t border-zinc-100 bg-zinc-50/10"
                                             )}>
-                                                <td className="px-6 py-3">
-                                                    {lIdx === 0 ? <span className="text-[10px] font-black text-zinc-900">{item.line?.name}</span> : null}
+                                                <td className="px-3 py-2">
+                                                    {lIdx === 0 ? <span className="text-[9px] font-black text-zinc-900">{item.line?.name}</span> : null}
                                                 </td>
-                                                <td className="px-6 py-3">
+                                                <td className="px-3 py-2">
                                                     <div className="flex flex-col leading-tight">
-                                                        <span className="text-[10px] font-black text-zinc-900 uppercase truncate max-w-[120px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
-                                                        <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[120px]">{l.style_no || 'Unknown Style'}</span>
+                                                        <span className="text-[9px] font-black text-zinc-900 uppercase truncate max-w-[110px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
+                                                        <span className="text-[7px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[110px]">{l.style_no || 'Unknown Style'}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] font-bold text-zinc-700">{glNumber}</span>
-                                                        <span className="text-[8px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
+                                                <td className="px-3 py-2">
+                                                    <div className="flex flex-col scale-95 origin-left">
+                                                        <span className="text-[9px] font-bold text-zinc-700">{glNumber}</span>
+                                                        <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-zinc-500 tabular-nums">{mpPlan}</td>
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-zinc-500 tabular-nums">{targetPlan}</td>
-                                                <td className="px-4 py-3 text-center text-xs font-black text-blue-600 tabular-nums">{mpActual}</td>
-                                                <td className="px-4 py-3 text-center text-xs font-black text-zinc-900 tabular-nums bg-zinc-50/30">{targetActual}</td>
-                                                <td className="px-4 py-3 text-center text-xs font-black text-emerald-600 tabular-nums">{lineOutput}</td>
-                                                <td className="px-4 py-3 text-center text-xs font-bold text-zinc-500 tabular-nums">{lastStep}</td>
-                                                <td className={cn("px-4 py-3 text-center text-[10px] font-black tabular-nums whitespace-nowrap", diffDoLastStep > 0 ? "text-amber-600" : "text-emerald-600")}>
+                                                <td className="px-2 py-2 text-center text-[10px] font-bold text-zinc-500 tabular-nums">{mpPlan}</td>
+                                                <td className="px-2 py-2 text-center text-[10px] font-bold text-zinc-500 tabular-nums">{targetPlan}</td>
+                                                <td className="px-2 py-2 text-center text-[10px] font-black text-blue-600 tabular-nums">{mpActual}</td>
+                                                <td className="px-2 py-2 text-center text-[10px] font-black text-zinc-900 tabular-nums bg-zinc-50/30">{targetActual}</td>
+                                                <td className="px-2 py-2 text-center text-[10px] font-black text-emerald-600 tabular-nums">{lineOutput}</td>
+                                                <td className="px-2 py-2 text-center text-[10px] font-bold text-zinc-500 tabular-nums">{lastStep}</td>
+                                                <td className={cn("px-2 py-2 text-center text-[9px] font-black tabular-nums whitespace-nowrap", diffDoLastStep > 0 ? "text-amber-600" : "text-emerald-600")}>
                                                     {diffDoLastStep}
                                                 </td>
-                                                <td className={cn("px-4 py-3 text-center text-[10px] font-black tabular-nums border-l border-zinc-50 whitespace-nowrap", diffDoTargetActual >= 0 ? "text-emerald-600" : "text-red-500")}>
+                                                <td className={cn("px-2 py-2 text-center text-[9px] font-black tabular-nums border-l border-zinc-50 whitespace-nowrap", diffDoTargetActual >= 0 ? "text-emerald-600" : "text-red-500")}>
                                                     {diffDoTargetActual > 0 ? `+${diffDoTargetActual}` : diffDoTargetActual}
                                                 </td>
-                                                <td className="px-4 py-3 text-center">
+                                                <td className="px-2 py-2 text-center">
                                                     <span className={cn(
-                                                        "inline-block px-1.5 py-0.5 rounded text-[8px] font-black",
+                                                        "inline-block px-1 py-0.5 rounded text-[7px] font-black",
                                                         pctTargetActual >= 100 ? "bg-emerald-100 text-emerald-700" : "bg-red-50 text-red-500"
                                                     )}>
                                                         {pctTargetActual}%
                                                     </span>
                                                 </td>
-                                                <td className={cn("px-4 py-3 text-center text-[10px] font-black tabular-nums border-l border-zinc-50 whitespace-nowrap", diffDoTargetPlan >= 0 ? "text-emerald-600" : "text-red-500")}>
+                                                <td className={cn("px-2 py-2 text-center text-[9px] font-black tabular-nums border-l border-zinc-50 whitespace-nowrap", diffDoTargetPlan >= 0 ? "text-emerald-600" : "text-red-500")}>
                                                     {diffDoTargetPlan > 0 ? `+${diffDoTargetPlan}` : diffDoTargetPlan}
                                                 </td>
-                                                <td className="px-4 py-3 text-center">
+                                                <td className="px-2 py-2 text-center">
                                                     <span className={cn(
-                                                        "inline-block px-1.5 py-0.5 rounded text-[8px] font-black",
+                                                        "inline-block px-1 py-0.5 rounded text-[7px] font-black",
                                                         pctTargetPlan >= 100 ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"
                                                     )}>
                                                         {pctTargetPlan}%
