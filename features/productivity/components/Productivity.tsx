@@ -28,16 +28,43 @@ export const Productivity = () => {
             ]);
 
             if (prodRes.status === 'success') {
-                const sortedData = [...prodRes.data].sort((a: any, b: any) =>
+                // Group by line to prevent duplicates (A1 Double)
+                const grouped = prodRes.data.reduce((acc: Record<string, any>, item: any) => {
+                    const lId = String(item.line_id); // Force string for object key
+                    if (!acc[lId]) {
+                        acc[lId] = {
+                            ...item,
+                            lots: item.lots && item.lots.length > 0 ? [...item.lots] : (item.lot ? [item.lot] : [])
+                        };
+                    } else {
+                        // Merge lots
+                        const existingLotIds = acc[lId].lots.map((l: any) => String(l.id));
+                        const itemLots = item.lots && item.lots.length > 0 ? item.lots : (item.lot ? [item.lot] : []);
+
+                        itemLots.forEach((l: any) => {
+                            const lotId = String(l.id);
+                            if (!existingLotIds.includes(lotId)) {
+                                acc[lId].lots.push(l);
+                            }
+                        });
+
+                        // Also merge manpower metrics to the record if we have them
+                        acc[lId].manpower = Number(acc[lId].manpower || 0) + Number(item.manpower || 0);
+                        acc[lId].plan_manpower = Number(acc[lId].plan_manpower || 0) + Number(item.plan_manpower || 0);
+                        acc[lId].sewer = Number(acc[lId].sewer || 0) + Number(item.sewer || 0);
+                    }
+                    return acc;
+                }, {});
+
+                const sortedData = Object.values(grouped).sort((a: any, b: any) =>
                     (a.line?.name || '').localeCompare(b.line?.name || '', undefined, { numeric: true, sensitivity: 'base' })
                 );
                 setData(sortedData);
 
-                // Fetch cumulative summaries for all lots in the data
-                const lotIds = Array.from(new Set(prodRes.data.flatMap((item: any) => {
-                    const lots = item.lots && item.lots.length > 0 ? item.lots : [item.lot];
-                    return lots.map((l: any) => l?.id).filter(Boolean);
-                }))) as string[];
+                // Fetch cumulative summaries for all lots
+                const lotIds = Array.from(new Set(sortedData.flatMap((item: any) =>
+                    item.lots?.map((l: any) => l?.id).filter(Boolean)
+                ))) as string[];
 
                 if (lotIds.length > 0) {
                     const cumulativeRes = await ProductionService.getBulkSummary(lotIds);
@@ -80,14 +107,14 @@ export const Productivity = () => {
             gl: l.gl_group?.gl_number || 'N/A',
             lot_id: l.id,
             lot_code: (l.lot_code || '').replace(/^0+/, ''),
-            target: l.pivot?.target_plan || item.target_plan || 0,
-            smv: l.pivot?.smv || item.smv || 0,
-            step: l.pivot?.last_step || item.last_step || 0,
-            plan_mp: item.plan_manpower,
-            actual_mp: item.manpower,
-            sewer: item.sewer,
-            hours: item.working_hour,
-            total_order: l.gmt_qty || 0
+            target: Number(l.pivot?.target_plan || 0),
+            smv: Number(l.pivot?.smv || 0),
+            step: Number(l.pivot?.last_step || 0),
+            plan_mp: Number(l.pivot?.plan_manpower || item.plan_manpower || 0),
+            actual_mp: (Number(l.pivot?.manpower || 0) + Number(l.pivot?.sewer || 0)) || (Number(item.manpower || 0) + Number(item.sewer || 0)) || 0,
+            sewer: Number(l.pivot?.sewer || item.sewer || 0),
+            hours: Number(l.pivot?.working_hour || item.working_hour || 8),
+            total_order: Number(l.gmt_qty || 0)
         }));
     });
 
@@ -228,10 +255,14 @@ export const Productivity = () => {
                                         // Calculate total production output for this specific style ACROSS ALL TIME (Cumulative)
                                         const cumulativeOutput = Number(cumulativeSummaries[l.id]?.total_output || 0);
 
-                                        const smv = l.pivot?.smv || item.smv || 0;
-                                        const dailyTarget = smv > 0 ? Math.round(((item.manpower + item.sewer) * 8 * 60) / smv) : 0;
+                                        const smv = Number(l.pivot?.smv || 0);
+                                        const pMp = Number(l.pivot?.manpower || item.manpower || 0);
+                                        const pSewer = Number(l.pivot?.sewer || item.sewer || 0);
+                                        const pWH = Number(l.pivot?.working_hour || item.working_hour || 8);
+
+                                        const dailyTarget = smv > 0 ? Math.round(((pMp + pSewer) * pWH * 60) / smv) : 0;
                                         const achieved = dailyTarget > 0 ? Math.round((lineOutput / dailyTarget) * 100) : 0;
-                                        const miOrder = l.gmt_qty || 0;
+                                        const miOrder = Number(l.gmt_qty || 0);
                                         const balance = miOrder - cumulativeOutput;
                                         const lotCode = (l.lot_code || '').replace(/^0+/, '');
                                         const glNumber = l.gl_group?.gl_number || 'N/A';
@@ -264,26 +295,24 @@ export const Productivity = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    {lIdx === 0 ? (
-                                                        <span className="text-xs font-bold text-blue-600">
-                                                            {item.manpower} <span className="text-zinc-300 mx-0.5 text-[9px]">/</span> <span className="text-zinc-400 font-medium">{item.plan_manpower || 0}</span>
-                                                        </span>
-                                                    ) : null}
+                                                    <span className="text-xs font-bold text-blue-600">
+                                                        {Number(l.pivot?.manpower || (lIdx === 0 ? item.manpower : 0))} <span className="text-zinc-300 mx-0.5 text-[9px]">/</span> <span className="text-zinc-400 font-medium">{Number(l.pivot?.plan_manpower || (lIdx === 0 ? item.plan_manpower : 0))}</span>
+                                                    </span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    {lIdx === 0 ? <span className="text-xs font-bold text-emerald-600">{item.sewer}</span> : null}
+                                                    <span className="text-xs font-bold text-emerald-600">{Number(l.pivot?.sewer || (lIdx === 0 ? item.sewer : 0))}</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    {lIdx === 0 ? <span className="text-xs font-bold text-zinc-500">{item.working_hour}H</span> : null}
+                                                    <span className="text-xs font-bold text-zinc-500">{Number(l.pivot?.working_hour || (lIdx === 0 ? item.working_hour : 8))}H</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    <span className="text-[10px] font-black text-zinc-400">{smv}</span>
+                                                    <span className="text-[10px] font-black text-zinc-400">{Number(smv)}</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-bold text-zinc-800 tabular-nums">{dailyTarget}</span>
+                                                    <span className="text-xs font-bold text-zinc-800 tabular-nums">{Number(dailyTarget)}</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    <span className="text-xs font-extrabold text-blue-600 tabular-nums">{lineOutput}</span>
+                                                    <span className="text-xs font-extrabold text-blue-600 tabular-nums">{Number(lineOutput)}</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     <div className={cn(
@@ -316,7 +345,7 @@ export const Productivity = () => {
                                     });
                                 })
                             ) : (
-                                data.flatMap((item: any) => {
+                                data.map((item: any) => {
                                     const lots = item.lots && item.lots.length > 0 ? item.lots : [item.lot];
 
                                     return lots.map((l: any, lIdx: number) => {
@@ -334,27 +363,29 @@ export const Productivity = () => {
                                             }, 0);
 
                                         // Variables
-                                        const mpPlan = item.plan_manpower || 0;
-                                        const targetPlan = l.pivot?.target_plan || 0;
-                                        const mpActual = item.manpower + item.sewer;
+                                        const mpPlan = Number(l.pivot?.plan_manpower || item.plan_manpower || 0);
+                                        const targetPlan = Number(l.pivot?.target_plan || 0);
+                                        const mpActual = (Number(l.pivot?.manpower || 0) + Number(l.pivot?.sewer || 0)) || (Number(item.manpower || 0) + Number(item.sewer || 0)) || 0;
+                                        const workingHour = Number(l.pivot?.working_hour || item.working_hour || 8);
 
                                         // 6. Target Actual ((Target Plan / MP plan) * MP actual))
-                                        const targetActual = mpPlan > 0 ? Math.round((targetPlan / mpPlan) * mpActual) : 0;
+                                        const smv = Number(l.pivot?.smv || 0);
+                                        const targetActual = smv > 0 ? Math.round((mpActual * workingHour * 60) / smv) : (mpPlan > 0 ? Math.round((targetPlan / mpPlan) * mpActual) : 0);
 
                                         // 9. Last Step
                                         const lastStep = Number(l.pivot?.last_step || 0);
 
                                         // 10. DIFF DO VS Last Step (last step - DO)
-                                        const diffDoLastStep = lastStep - lineOutput;
+                                        const diffDoLastStep = Number(lastStep - lineOutput);
 
                                         // 11. DIFF DO vs Target Actual (DO - target actual)
-                                        const diffDoTargetActual = lineOutput - targetActual;
+                                        const diffDoTargetActual = Number(lineOutput - targetActual);
 
                                         // 12. Percentage (DO / target actual * 100%)
                                         const pctTargetActual = targetActual > 0 ? Math.round((lineOutput / targetActual) * 100) : 0;
 
                                         // 13. DIFF DO vs Target Plan (DO - target plan)
-                                        const diffDoTargetPlan = lineOutput - targetPlan;
+                                        const diffDoTargetPlan = Number(lineOutput - targetPlan);
 
                                         // 14. Percentage (DO / target plan * 100%)
                                         const pctTargetPlan = targetPlan > 0 ? Math.round((lineOutput / targetPlan) * 100) : 0;
@@ -363,9 +394,12 @@ export const Productivity = () => {
                                         const lotCode = (l.lot_code || '').replace(/^0+/, '');
 
                                         return (
-                                            <tr key={`${item.id}-${l.id}-report`} className="group hover:bg-zinc-50/50 transition-colors border-t border-zinc-100">
+                                            <tr key={`${item.id}-${l.id}-report`} className={cn(
+                                                "group hover:bg-zinc-50/50 transition-colors",
+                                                lIdx > 0 ? "border-t border-zinc-50/30" : "border-t border-zinc-100 bg-zinc-50/10"
+                                            )}>
                                                 <td className="px-6 py-3">
-                                                    <span className="text-[10px] font-black text-zinc-900">{item.line?.name}</span>
+                                                    {lIdx === 0 ? <span className="text-[10px] font-black text-zinc-900">{item.line?.name}</span> : null}
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <div className="flex flex-col leading-tight">
@@ -428,13 +462,31 @@ export const Productivity = () => {
                         <p className="text-xl font-black text-zinc-900 relative z-10">{data.length}</p>
                     </div>
                     <div className="bg-white p-4 rounded-xl border border-zinc-100 shadow-sm relative overflow-hidden group">
-                        <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-1 relative z-10">Actual MP</p>
-                        <p className="text-xl font-black text-emerald-600 relative z-10">{data.reduce((sum, i) => sum + i.manpower, 0)}</p>
+                        <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-1 relative z-10">Actual Total MP</p>
+                        <p className="text-xl font-black text-emerald-600 relative z-10">
+                            {Math.round(data.reduce((sum, item) => {
+                                const lineStyleMp = item.lots?.reduce((s: number, l: any) => s + Number(l.pivot?.manpower || 0), 0) || 0;
+                                // If no pivot metrics, use the legacy top-level manpower (now also sum of records)
+                                return sum + (lineStyleMp > 0 ? lineStyleMp : Number(item.manpower || 0));
+                            }, 0))}
+                        </p>
                     </div>
                     <div className="bg-zinc-900 p-4 rounded-xl col-span-2 flex items-center justify-between text-white relative overflow-hidden">
                         <div className="relative z-10">
                             <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-1">Health Signal</p>
-                            <p className="text-xs font-bold text-white/90">MP Utilization: {Math.round((data.reduce((s, i) => s + i.manpower, 0) / (data.reduce((s, i) => s + (i.plan_manpower || 1), 0) || 1)) * 100)}%</p>
+                            <p className="text-xs font-bold text-white/90">
+                                MP Utilization: {(() => {
+                                    const totalAct = data.reduce((sum, item) => {
+                                        const mp = item.lots?.reduce((s: number, l: any) => s + Number(l.pivot?.manpower || 0), 0) || 0;
+                                        return sum + (mp > 0 ? mp : Number(item.manpower || 0));
+                                    }, 0);
+                                    const totalPln = data.reduce((sum, item) => {
+                                        const mp = item.lots?.reduce((s: number, l: any) => s + Number(l.pivot?.plan_manpower || 0), 0) || 0;
+                                        return sum + (mp > 0 ? mp : Number(item.plan_manpower || 1));
+                                    }, 0);
+                                    return totalPln > 0 ? Math.round((totalAct / totalPln) * 100) : 0;
+                                })()}%
+                            </p>
                         </div>
                         <Icon icon="solar:shield-check-bold-duotone" className="w-8 h-8 text-emerald-400 relative z-10" />
                     </div>
