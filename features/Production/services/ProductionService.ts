@@ -14,6 +14,18 @@ export class ProductionService {
         }
     }
 
+    static async getDashboardStats(range: number = 7) {
+        try {
+            const response = await fetch(`${this.baseUrl}/${this.resource}/dashboard?range=${range}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            throw error;
+        }
+    }
+
     static async getSummary(lotId: string, color: string) {
         try {
             const response = await fetch(`${this.baseUrl}/${this.resource}/summary?lot_id=${lotId}&color=${encodeURIComponent(color)}`, {
