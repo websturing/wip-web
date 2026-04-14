@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/app/components/ui/Button';
+import { ConfirmationDialog } from '@/app/components/ui/ConfirmationDialog';
 import { DatePicker } from '@/app/components/ui/DatePicker';
 import {
     Dialog,
@@ -540,6 +541,17 @@ export const Production = () => {
                         </DialogContent>
                     </DialogPortal>
                 </Dialog>
+
+                <ConfirmationDialog
+                    open={confirmDelete.open}
+                    onOpenChange={(open) => setConfirmDelete(prev => ({ ...prev, open }))}
+                    title="Permanent Delete Confirmation?"
+                    description="Warning: This action will permanently remove this record from the database. This process is irreversible and all associated data will be lost."
+                    confirmLabel="Confirm Deletion"
+                    variant="destructive"
+                    onConfirm={handleDelete}
+                    isLoading={confirmDelete.loading}
+                />
 
                 <style jsx>{`
                 .no-scrollbar::-webkit-scrollbar { display: none; }

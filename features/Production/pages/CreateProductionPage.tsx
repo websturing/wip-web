@@ -34,6 +34,7 @@ function CreateProductionForm({ id }: { id?: string }) {
     const [lines, setLines] = useState<any[]>([]);
     const [lots, setLots] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(isEdit);
     const [toast, setToast] = useState<{ open: boolean; title: string, message: string; variant?: 'success' | 'destructive' }>({
         open: false,
         title: '',
@@ -105,14 +106,14 @@ function CreateProductionForm({ id }: { id?: string }) {
 
                     // Map items to form structure
                     const mappedItems = p.items.map((item: any) => ({
-                        id: item.id, // Keep ID for potential server-side mapping
-                        lot_id: String(item.lot_id),
+                        id: item.id,
+                        lot_id: item.lot_id,
                         color: item.color,
                         sizes: item.details.map((d: any) => ({
                             size_name: d.size_name,
                             qty_input: d.qty_input,
                             qty_output: d.qty_output,
-                            order_mi: 0, // Will be hydrated when lot is fetched
+                            order_mi: 0,
                             cut_qty: 0,
                             recorded_input: 0,
                             recorded_output: 0
@@ -121,22 +122,72 @@ function CreateProductionForm({ id }: { id?: string }) {
 
                     setFormData({
                         production_date: p.production_date,
-                        line_id: String(p.line_id),
+                        line_id: p.line_id,
                         entry_mode: p.items[0]?.details.length === 1 && p.items[0]?.details[0].size_name === 'TOTAL' ? 'output' : 'per-size',
                         remarks: p.remarks || '',
                         items: mappedItems
                     });
 
-                    // Trigger hydration for each item
-                    mappedItems.forEach((item: any, idx: number) => {
-                        fetchLotDetails(item.lot_id, idx);
+                    // Trigger hydration for each item AFTER lots are set
+                    const currentLots = lotsRes?.status === 'success' ? lotsRes.data.map((l: any) => ({
+                        id: l.id,
+                        label: (l.lot_code || '').replace(/^0+/, ''),
+                        lot_code: l.lot_code || ''
+                    })) : [];
+
+                    mappedItems.forEach(async (item: any, idx: number) => {
+                        fetchLotDetailsWithLots(item.lot_id, idx, currentLots);
                     });
                 }
             }
+            setIsFetching(false);
         };
 
         init();
     }, [id]);
+
+    const fetchLotDetailsWithLots = async (lotId: string, itemIdx: number, availableLots: any[]) => {
+        const lot = availableLots.find(l => String(l.id) === String(lotId));
+        if (!lot) return;
+
+        try {
+            const resp = await fetch(`http://cutting.glaindonesia.lan/api/summary-by-gl?gl_number=${lot.lot_code.replace(/^0+/, '')}`);
+            const json = await resp.json();
+
+            if (json.status === 200 && json.data.summary_by_color) {
+                const bodyColors = json.data.summary_by_color.filter((c: any) =>
+                    String(c.type || '').toLowerCase() === 'body'
+                );
+
+                setLotDetails(prev => ({ ...prev, [itemIdx]: bodyColors }));
+
+                // If in Edit mode, we don't want to overwrite the color and sizes with defaults
+                // but we DO want to hydrate the order_mi and cut_qty
+                if (id) {
+                    const colorData = bodyColors.find((c: any) => c.color === formData.items[itemIdx]?.color);
+                    if (colorData) {
+                        setFormData(prev => {
+                            const newItems = [...prev.items];
+                            newItems[itemIdx].sizes = newItems[itemIdx].sizes.map(s => {
+                                const bd = colorData.size_breakdown.find((sz: any) => sz.size === s.size_name);
+                                return {
+                                    ...s,
+                                    order_mi: bd ? parseInt(bd.total_order || bd.order_qty) || 0 : s.order_mi,
+                                    cut_qty: bd ? parseInt(bd.cut_qty) || 0 : s.cut_qty
+                                };
+                            });
+                            return { ...prev, items: newItems };
+                        });
+                    }
+                } else if (bodyColors.length === 1) {
+                    const colorData = bodyColors[0];
+                    updateItemColor(itemIdx, colorData.color, colorData.size_breakdown);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch cutting details:', error);
+        }
+    };
 
     const fetchLotDetails = async (lotId: string, itemIdx: number) => {
         const lot = lots.find(l => String(l.id) === String(lotId));
@@ -292,7 +343,21 @@ function CreateProductionForm({ id }: { id?: string }) {
     }, 0);
 
     return (
-        <div className="animate-in fade-in duration-700">
+        <div className="animate-in fade-in duration-700 relative min-h-screen">
+            {isFetching && (
+                <div className="fixed inset-0 z-[200] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-zinc-100 rounded-full"></div>
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-zinc-900 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="absolute -inset-4 border border-zinc-100 rounded-[2rem] animate-pulse"></div>
+                    </div>
+                    <div className="text-center space-y-1">
+                        <h4 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-900">Retrieving Records</h4>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic opacity-60">Synchronizing with production core...</p>
+                    </div>
+                </div>
+            )}
+
             <PageHeader
                 items={breadcrumbItems}
                 title={isEdit ? "Update Production Log" : "Create Production Log"}
