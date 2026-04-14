@@ -28,7 +28,10 @@ export const Productivity = () => {
             ]);
 
             if (prodRes.status === 'success') {
-                setData(prodRes.data);
+                const sortedData = [...prodRes.data].sort((a: any, b: any) =>
+                    (a.line?.name || '').localeCompare(b.line?.name || '', undefined, { numeric: true, sensitivity: 'base' })
+                );
+                setData(sortedData);
 
                 // Fetch cumulative summaries for all lots in the data
                 const lotIds = Array.from(new Set(prodRes.data.flatMap((item: any) => {
@@ -152,9 +155,12 @@ export const Productivity = () => {
                             {activeTab === 'daily' ? (
                                 <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                     <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Line</th>
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">GL / Style</th>
-                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MP</th>
+                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Buyer & Style</th>
+                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">GL / Lot</th>
+                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MP (Act/Pln)</th>
                                     <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Sewer</th>
+                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">WH</th>
+                                    <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">SMV</th>
                                     <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Target</th>
                                     <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Output</th>
                                     <th className="px-6 py-4 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">Achv</th>
@@ -164,7 +170,8 @@ export const Productivity = () => {
                             ) : (
                                 <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                     <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[100px]">Line</th>
-                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">GL / Style</th>
+                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[150px]">Buyer & Style</th>
+                                    <th className="px-6 py-4 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">GL / Lot</th>
                                     <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Plan</th>
                                     <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Tgt Plan</th>
                                     <th className="px-4 py-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Act</th>
@@ -182,17 +189,17 @@ export const Productivity = () => {
                         <tbody className="divide-y divide-zinc-50">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={activeTab === 'daily' ? 6 : 7} className="py-40 text-center">
-                                        <div className="flex flex-col items-center gap-4">
+                                    <td colSpan={20} className="py-40 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-4 w-full">
                                             <div className="w-10 h-10 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin"></div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-300">Synchronizing...</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-300">Synchronizing Intelligence...</span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={activeTab === 'daily' ? 6 : 7} className="py-40 text-center">
-                                        <div className="flex flex-col items-center gap-3 opacity-10">
+                                    <td colSpan={20} className="py-40 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-3 opacity-10 w-full">
                                             <Icon icon="solar:box-minimalistic-bold-duotone" className="w-16 h-16" />
                                             <p className="text-[10px] font-black uppercase tracking-widest">No Intelligence Data Available</p>
                                         </div>
@@ -245,16 +252,32 @@ export const Productivity = () => {
                                                     ) : null}
                                                 </td>
                                                 <td className="px-6 py-3">
+                                                    <div className="flex flex-col leading-tight">
+                                                        <span className="text-[11px] font-black text-zinc-900 uppercase truncate max-w-[150px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
+                                                        <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[150px]">{l.style_no || 'Unknown Style'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-3">
                                                     <div className="flex flex-col">
                                                         <span className="text-[11px] font-bold text-zinc-700">{glNumber}</span>
                                                         <span className="text-[8px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
-                                                    {lIdx === 0 ? <span className="text-xs font-bold text-blue-600">{item.manpower}</span> : null}
+                                                    {lIdx === 0 ? (
+                                                        <span className="text-xs font-bold text-blue-600">
+                                                            {item.manpower} <span className="text-zinc-300 mx-0.5 text-[9px]">/</span> <span className="text-zinc-400 font-medium">{item.plan_manpower || 0}</span>
+                                                        </span>
+                                                    ) : null}
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     {lIdx === 0 ? <span className="text-xs font-bold text-emerald-600">{item.sewer}</span> : null}
+                                                </td>
+                                                <td className="px-6 py-3 text-center">
+                                                    {lIdx === 0 ? <span className="text-xs font-bold text-zinc-500">{item.working_hour}H</span> : null}
+                                                </td>
+                                                <td className="px-6 py-3 text-center">
+                                                    <span className="text-[10px] font-black text-zinc-400">{smv}</span>
                                                 </td>
                                                 <td className="px-6 py-3 text-center">
                                                     <span className="text-xs font-bold text-zinc-800 tabular-nums">{dailyTarget}</span>
@@ -345,8 +368,14 @@ export const Productivity = () => {
                                                     <span className="text-[10px] font-black text-zinc-900">{item.line?.name}</span>
                                                 </td>
                                                 <td className="px-6 py-3">
+                                                    <div className="flex flex-col leading-tight">
+                                                        <span className="text-[10px] font-black text-zinc-900 uppercase truncate max-w-[120px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
+                                                        <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[120px]">{l.style_no || 'Unknown Style'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-3">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[11px] font-bold text-zinc-700">{glNumber}</span>
+                                                        <span className="text-[10px] font-bold text-zinc-700">{glNumber}</span>
                                                         <span className="text-[8px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
                                                     </div>
                                                 </td>

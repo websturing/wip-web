@@ -93,6 +93,8 @@ export const Production = () => {
                     glNo,
                     lotCode,
                     lotClean,
+                    customerName: item.lot?.gl_group?.customer?.name || 'Unknown Buyer',
+                    styleNo: item.lot?.style_no || 'Unknown Style',
                     qty_in: item.details.reduce((sum: number, d: any) => sum + d.qty_input, 0),
                     qty_out: item.details.reduce((sum: number, d: any) => sum + d.qty_output, 0),
                     color: item.color,
@@ -303,12 +305,19 @@ export const Production = () => {
                                                             <div className="bg-zinc-900 px-2.5 py-1 rounded-md text-[9px] font-black text-white">
                                                                 {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </div>
-                                                            <div className="bg-blue-600 px-2.5 py-1 rounded-md text-[9px] font-black text-white uppercase italic">
-                                                                {p.line?.name}
+                                                            <div className="flex flex-col leading-none">
+                                                                <span className="text-[10px] font-black text-zinc-900 uppercase tracking-tight">{p.customerName}</span>
+                                                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-tighter">{p.styleNo}</span>
                                                             </div>
                                                         </div>
-                                                        <div className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50">
-                                                            <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="bg-zinc-800 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">GL {p.glNo}</span>
+                                                                <span className="bg-zinc-100 text-zinc-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-zinc-200">LOT {p.lotClean}</span>
+                                                            </div>
+                                                            <div className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50">
+                                                                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-6">
@@ -344,8 +353,9 @@ export const Production = () => {
                                 <thead>
                                     <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                         <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Production Line</th>
-                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Status</th>
-                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Lots & Colors</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Log</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none w-48">Buyer & Style</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">GL / Lot / Color</th>
                                         <th className="px-4 py-4 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Total Qty</th>
                                         <th className="px-4 py-4 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">View</th>
                                     </tr>
@@ -374,18 +384,34 @@ export const Production = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-6">
+                                                    <div className="flex flex-col gap-1.5">
+                                                        {Array.from(new Set(data.entries.map((e: any) => `${e.customerName}|${e.styleNo}`))).map((cs: any, i: number) => {
+                                                            const [cust, style] = cs.split('|');
+                                                            return (
+                                                                <div key={i} className="flex flex-col leading-tight">
+                                                                    <span className="text-zinc-900 font-black text-[11px] uppercase truncate max-w-[180px]">{cust}</span>
+                                                                    <span className="text-zinc-400 font-bold text-[9px] uppercase tracking-wider truncate max-w-[180px]">{style}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-6">
                                                     <div className="flex flex-col gap-2">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}`))).map((glLot: any, i: number) => {
+                                                                const [gl, lot] = glLot.split('|');
+                                                                return (
+                                                                    <span key={i} className="bg-zinc-900 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm uppercase tracking-widest">
+                                                                        GL: {gl} <span className="text-blue-400 ml-1">LOT {lot}</span>
+                                                                    </span>
+                                                                );
+                                                            })}
+                                                        </div>
                                                         <div className="flex flex-wrap gap-1">
                                                             {allColors.map((c: any, i: number) => (
                                                                 <span key={i} className="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded border border-blue-100 uppercase tracking-widest">
                                                                     {c}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {Array.from(new Set(data.entries.map((e: any) => e.glNo))).map((gl: any, i: number) => (
-                                                                <span key={i} className="bg-zinc-100 text-zinc-500 text-[9px] font-black px-2 py-0.5 rounded border border-zinc-200 uppercase tracking-widest">
-                                                                    GL: {gl}
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -457,8 +483,12 @@ export const Production = () => {
                                                                 {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-black text-zinc-900 uppercase tracking-tight leading-none mb-1.5">GL: {p.glNo}</p>
+                                                                <div className="flex flex-col mb-1.5">
+                                                                    <span className="text-[11px] font-black text-zinc-900 uppercase tracking-tight leading-tight">{p.customerName}</span>
+                                                                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{p.styleNo}</span>
+                                                                </div>
                                                                 <div className="flex items-center gap-2">
+                                                                    <span className="text-[9px] font-black bg-zinc-900 text-white px-1.5 py-0.5 rounded shadow-sm">GL {p.glNo}</span>
                                                                     <span className="text-[9px] font-black bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded">LOT {p.lotClean}</span>
                                                                     {p.remarks && (
                                                                         <span className="text-[9px] font-bold text-orange-500 italic truncate max-w-[150px]">"{p.remarks}"</span>
