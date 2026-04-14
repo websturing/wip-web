@@ -136,7 +136,7 @@ export const Productivity = () => {
                     <DatePicker
                         value={date}
                         onChange={(val) => setDate(val)}
-                        className="w-[180px]"
+                        className="w-[200px]"
                     />
 
                     <div className="h-4 w-[1px] bg-zinc-200 mx-1"></div>
@@ -171,7 +171,7 @@ export const Productivity = () => {
                     )}
                 >
                     <Icon icon="solar:target-bold-duotone" className="w-3.5 h-3.5" />
-                    Style Report
+                    Target Output
                 </button>
             </div>
 

@@ -243,7 +243,7 @@ export const Production = () => {
                             className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl px-6 h-10 flex items-center gap-2 transition-all shadow-md active:scale-95 text-xs font-bold"
                         >
                             <Icon icon="solar:add-circle-bold" className="w-4 h-4" />
-                            <span>Create Production</span>
+                            <span>New Entry</span>
                         </Button>
                     </div>
                 </div>
