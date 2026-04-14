@@ -105,53 +105,53 @@ export default function WipReportTable() {
                     <table className="w-full border-collapse text-zinc-900 border-[1px] border-zinc-400">
                         <thead>
                             {/* ROW 1 HEADERS */}
-                            <tr className="bg-white text-[#002060] font-bold h-7">
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">GL #</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Buyer/Customer</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Brand</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400 px-2">Style No</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Product Type</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400 bg-[#ffff00]">Ex Fty Date</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">FACTORY</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">GMT Delivery</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Ord (DZ)</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Ord (Pcs)</th>
+                            <tr className="bg-white text-[#002060] font-bold h-8">
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">GL #</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Buyer/Customer</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Brand</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400 px-2">Style No</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Product Type</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400 bg-[#ffff00]">Ex Fty Date</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">FACTORY</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">GMT Delivery</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Ord (DZ)</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Ord (Pcs)</th>
 
-                                <th colSpan={3} className="px-0.5 text-center text-[7px] border border-zinc-400 bg-[#92d050]">CUTTING</th>
-                                <th colSpan={3} className="px-0.5 text-center text-[7px] border border-zinc-400 bg-[#00b0f0] text-white">SEWING</th>
-                                <th colSpan={3} className="px-0.5 text-center text-[7px] border border-zinc-400 bg-[#ffccff]">PACKING</th>
+                                <th colSpan={3} className="px-1 text-center text-[9px] border border-zinc-400 bg-[#92d050]">CUTTING</th>
+                                <th colSpan={3} className="px-1 text-center text-[9px] border border-zinc-400 bg-[#00b0f0] text-white">SEWING</th>
+                                <th colSpan={3} className="px-1 text-center text-[9px] border border-zinc-400 bg-[#ffccff]">PACKING</th>
 
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Exp QTY</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Remarks</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Exp QTY</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Remarks</th>
                             </tr>
 
                             {/* ROW 2 HEADERS */}
-                            <tr className="bg-[#95b3d7] text-[#002060] font-bold h-6">
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400 sticky left-0 bg-[#95b3d7] z-10">GL+LOT#</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Buyer</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Brand</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Style</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Type</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400 bg-[#ffff00]">Date</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">FTY</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">GMT</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">DZ</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">PCS</th>
+                            <tr className="bg-[#95b3d7] text-[#002060] font-bold h-7">
+                                <th className="px-1 text-center text-[9px] border border-zinc-400 sticky left-0 bg-[#95b3d7] z-10">GL+LOT#</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Buyer</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Brand</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Style</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Type</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400 bg-[#ffff00]">Date</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">FTY</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">GMT</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">DZ</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">PCS</th>
 
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#92d050]">CUTTING</th>
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#92d050]">Bal-Ord</th>
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#92d050]">ACCUM</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#92d050]">CUTTING</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#92d050]">Bal-Ord</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#92d050]">ACCUM</th>
 
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#00b0f0] text-white">SEWING</th>
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#00b0f0] text-white">Ord-Sew</th>
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#00b0f0] text-white">Cut-Sew</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#00b0f0] text-white">SEWING</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#00b0f0] text-white">Ord-Sew</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#00b0f0] text-white">Cut-Sew</th>
 
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#ffccff]">PACKING</th>
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#ffccff]">Ord-Pack</th>
-                                <th className="px-0.5 text-center text-[6.5px] border border-zinc-400 bg-[#ffccff]">Sew-Pack</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#ffccff]">PACKING</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#ffccff]">Ord-Pack</th>
+                                <th className="px-1 text-center text-[8px] border border-zinc-400 bg-[#ffccff]">Sew-Pack</th>
 
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Exp</th>
-                                <th className="px-0.5 text-center text-[7px] border border-zinc-400">Remarks</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Exp</th>
+                                <th className="px-1 text-center text-[9px] border border-zinc-400">Remarks</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -174,17 +174,17 @@ export default function WipReportTable() {
                                     const order = row.order_qty_pcs || 0;
 
                                     return (
-                                        <tr key={idx} className="hover:bg-zinc-50 transition-colors h-7">
-                                            <td className="px-0.5 text-[8px] font-bold text-blue-700 border border-zinc-400 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)] truncate max-w-[70px]">{row.gl_lot}</td>
-                                            <td className="px-0.5 text-[7px] font-medium text-[#002060] border border-zinc-400 truncate max-w-[80px]">{row.customer}</td>
-                                            <td className="px-0.5 text-[7px] font-medium text-[#002060] border border-zinc-400 truncate max-w-[60px]">{row.brand}</td>
-                                            <td className="px-0.5 text-[8px] font-medium text-blue-700 border border-zinc-400 truncate max-w-[80px]">{row.style_no}</td>
-                                            <td className="px-0.5 text-[7px] font-medium text-[#002060] border border-zinc-400 truncate max-w-[70px] text-center">-</td>
-                                            <td className="px-0.5 text-[7px] font-medium text-[#002060] border border-zinc-400 bg-zinc-50 text-center">{row.ex_fty_date}</td>
-                                            <td className="px-0.5 text-[7px] font-medium text-[#002060] border border-zinc-400 text-center">{row.fty || "B"}</td>
-                                            <td className="px-0.5 text-[7px] font-medium text-[#002060] border border-zinc-400 text-center uppercase">{row.gmt_delivery_date}</td>
-                                            <td className="px-0.5 text-[9px] font-bold text-[#002060] border border-zinc-400 text-center">{Math.round(order / 12)}</td>
-                                            <td className="px-0.5 text-[9px] font-bold text-[#002060] border border-zinc-400 text-center">{formatNum(order)}</td>
+                                        <tr key={idx} className="hover:bg-zinc-50 transition-colors h-8">
+                                            <td className="px-1 text-[10px] font-bold text-blue-700 border border-zinc-400 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)] truncate max-w-[90px]">{row.gl_lot}</td>
+                                            <td className="px-1 text-[9px] font-medium text-[#002060] border border-zinc-400 truncate max-w-[100px]">{row.customer}</td>
+                                            <td className="px-1 text-[9px] font-medium text-[#002060] border border-zinc-400 truncate max-w-[80px]">{row.brand}</td>
+                                            <td className="px-1 text-[10px] font-medium text-blue-700 border border-zinc-400 truncate max-w-[100px]">{row.style_no}</td>
+                                            <td className="px-1 text-[9px] font-medium text-[#002060] border border-zinc-400 truncate max-w-[70px] text-center">-</td>
+                                            <td className="px-1 text-[9px] font-medium text-[#002060] border border-zinc-400 bg-zinc-50 text-center">{row.ex_fty_date}</td>
+                                            <td className="px-1 text-[9px] font-medium text-[#002060] border border-zinc-400 text-center">{row.fty || "B"}</td>
+                                            <td className="px-1 text-[9px] font-medium text-[#002060] border border-zinc-400 text-center uppercase">{row.gmt_delivery_date}</td>
+                                            <td className="px-1 text-[10px] font-bold text-[#002060] border border-zinc-400 text-center">{Math.round(order / 12)}</td>
+                                            <td className="px-1 text-[10px] font-bold text-[#002060] border border-zinc-400 text-center">{formatNum(order)}</td>
 
                                             {/* Cutting Body */}
                                             <td className="px-0.5 text-[9px] font-bold text-blue-700 border border-zinc-400 text-center bg-[#c6e0b4]">{isCut404 ? 'E404' : formatNum(cutAcc)}</td>
@@ -206,13 +206,13 @@ export default function WipReportTable() {
                                             )}>{isCut404 ? '-' : formatNum(sewAcc - cutAcc)}</td>
 
                                             {/* Packing Body */}
-                                            <td className="px-0.5 text-[9px] font-bold text-blue-700 border border-zinc-400 text-center bg-[#e4dfec]">{formatNum(packAcc)}</td>
+                                            <td className="px-1 text-[10px] font-bold text-blue-700 border border-zinc-400 text-center bg-[#e4dfec]">{formatNum(packAcc)}</td>
                                             <td className={cn(
-                                                "px-0.5 text-[9px] font-bold border border-zinc-400 text-center",
+                                                "px-1 text-[10px] font-bold border border-zinc-400 text-center",
                                                 (packAcc - order) < 0 ? "text-red-600 bg-[#f8d7da]" : "text-pink-800 bg-[#e4dfec]"
                                             )}>{formatNum(packAcc - order)}</td>
                                             <td className={cn(
-                                                "px-0.5 text-[9px] font-bold border border-zinc-400 text-center",
+                                                "px-1 text-[10px] font-bold border border-zinc-400 text-center",
                                                 (packAcc - sewAcc) < 0 ? "text-red-600 bg-[#f8d7da]" : "text-pink-800 bg-[#e4dfec]"
                                             )}>{formatNum(packAcc - sewAcc)}</td>
 
@@ -239,7 +239,7 @@ export default function WipReportTable() {
                                                     formatNum(row.export_qty || 0)
                                                 )}
                                             </td>
-                                            <td className="px-0.5 text-[7px] font-medium text-blue-700 border border-zinc-400 italic truncate max-w-[80px]">
+                                            <td className="px-1 text-[9px] font-medium text-blue-700 border border-zinc-400 italic truncate max-w-[100px]">
                                                 {(() => {
                                                     const packing = packAcc || 0;
                                                     const exportQty = row.export_qty || 0;
@@ -248,14 +248,14 @@ export default function WipReportTable() {
                                                     if (packing === 0) return "NO PACK YET";
 
                                                     if (packing === exportQty) {
-                                                        if (packing === orderQty) return "FINISH GOOD SHIP ALREADY";
-                                                        if (packing < orderQty) return `SHORT SHIP - ${orderQty - packing} pcs`;
-                                                        if (packing > orderQty) return `OVER SHIP - ${packing - orderQty} pcs`;
+                                                        if (packing === orderQty) return "FINISH SHIP";
+                                                        if (packing < orderQty) return `SHORT - ${orderQty - packing}`;
+                                                        if (packing > orderQty) return `OVER - ${packing - orderQty}`;
                                                     }
 
-                                                    if (exportQty === 0 && packing > 0) return "PACK ALREADY, NOT SHIP YET";
+                                                    if (exportQty === 0 && packing > 0) return "PACKED, NO SHIP";
 
-                                                    return "NEED TO CHECK";
+                                                    return "CHECK";
                                                 })()}
                                             </td>
                                         </tr>

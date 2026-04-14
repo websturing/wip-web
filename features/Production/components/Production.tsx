@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { useProduction } from '../hooks/useProduction';
-import { ProductionService } from '../services/ProductionService';
 
 export const Production = () => {
     const router = useRouter();
@@ -136,7 +135,7 @@ export const Production = () => {
 
     return (
         <>
-            <div className="p-8 max-w-[1600px] mx-auto">
+            <div className="p-4 md:p-8 max-w-[1440px] mx-auto">
                 {/* Header Actions */}
                 <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-12">
                     <div className="flex items-start gap-5">
@@ -199,7 +198,7 @@ export const Production = () => {
                                 <span>Cards</span>
                             </button>
                         </div>
-
+                        {/* 
                         <input
                             type="file"
                             id="production-import"
@@ -235,7 +234,7 @@ export const Production = () => {
                         >
                             <Icon icon="solar:file-send-bold-duotone" className="w-4 h-4 text-blue-500" />
                             <span>Import</span>
-                        </Button>
+                        </Button> */}
 
                         <Button
                             onClick={() => router.push('/admin/production/create')}
@@ -344,11 +343,11 @@ export const Production = () => {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="bg-zinc-50/50 border-b border-zinc-100">
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Production Line</th>
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Capacity & Status</th>
-                                        <th className="px-6 py-5 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Associated Lots & Colors</th>
-                                        <th className="px-6 py-5 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest">Total Qty</th>
-                                        <th className="px-6 py-5 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest">Activities</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Production Line</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Status</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Lots & Colors</th>
+                                        <th className="px-4 py-4 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Total Qty</th>
+                                        <th className="px-4 py-4 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">View</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-50">
@@ -358,13 +357,13 @@ export const Production = () => {
 
                                         return (
                                             <tr key={key} className="hover:bg-zinc-50/30 transition-colors group">
-                                                <td className="px-6 py-8">
+                                                <td className="px-4 py-6">
                                                     <div className="flex flex-col">
                                                         <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LINE CENTER</span>
                                                         <span className="text-zinc-900 font-black tracking-tight">{data.lineName}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-8">
+                                                <td className="px-4 py-6">
                                                     <div className="flex flex-col">
                                                         <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LOG ENTRIES</span>
                                                         <div className="flex items-center gap-2">
@@ -374,7 +373,7 @@ export const Production = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-8">
+                                                <td className="px-4 py-6">
                                                     <div className="flex flex-col gap-2">
                                                         <div className="flex flex-wrap gap-1">
                                                             {allColors.map((c: any, i: number) => (
@@ -392,7 +391,7 @@ export const Production = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-8 text-right">
+                                                <td className="px-4 py-6 text-right">
                                                     <div className="flex flex-col items-end">
                                                         <div className="flex items-center gap-2 mb-1">
                                                             <span className="text-[9px] font-black text-zinc-400 uppercase">IN:</span>
@@ -404,7 +403,7 @@ export const Production = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-8 text-center">
+                                                <td className="px-4 py-6 text-center">
                                                     <button
                                                         onClick={() => setSelectedGroupKey(key)}
                                                         className="w-10 h-10 rounded-xl bg-zinc-50 hover:bg-zinc-900 hover:text-white border border-zinc-100 transition-all flex items-center justify-center text-zinc-400 shadow-sm mx-auto group-hover:scale-110 active:scale-95"

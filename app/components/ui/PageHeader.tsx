@@ -12,6 +12,7 @@ interface PageHeaderProps {
     description?: string;
     showTitle?: boolean;
     className?: string;
+    action?: React.ReactNode;
 }
 
 export const PageHeader = ({
@@ -21,7 +22,8 @@ export const PageHeader = ({
     subtitle,
     description,
     showTitle = true,
-    className
+    className,
+    action
 }: PageHeaderProps) => {
     // Merge or fallback
     const finalItems = breadcrumbItems || items || [];
@@ -33,21 +35,29 @@ export const PageHeader = ({
 
             {/* Title & Description Part */}
             {showTitle && title && (
-                <div className="mb-6 md:mb-10  group">
-                    <h1 className="text-xl md:text-lg lg:text-[1.5rem] font-bold text-zinc-900 tracking-tight transition-all duration-300">
-                        {title} {subtitle && (
-                            <span className="text-blue-500 font-extrabold whitespace-nowrap ml-1 group-hover:translate-x-1 inline-block transition-transform">
-                                {subtitle}
-                            </span>
+                <div className="mb-6 md:mb-10 group flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-xl md:text-lg lg:text-[1.5rem] font-bold text-zinc-900 tracking-tight transition-all duration-300">
+                            {title} {subtitle && (
+                                <span className="text-blue-500 font-extrabold whitespace-nowrap ml-1 group-hover:translate-x-1 inline-block transition-transform">
+                                    {subtitle}
+                                </span>
+                            )}
+                        </h1>
+                        {description && (
+                            <p className="text-zinc-500 text-[10px] md:text-xs font-medium leading-relaxed opacity-80 tracking-[0.2em] max-w-3xl">
+                                {description}
+                            </p>
                         )}
-                    </h1>
-                    {description && (
-                        <p className="text-zinc-500 text-[10px] md:text-xs font-medium   leading-relaxed opacity-80 tracking-[0.2em] max-w-3xl">
-                            {description}
-                        </p>
+                    </div>
+                    {action && (
+                        <div className="flex shrink-0">
+                            {action}
+                        </div>
                     )}
                 </div>
             )}
         </div>
     );
 };
+

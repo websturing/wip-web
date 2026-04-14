@@ -69,13 +69,18 @@ export default function PackingFormPage() {
             const json = await resp.json();
 
             if (json.status === 200 && json.data.summary_by_color) {
+                // Filter only 'body' types as per user request
+                const bodyColors = json.data.summary_by_color.filter((c: any) =>
+                    String(c.type || '').toLowerCase() === 'body'
+                );
+
                 setLotDetails(prev => ({
                     ...prev,
-                    [itemIdx]: json.data.summary_by_color
+                    [itemIdx]: bodyColors
                 }));
 
-                if (json.data.summary_by_color.length === 1) {
-                    const colorData = json.data.summary_by_color[0];
+                if (bodyColors.length === 1) {
+                    const colorData = bodyColors[0];
                     updateItemColor(itemIdx, colorData.color, colorData.size_breakdown);
                 }
             }
@@ -183,6 +188,10 @@ export default function PackingFormPage() {
         }
     };
 
+    const grandTotalOutput = formData.items.reduce((sum, item) => {
+        return sum + item.sizes.reduce((iSum, s) => iSum + (s.qty_output || 0), 0);
+    }, 0);
+
     return (
         <div className="animate-in fade-in duration-700">
             <PageHeader
@@ -190,9 +199,19 @@ export default function PackingFormPage() {
                 title="Create Packing Log"
                 subtitle="Warehouse Entry"
                 description="Record daily finished goods packing quantities."
+                action={
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.push('/admin/packing')}
+                        className="flex items-center gap-2 px-6 h-12 rounded-2xl bg-zinc-50 border border-zinc-100 hover:bg-zinc-100 transition-all font-black text-xs uppercase tracking-widest text-zinc-500 hover:text-zinc-900"
+                    >
+                        <Icon icon="solar:alt-arrow-left-bold-duotone" className="w-5 h-5" />
+                        <span>Back</span>
+                    </Button>
+                }
             />
 
-            <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden p-5 md:p-8 w-full mb-20 relative max-w-[1366px] mx-auto">
+            <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden p-4 md:p-6 w-full mb-20 relative max-w-[1400px] mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12 items-end">
                     <div className="space-y-1.5 flex-1">
                         <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Packing Date</label>
@@ -259,7 +278,7 @@ export default function PackingFormPage() {
                         const totalRecordedOutput = sizesToShow.reduce((sum, s) => sum + (Number(s.recorded_output) || 0), 0);
 
                         return (
-                            <div key={iIdx} className="group relative p-8 bg-zinc-50/30 rounded-[3rem] border border-zinc-100 hover:border-emerald-100 hover:bg-white transition-all duration-700">
+                            <div key={iIdx} className="group relative p-5 md:p-6 bg-zinc-50/30 rounded-[3rem] border border-zinc-100 hover:border-emerald-100 hover:bg-white transition-all duration-700">
                                 <div className="flex items-center justify-between mb-10">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-[1.2rem] bg-emerald-950 text-white flex items-center justify-center font-black text-sm shadow-xl">
@@ -330,16 +349,16 @@ export default function PackingFormPage() {
                                             <table className="w-full border-collapse">
                                                 <thead>
                                                     <tr className="bg-emerald-950 text-white">
-                                                        <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-40">
+                                                        <th className="px-4 py-5 text-left text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-36">
                                                             Data Metrics
                                                         </th>
                                                         {sizesToShow.map((s, idx) => (
-                                                            <th key={idx} className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-widest min-w-[120px]">
+                                                            <th key={idx} className="px-3 py-5 text-center text-[10px] font-black uppercase tracking-widest min-w-[70px]">
                                                                 {s.size_name}
                                                             </th>
                                                         ))}
                                                         {formData.entry_mode === 'per-size' && (
-                                                            <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-widest min-w-[120px] bg-emerald-600">
+                                                            <th className="px-3 py-5 text-center text-[10px] font-black uppercase tracking-widest min-w-[80px] bg-emerald-600">
                                                                 TOTAL
                                                             </th>
                                                         )}
@@ -505,13 +524,22 @@ export default function PackingFormPage() {
                 </div>
 
                 <div className="mt-16 flex flex-col md:flex-row gap-6">
-                    <button
-                        onClick={addItem}
-                        className="flex-1 py-10 border-2 border-dashed border-zinc-100 rounded-[2.5rem] text-zinc-400 hover:border-emerald-200 hover:text-emerald-500 transition-all flex flex-col items-center justify-center gap-3 group"
-                    >
-                        <Icon icon="solar:add-square-bold-duotone" className="w-8 h-8 group-hover:scale-110 transition-transform" />
-                        <span className="text-[11px] font-black uppercase tracking-[0.2em]">Add Another Product</span>
-                    </button>
+                    <div className="flex-1 flex flex-col md:flex-row gap-5 items-center">
+                        <button
+                            onClick={addItem}
+                            className="flex-1 w-full py-10 border-2 border-dashed border-zinc-100 rounded-[2.5rem] text-zinc-400 hover:border-emerald-200 hover:text-emerald-500 transition-all flex flex-col items-center justify-center gap-3 group"
+                        >
+                            <Icon icon="solar:add-square-bold-duotone" className="w-8 h-8 group-hover:scale-110 transition-transform" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em]">Add Another Product</span>
+                        </button>
+
+                        {grandTotalOutput > 0 && (
+                            <div className="shrink-0 bg-emerald-900 text-white px-8 py-6 rounded-[2.5rem] shadow-xl shadow-emerald-950/20 border border-emerald-800/30 flex flex-col items-center justify-center min-w-[180px] animate-in zoom-in duration-500">
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Total Finished Goods</span>
+                                <span className="text-2xl font-black tracking-tight">{grandTotalOutput.toLocaleString()} <span className="text-xs opacity-40">PCS</span></span>
+                            </div>
+                        )}
+                    </div>
 
                     <Button
                         onClick={handleSave}
