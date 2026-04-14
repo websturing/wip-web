@@ -8,6 +8,7 @@ export interface IeLayout {
         lot_number: string;
     };
     price: number;
+    efficiency_constant: number;
     department: string;
     is_gl_number?: boolean;
     gl_number?: string;
@@ -23,15 +24,25 @@ export interface IeLayout {
     details?: TimeStudy[];
 }
 
+export type OperationSection = 'OUTLINE' | 'OFFLINE' | 'INLINE';
+
 export interface TimeStudy {
-    id: number;
-    ie_layout_id: number;
-    operation_id: number;
+    id?: number;
+    ie_layout_id?: number;
+    operation_id: number | string;
+    operation_name?: string; // New: for custom operations
+    section: OperationSection;
     handling_position: string;
+    handling_position_value: number;
     length: number;
     sequence: number;
     machine_type: string;
     machine_turn: number;
+    man_power?: number;
+    std_time?: number;
+    target_hour?: number;
+    target_day?: number;
+    smv?: number;
     operation?: Operation;
 }
 
