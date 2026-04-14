@@ -1,5 +1,6 @@
 'use client';
 
+import { PermissionGuard } from '@/app/components/auth/PermissionGuard';
 import { Button } from '@/app/components/ui/Button';
 import { ConfirmationDialog } from '@/app/components/ui/ConfirmationDialog';
 import { DatePicker } from '@/app/components/ui/DatePicker';
@@ -228,13 +229,15 @@ export const Production = () => {
                             </button>
                         </div>
 
-                        <Button
-                            onClick={() => router.push('/admin/production/create')}
-                            className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl px-6 h-10 flex items-center gap-2 transition-all shadow-md active:scale-95 text-xs font-bold"
-                        >
-                            <Icon icon="solar:add-circle-bold" className="w-4 h-4" />
-                            <span>New Entry</span>
-                        </Button>
+                        <PermissionGuard permission="production.create">
+                            <Button
+                                onClick={() => router.push('/admin/production/create')}
+                                className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl px-6 h-10 flex items-center gap-2 transition-all shadow-md active:scale-95 text-xs font-bold"
+                            >
+                                <Icon icon="solar:add-circle-bold" className="w-4 h-4" />
+                                <span>New Entry</span>
+                            </Button>
+                        </PermissionGuard>
                     </div>
                 </div>
 
@@ -490,20 +493,24 @@ export const Production = () => {
                                                                 <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
                                                             </div>
                                                             <div className="flex items-center gap-1">
-                                                                <button
-                                                                    onClick={() => router.push(`/admin/production/edit/${p.id}`)}
-                                                                    className="w-8 h-8 rounded-lg bg-white border border-zinc-100 hover:bg-zinc-900 hover:text-white flex items-center justify-center text-zinc-400 transition-all shadow-sm active:scale-95"
-                                                                    title="Edit Log"
-                                                                >
-                                                                    <Icon icon="solar:pen-bold-duotone" className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setConfirmDelete({ open: true, id: p.id, loading: false })}
-                                                                    className="w-8 h-8 rounded-lg bg-white border border-zinc-100 hover:bg-red-500 hover:text-white flex items-center justify-center text-zinc-400 transition-all shadow-sm active:scale-95 group/del"
-                                                                    title="Delete Log"
-                                                                >
-                                                                    <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4 group-hover/del:scale-110" />
-                                                                </button>
+                                                                <PermissionGuard permission="production.update">
+                                                                    <button
+                                                                        onClick={() => router.push(`/admin/production/edit/${p.id}`)}
+                                                                        className="w-8 h-8 rounded-lg bg-white border border-zinc-100 hover:bg-zinc-900 hover:text-white flex items-center justify-center text-zinc-400 transition-all shadow-sm active:scale-95"
+                                                                        title="Edit Log"
+                                                                    >
+                                                                        <Icon icon="solar:pen-bold-duotone" className="w-4 h-4" />
+                                                                    </button>
+                                                                </PermissionGuard>
+                                                                <PermissionGuard permission="production.delete">
+                                                                    <button
+                                                                        onClick={() => setConfirmDelete({ open: true, id: p.id, loading: false })}
+                                                                        className="w-8 h-8 rounded-lg bg-white border border-zinc-100 hover:bg-red-500 hover:text-white flex items-center justify-center text-zinc-400 transition-all shadow-sm active:scale-95 group/del"
+                                                                        title="Delete Log"
+                                                                    >
+                                                                        <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4 group-hover/del:scale-110" />
+                                                                    </button>
+                                                                </PermissionGuard>
                                                             </div>
                                                         </div>
                                                     </div>

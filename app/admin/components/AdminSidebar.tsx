@@ -65,6 +65,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
             ],
             badgeSection: '404'
+        },
+        {
+            title: 'System Management',
+            items: [
+                { name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-bold-duotone', badge: null },
+            ],
+            badgeSection: 'ADMIN'
         }
     ];
 
