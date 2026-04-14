@@ -1,17 +1,9 @@
+import { apiClient } from '@/lib/api';
 import { IeLayout } from '../types';
 
 export class IeLayoutService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-
     private static async request(path: string, options: RequestInit = {}) {
-        const url = `${this.baseUrl}${path}`;
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            ...(options.headers || {}),
-        };
-
-        const response = await fetch(url, { ...options, headers });
+        const response = await apiClient.fetch(path, options);
         const result = await response.json();
 
         if (!response.ok) {
@@ -33,7 +25,6 @@ export class IeLayoutService {
 
     static async getByLotId(lotId: string): Promise<IeLayout | null> {
         const result = await this.request(`/ielayout?lot_id=${lotId}`);
-        // The index endpoint should support filtering by lot_id and return the first match or null
         return result.data?.length > 0 ? result.data[0] : null;
     }
 
@@ -68,7 +59,7 @@ export class IeLayoutService {
     // GL Numbers
     static async getGlNumbers(): Promise<any[]> {
         const result = await this.request('/reference/gl-groups');
-        return result?.data?.data || []; // Handle pagination structure
+        return result?.data?.data || [];
     }
 
     // Lots

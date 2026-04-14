@@ -1,70 +1,35 @@
+import { apiClient } from "@/lib/api";
+
 export class ReferenceService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    private static resource = 'reference';
+    private static resource = '/reference';
 
     static async getLots(page: number = 1, search: string = '') {
-        try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/lots?page=${page}&search=${encodeURIComponent(search)}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching lots:', error);
-            throw error;
-        }
+        const response = await apiClient.get(`${this.resource}/lots?page=${page}&search=${encodeURIComponent(search)}`);
+        return await response.json();
     }
 
     static async getLotList() {
-        try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/lots/list`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching lot list:', error);
-            throw error;
-        }
+        const response = await apiClient.get(`${this.resource}/lots/list`);
+        return await response.json();
     }
 
     static async importExcel(file: File) {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch(`${this.baseUrl}/${this.resource}/import`, {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error importing excel:', error);
-            throw error;
-        }
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.fetch(`${this.resource}/import`, {
+            method: 'POST',
+            body: formData
+        });
+        return await response.json();
     }
 
     static async deleteLot(id: string) {
-        try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/lots/${id}`, {
-                method: 'DELETE',
-                headers: { 'Accept': 'application/json' }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error deleting lot:', error);
-            throw error;
-        }
+        const response = await apiClient.delete(`${this.resource}/lots/${id}`);
+        return await response.json();
     }
 
     static async getGlSummary(glGroupId: string) {
-        try {
-            const response = await fetch(`${this.baseUrl}/${this.resource}/gl-groups/${glGroupId}/summary`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching GL summary:', error);
-            throw error;
-        }
+        const response = await apiClient.get(`${this.resource}/gl-groups/${glGroupId}/summary`);
+        return await response.json();
     }
 }

@@ -1,23 +1,15 @@
+import { apiClient } from "@/lib/api";
+
 export class GLNumberService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    private static resource = '/glnumber';
 
     static async getAll() {
-        try {
-            const response = await fetch(`${this.baseUrl}/glnumber`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching glnumber:', error);
-            throw error;
-        }
+        const response = await apiClient.get(this.resource);
+        return await response.json();
     }
 
     static async getById(id: string | number) {
-        try {
-            const response = await fetch(`${this.baseUrl}/glnumber/${id}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching glnumber by ID:', error);
-            throw error;
-        }
+        const response = await apiClient.get(`${this.resource}/${id}`);
+        return await response.json();
     }
 }

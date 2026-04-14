@@ -1,23 +1,15 @@
+import { apiClient } from "@/lib/api";
+
 export class LeadersService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    private static resource = '/leaders';
 
     static async getAll() {
-        try {
-            const response = await fetch(`${this.baseUrl}/leaders`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching leaders:', error);
-            throw error;
-        }
+        const response = await apiClient.get(this.resource);
+        return await response.json();
     }
 
     static async getById(id: string | number) {
-        try {
-            const response = await fetch(`${this.baseUrl}/leaders/${id}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching leaders by ID:', error);
-            throw error;
-        }
+        const response = await apiClient.get(`${this.resource}/${id}`);
+        return await response.json();
     }
 }

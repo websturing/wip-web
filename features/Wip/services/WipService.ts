@@ -1,23 +1,15 @@
+import { apiClient } from "@/lib/api";
+
 export class WipService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    private static resource = '/wip';
 
     static async getAll() {
-        try {
-            const response = await fetch(`${this.baseUrl}/wip`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching wip:', error);
-            throw error;
-        }
+        const response = await apiClient.get(this.resource);
+        return await response.json();
     }
 
     static async getById(id: string | number) {
-        try {
-            const response = await fetch(`${this.baseUrl}/wip/${id}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching wip by ID:', error);
-            throw error;
-        }
+        const response = await apiClient.get(`${this.resource}/${id}`);
+        return await response.json();
     }
 }
