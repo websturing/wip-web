@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { IeLayout } from '../types';
+import { IeLayout, Operation } from '../types';
 
 export class IeLayoutService {
     private static async request(path: string, options: RequestInit = {}) {
@@ -51,30 +51,30 @@ export class IeLayoutService {
     }
 
     // Operations
-    static async getOperations(): Promise<any[]> {
+    static async getOperations(): Promise<Operation[]> {
         const result = await this.request('/ielayout/operations');
         return result?.data || [];
     }
 
     // GL Numbers
-    static async getGlNumbers(): Promise<any[]> {
+    static async getGlNumbers(): Promise<unknown[]> {
         const result = await this.request('/reference/gl-groups');
         return result?.data?.data || [];
     }
 
     // Lots
-    static async getLots(): Promise<any[]> {
+    static async getLots(): Promise<{ id: string, lot_code: string }[]> {
         const result = await this.request('/reference/lots/list');
         return result?.data || [];
     }
 
     // Daily Manpower
-    static async getDailyManpower(layoutId: number | string): Promise<any[]> {
+    static async getDailyManpower(layoutId: number | string): Promise<unknown[]> {
         const result = await this.request(`/ielayout/manpower?ie_layout_id=${layoutId}`);
         return result?.data || [];
     }
 
-    static async saveDailyManpower(data: any): Promise<any> {
+    static async saveDailyManpower(data: unknown): Promise<unknown> {
         const result = await this.request('/ielayout/manpower', {
             method: 'POST',
             body: JSON.stringify(data),
