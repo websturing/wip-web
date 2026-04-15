@@ -7,7 +7,8 @@ import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Toast, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from '@/app/components/ui/Toast';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
+import { OperationSection, TimeStudy } from "../types";
 import { useIeLayoutForm } from '../hooks/useIeLayoutForm';
 
 // Premium Modular Components
@@ -15,8 +16,6 @@ import { FormFooterSummary } from '../components/IeLayoutForm/FormFooterSummary'
 import { LayoutConfigCard } from '../components/IeLayoutForm/LayoutConfigCard';
 import { LineBalancingChart } from '../components/IeLayoutForm/LineBalancingChart';
 import { WorkflowSection } from '../components/IeLayoutForm/WorkflowSection';
-
-
 
 export const IeLayoutFormPage = () => {
     const params = useParams();
@@ -251,4 +250,4 @@ export const IeLayoutFormPage = () => {
             <style jsx>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
         </div>
     );
-}
+};
