@@ -67,7 +67,7 @@ export const ConfirmationDialog = ({
     description,
     onConfirm,
     confirmLabel = 'Confirm',
-    cancelLabel = 'Cancel',
+    cancelLabel,
     variant = 'default',
     isLoading = false,
 }: ConfirmationDialogProps) => {
@@ -94,13 +94,15 @@ export const ConfirmationDialog = ({
                     </DialogPrimitive.Description>
                 </div>
 
-                <div className="flex gap-4 mt-10">
-                    <button
-                        onClick={() => onOpenChange(false)}
-                        className="flex-1 h-16 rounded-[1.5rem] bg-zinc-50 border border-zinc-100 hover:bg-zinc-100 font-black text-[10px] uppercase tracking-widest text-zinc-500 transition-all active:scale-95"
-                    >
-                        {cancelLabel}
-                    </button>
+                <div className={cn("flex gap-4 mt-10", !cancelLabel && "justify-center")}>
+                    {cancelLabel && (
+                        <button
+                            onClick={() => onOpenChange(false)}
+                            className="flex-1 h-16 rounded-[1.5rem] bg-zinc-50 border border-zinc-100 hover:bg-zinc-100 font-black text-[10px] uppercase tracking-widest text-zinc-500 transition-all active:scale-95"
+                        >
+                            {cancelLabel}
+                        </button>
+                    )}
 
                     <Button
                         onClick={(e) => {
