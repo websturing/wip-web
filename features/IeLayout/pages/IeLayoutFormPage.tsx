@@ -72,7 +72,7 @@ export const IeLayoutFormPage = () => {
                     }
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12 max-w-[1400px] mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12 max-w-[1600px] mx-auto">
                     {/* Primary Configuration */}
                     <LayoutConfigCard
                         formData={formData}
