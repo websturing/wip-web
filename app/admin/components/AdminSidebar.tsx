@@ -62,6 +62,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         {
             title: 'Industrial Engineering',
             items: [
+                { name: 'Operation Breakdown', path: '/admin/ielayout', icon: 'solar:layers-broken', badge: null },
                 { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
             ],
             badgeSection: '404'
