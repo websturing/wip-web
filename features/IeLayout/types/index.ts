@@ -24,7 +24,7 @@ export interface IeLayout {
     details?: TimeStudy[];
 }
 
-export type OperationSection = 'OUTLINE' | 'OFFLINE' | 'INLINE';
+export type OperationSection = string;
 
 export interface TimeStudy {
     id?: number;

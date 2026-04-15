@@ -1,19 +1,22 @@
 'use client';
 
 import { Button } from '@/app/components/ui/Button';
+import { ConfirmationDialog } from '@/app/components/ui/ConfirmationDialog';
 import { Icon } from '@/app/components/ui/Icon';
-import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useIeLayout } from '../hooks/useIeLayout';
 
+import { IeLayout } from '../types';
+
 interface IeLayoutListProps {
-    onEdit: (layout: any) => void;
-    onManpowerClick: (layout: any) => void;
+    onEdit: (layout: IeLayout) => void;
+    onManpowerClick: (layout: IeLayout) => void;
 }
 
 export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => {
     const { data, isLoading, error, deleteLayout } = useIeLayout();
     const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     if (isLoading) return (
         <div className="p-32 flex flex-col items-center justify-center gap-6">
@@ -31,36 +34,36 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
     );
 
     return (
-        <div className="px-10 pb-20">
+        <div className="px-4 md:px-8 pb-20">
             {/* View Toggle */}
             <div className="flex justify-end mb-8">
                 <div className="bg-white border border-zinc-100 p-1.5 rounded-[1.5rem] flex items-center gap-1.5 shadow-xl shadow-zinc-200/50">
                     <button
                         onClick={() => setViewMode('list')}
                         className={cn(
-                            "px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                            "px-4 md:px-5 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
                             viewMode === 'list' ? "bg-zinc-900 text-white shadow-lg" : "text-zinc-400 hover:bg-zinc-50"
                         )}
                     >
-                        <Icon icon="solar:list-bold-duotone" className="w-4 h-4" />
-                        <span>List View</span>
+                        <Icon icon="solar:list-bold-duotone" className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">List View</span>
                     </button>
                     <button
                         onClick={() => setViewMode('card')}
                         className={cn(
-                            "px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                            "px-4 md:px-5 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
                             viewMode === 'card' ? "bg-zinc-900 text-white shadow-lg" : "text-zinc-400 hover:bg-zinc-50"
                         )}
                     >
-                        <Icon icon="solar:widget-2-bold-duotone" className="w-4 h-4" />
-                        <span>Card View</span>
+                        <Icon icon="solar:widget-2-bold-duotone" className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Card View</span>
                     </button>
                 </div>
             </div>
 
             <div className={cn(
-                "grid gap-8",
-                viewMode === 'list' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+                "grid gap-6 md:gap-8",
+                viewMode === 'list' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 2xl:grid-cols-3"
             )}>
                 {data?.length > 0 ? (
                     viewMode === 'list' ? (
@@ -156,23 +159,23 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => onManpowerClick(layout)}
-                                                        className="w-10 h-10 bg-white text-zinc-400 hover:bg-emerald-50 hover:text-emerald-600 rounded-xl border border-zinc-100 transition-all flex items-center justify-center group/mp shadow-sm"
+                                                        className="w-8 h-8 bg-white text-zinc-400 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg border border-zinc-100 transition-all flex items-center justify-center group/mp shadow-sm"
                                                         title="Daily Manpower"
                                                     >
-                                                        <Icon icon="solar:users-group-rounded-bold-duotone" className="w-5 h-5 group-hover/mp:scale-110 transition-transform" />
+                                                        <Icon icon="solar:users-group-rounded-bold-duotone" className="w-4 h-4 group-hover/mp:scale-110 transition-transform" />
                                                     </button>
                                                     <button
                                                         onClick={() => onEdit(layout)}
-                                                        className="h-10 px-4 bg-zinc-900 hover:bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-zinc-200"
+                                                        className="h-8 px-3 bg-zinc-900 hover:bg-blue-600 text-white rounded-lg font-black text-[8px] uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 shadow-md shadow-zinc-200"
                                                     >
-                                                        <Icon icon="solar:tuning-2-bold-duotone" className="w-4 h-4" />
+                                                        <Icon icon="solar:tuning-2-bold-duotone" className="w-3.5 h-3.5" />
                                                         <span>Optimize</span>
                                                     </button>
                                                     <button
-                                                        onClick={() => { if (confirm('Archive?')) deleteLayout(layout.id); }}
-                                                        className="w-10 h-10 bg-white text-zinc-200 hover:bg-red-50 hover:text-red-500 rounded-xl border border-zinc-100 transition-all flex items-center justify-center group/del shadow-sm"
+                                                        onClick={() => setDeleteId(layout.id)}
+                                                        className="w-8 h-8 bg-white text-zinc-200 hover:bg-red-50 hover:text-red-500 rounded-lg border border-zinc-100 transition-all flex items-center justify-center group/del shadow-sm"
                                                     >
-                                                        <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4 group-hover/del:scale-110 transition-transform" />
+                                                        <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5 group-hover/del:scale-110 transition-transform" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -284,9 +287,7 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                                         <Icon icon="solar:users-group-rounded-bold-duotone" className="w-5 h-5 group-hover/mp:scale-110 transition-transform" />
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            if (confirm('Archive this layout module?')) deleteLayout(layout.id);
-                                        }}
+                                        onClick={() => setDeleteId(layout.id)}
                                         title="Archive Layout"
                                         className="h-14 w-14 bg-zinc-50 text-zinc-300 hover:bg-red-50 hover:text-red-500 rounded-2xl border border-zinc-100 flex items-center justify-center transition-all group/del"
                                     >
@@ -306,6 +307,20 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                     </div>
                 )}
             </div>
+
+            <ConfirmationDialog
+                open={!!deleteId}
+                onOpenChange={(open) => !open && setDeleteId(null)}
+                title="Archive Architecture"
+                description="This will move the selected IE Layout to the archives. You can still recover this data from the system logs if necessary."
+                onConfirm={() => {
+                    if (deleteId) deleteLayout(deleteId);
+                    setDeleteId(null);
+                }}
+                confirmLabel="Archive Module"
+                cancelLabel="Keep Layout"
+                variant="destructive"
+            />
         </div>
     );
 };
