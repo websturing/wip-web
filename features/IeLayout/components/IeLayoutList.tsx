@@ -3,6 +3,7 @@
 import { Button } from '@/app/components/ui/Button';
 import { ConfirmationDialog } from '@/app/components/ui/ConfirmationDialog';
 import { Icon } from '@/app/components/ui/Icon';
+import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useIeLayout } from '../hooks/useIeLayout';
 
@@ -34,7 +35,7 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
     );
 
     return (
-        <div className="px-4 md:px-8 pb-20">
+        <div className="px-4 md:px-4 pb-20">
             {/* View Toggle */}
             <div className="flex justify-end mb-8">
                 <div className="bg-white border border-zinc-100 p-1.5 rounded-[1.5rem] flex items-center gap-1.5 shadow-xl shadow-zinc-200/50">
