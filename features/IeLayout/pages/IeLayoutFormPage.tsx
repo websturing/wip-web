@@ -63,27 +63,16 @@ export const IeLayoutFormPage = () => {
                     title={id ? 'Refine Architecture' : 'Initialize IE Layout'}
                     description="Crafting the skeleton of production efficiency through high-precision time study modeling."
                     action={
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => router.back()}
-                                className="h-12 px-6 bg-white border border-zinc-100 text-zinc-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-50 transition-all active:scale-95"
-                            >
-                                Discard
-                            </button>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={isLoading}
-                                className="h-12 px-8 bg-zinc-900 hover:bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-zinc-200 transition-all active:scale-95 flex items-center gap-3 disabled:opacity-50"
-                            >
-                                {isLoading && <Icon icon="solar:refresh-line-duotone" className="w-4 h-4 animate-spin" />}
-                                <Icon icon="solar:cloud-upload-bold-duotone" className="w-4 h-4" />
-                                <span>{isLoading ? 'Processing...' : 'Commit Architecture'}</span>
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => router.back()}
+                            className="h-12 px-6 bg-white border border-zinc-100 text-zinc-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-50 transition-all active:scale-95"
+                        >
+                            Back
+                        </button>
                     }
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 px-6 lg:px-12 mt-12 max-w-[1400px] mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-12 max-w-[1400px] mx-auto">
                     {/* Primary Configuration */}
                     <LayoutConfigCard
                         formData={formData}
@@ -138,6 +127,18 @@ export const IeLayoutFormPage = () => {
                     </div>
 
                     <FormFooterSummary formData={formData} />
+
+                    <div className="lg:col-span-12 flex justify-end pb-20">
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isLoading}
+                            className="h-16 px-16 bg-zinc-900 hover:bg-blue-600 text-white rounded-[1.5rem] font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl shadow-zinc-200 transition-all active:scale-95 flex items-center gap-4 disabled:opacity-50"
+                        >
+                            {isLoading && <Icon icon="solar:refresh-line-duotone" className="w-5 h-5 animate-spin" />}
+                            <Icon icon="solar:check-circle-bold-duotone" className="w-5 h-5 text-emerald-400" />
+                            <span>{isLoading ? 'Processing...' : id ? 'Commit Architecture' : 'Initialize Specs'}</span>
+                        </button>
+                    </div>
                 </div>
 
                 <Dialog open={isSectionModalOpen} onOpenChange={setIsSectionModalOpen}>
