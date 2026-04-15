@@ -69,9 +69,28 @@ export const IeLayoutFormPage = () => {
                 if (id) {
                     const layoutData = await IeLayoutService.getById(id as string);
                     if (layoutData) {
+                        const sanitizedDetails = (layoutData.details || []).map(d => ({
+                            ...d,
+                            section: d.section || 'INLINE',
+                            handling_position_value: Number(d.handling_position_value || 0),
+                            length: Number(d.length || 0),
+                            machine_turn: Number(d.machine_turn || 0),
+                            man_power: Number(d.man_power || 0),
+                            std_time: Number(d.std_time || 0),
+                            target_hour: Number(d.target_hour || 0),
+                            target_day: Number(d.target_day || 0),
+                            smv: Number(d.smv || 0)
+                        }));
                         setFormData({
                             ...layoutData,
-                            details: layoutData.details || []
+                            price: Number(layoutData.price || 0),
+                            efficiency_constant: Number(layoutData.efficiency_constant || 1),
+                            total_smv: Number(layoutData.total_smv || 0),
+                            man_power_sewer: Number(layoutData.man_power_sewer || 0),
+                            man_power_matching: Number(layoutData.man_power_matching || 0),
+                            man_power_qc: Number(layoutData.man_power_qc || 0),
+                            man_power_others: Number(layoutData.man_power_others || 0),
+                            details: sanitizedDetails
                         });
                     }
                 }
@@ -161,30 +180,44 @@ export const IeLayoutFormPage = () => {
 
     const handleSubmit = async () => {
         if (!formData.name) return alert('Layout name is required');
+
+        // Calculate totals before saving
+        const totalSmv = formData.details?.reduce((acc, d) => acc + (d.smv || 0), 0) || 0;
+
+        // Final data preparation
+        const submitData = {
+            ...formData,
+            total_smv: totalSmv,
+            // Ensure no circular references or extra frontend-only objects are passed if necessary
+            // (The backend sanitization I added will handle this, but it's good practice)
+        };
+
         setIsLoading(true);
         try {
             if (id) {
-                await IeLayoutService.update(id as string, formData);
+                await IeLayoutService.update(id as string, submitData);
             } else {
-                await IeLayoutService.create(formData);
+                await IeLayoutService.create(submitData);
             }
             router.push('/admin/ielayout');
         } catch (error) {
             console.error('Failed to save layout:', error);
-            alert('Error saving layout.');
+            alert('Error saving layout. Please verify all operations have been correctly initialized.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const formatInt = (num: number | undefined) => {
-        if (num === undefined || isNaN(num)) return '0';
-        return Math.round(num).toString();
+    const formatInt = (num: any) => {
+        const val = Number(num);
+        if (isNaN(val)) return '0';
+        return Math.round(val).toString();
     };
 
-    const formatPrec = (num: number | undefined) => {
-        if (num === undefined || isNaN(num) || num === 0) return '0';
-        return parseFloat(num.toFixed(3)).toString();
+    const formatPrec = (num: any) => {
+        const val = Number(num);
+        if (isNaN(val) || val === 0) return '0';
+        return parseFloat(val.toFixed(3)).toString();
     };
 
     const sectionTotals = useMemo(() => {
