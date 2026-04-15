@@ -69,18 +69,18 @@ export const IeLayoutFormPage = () => {
                 if (id) {
                     const layoutData = await IeLayoutService.getById(id as string);
                     if (layoutData) {
-                        const sanitizedDetails = (layoutData.details || []).map(d => ({
-                            ...d,
-                            section: d.section || 'INLINE',
-                            handling_position_value: Number(d.handling_position_value || 0),
-                            length: Number(d.length || 0),
-                            machine_turn: Number(d.machine_turn || 0),
-                            man_power: Number(d.man_power || 0),
-                            std_time: Number(d.std_time || 0),
-                            target_hour: Number(d.target_hour || 0),
-                            target_day: Number(d.target_day || 0),
-                            smv: Number(d.smv || 0)
-                        }));
+                        const efficiency = Number(layoutData.efficiency_constant || 1);
+                        const sanitizedDetails = (layoutData.details || []).map(d => {
+                            const detailWithNumbers = {
+                                ...d,
+                                section: d.section || 'INLINE',
+                                handling_position_value: Number(d.handling_position_value || 0),
+                                length: Number(d.length || 0),
+                                machine_turn: Number(d.machine_turn || 0),
+                                man_power: Number(d.man_power || 1), // Default to 1 if missing
+                            };
+                            return calculateRowMetrics(detailWithNumbers, efficiency);
+                        });
                         setFormData({
                             ...layoutData,
                             price: Number(layoutData.price || 0),
@@ -109,13 +109,15 @@ export const IeLayoutFormPage = () => {
 
         const posHandling = detail.handling_position_value || 0;
         const sewLength = detail.length || 0;
+        const mp = detail.man_power || 1;
 
         const rawStdTime = posHandling > 0 ? (sewLength * turn) + posHandling : 0;
         const stdTime = Math.ceil(rawStdTime * 100) / 100;
 
-        const targetHour = (posHandling > 0 && stdTime > 0) ? (3600 * efficiency) / stdTime : 0;
+        // Standard Industry Formulas
+        const smv = stdTime > 0 ? stdTime / 60 : 0;
+        const targetHour = (stdTime > 0) ? (3600 * efficiency * mp) / stdTime : 0;
         const targetDay = targetHour * 8;
-        const smv = targetHour > 0 ? 60 / targetHour : 0;
 
         return {
             ...detail,
@@ -499,10 +501,17 @@ export const IeLayoutFormPage = () => {
                                 <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Architecture Productivity</span>
                                 <div className="flex items-center gap-3">
                                     <span className="text-4xl font-black text-white">
-                                        {formatInt((formData.details || []).reduce((acc, d) => acc + (d.target_day || 0), 0) / ((formData.details || []).length || 1))}
+                                        {formatInt(
+                                            (() => {
+                                                const totalSmv = (formData.details || []).reduce((acc, d) => acc + (d.smv || 0), 0);
+                                                const totalMp = (formData.details || []).reduce((acc, d) => acc + (d.man_power || 0), 0);
+                                                const eff = formData.efficiency_constant || 1;
+                                                return totalSmv > 0 ? (totalMp * 60 * eff * 8) / totalSmv : 0; // *8 for Day basis
+                                            })()
+                                        )}
                                     </span>
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none">Units / Line</span>
+                                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none">Units / Line / Day</span>
                                     </div>
                                 </div>
                             </div>
