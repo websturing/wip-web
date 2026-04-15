@@ -100,7 +100,7 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                                                 <div className="flex items-center gap-6">
                                                     <div className="flex flex-col">
                                                         <span className="text-[8px] font-black text-zinc-300 uppercase leading-none mb-1">SMV</span>
-                                                        <span className="text-sm font-black text-zinc-900">{(layout.total_smv || 0).toFixed(2)}</span>
+                                                        <span className="text-sm font-black text-zinc-900">{parseFloat(Number(layout.total_smv || 0).toFixed(2)).toString()}</span>
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[8px] font-black text-zinc-300 uppercase leading-none mb-1">Process</span>
@@ -223,7 +223,7 @@ export const IeLayoutList = ({ onEdit, onManpowerClick }: IeLayoutListProps) => 
                                         <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block mb-1 opacity-60">Total SMV</span>
                                         <div className="flex items-center gap-2 text-zinc-900">
                                             <Icon icon="solar:stopwatch-bold-duotone" className="w-3.5 h-3.5 text-blue-500" />
-                                            <span className="text-lg font-black">{(layout.total_smv || 0).toFixed(2)}</span>
+                                            <span className="text-lg font-black">{parseFloat(Number(layout.total_smv || 0).toFixed(2)).toString()}</span>
                                         </div>
                                     </div>
                                     <div className="bg-zinc-50/50 p-4 rounded-xl border border-zinc-100 transition-all hover:bg-white hover:border-blue-50 col-span-2">
