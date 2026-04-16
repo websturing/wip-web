@@ -78,12 +78,11 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
 
 
     return (
-        <div className="w-[260px] lg:w-[280px] h-full bg-[#111827] rounded-[0.8rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300">
-            {/* Header Area with Close for Mobile */}
-            <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-800/50">
-                <div className="flex items-center gap-3">
-                    <div className="bg-blue-600 p-1 rounded font-black text-[10px] text-white">GL</div>
-                    <span className="text-white font-black text-xs uppercase tracking-widest italic">WIP Administrator</span>
+        <div className="w-[240px] h-full bg-[#111827] rounded-[1rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300 border-r border-white/5">
+            <div className="h-20 flex items-center justify-between px-5 border-b border-zinc-800/50">
+                <div className="flex items-center gap-2.5">
+                    <div className="bg-blue-600 p-1 rounded-md font-black text-[10px] text-white">GL</div>
+                    <span className="text-white font-black text-[10px] uppercase tracking-widest italic opacity-90">WIP Admin</span>
                 </div>
                 {isMobile && (
                     <button
@@ -122,21 +121,21 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                             href={item.path}
                                             onClick={() => isMobile && onClose?.()}
                                             className={cn(
-                                                "relative flex items-center justify-between pl-6 pr-4 py-3 transition-all group",
+                                                "relative flex items-center justify-between pl-5 pr-4 py-2.5 transition-all group",
                                                 isActive
                                                     ? 'bg-zinc-800/50 text-orange-400 font-bold'
                                                     : 'text-zinc-400 hover:bg-zinc-800/30 hover:text-zinc-100'
                                             )}
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2.5">
                                                 <Icon
                                                     icon={item.icon}
                                                     className={cn(
-                                                        "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
+                                                        "w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-110",
                                                         isActive ? 'text-orange-400' : 'text-zinc-500 group-hover:text-zinc-300'
                                                     )}
                                                 />
-                                                <span className="text-[12px] tracking-tight font-medium">{item.name}</span>
+                                                <span className="text-[11px] tracking-tight font-medium uppercase">{item.name}</span>
                                             </div>
 
                                             {item.badge && (
@@ -146,7 +145,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                             )}
 
                                             {isActive && (
-                                                <div className="absolute right-0 top-0 w-1 h-full bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.8)] animate-in fade-in slide-in-from-right-1 duration-500"></div>
+                                                <div className="absolute right-0 top-0 w-0.5 h-full bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.8)] animate-in fade-in slide-in-from-right-1 duration-500"></div>
                                             )}
                                         </Link>
                                     );

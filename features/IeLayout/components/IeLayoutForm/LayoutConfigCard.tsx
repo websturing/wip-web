@@ -52,7 +52,7 @@ export const LayoutConfigCard = ({ formData, lots, updateFormData }: LayoutConfi
                         </label>
                         <div className="relative">
                             <input
-                                type="number" step="0.01"
+                                type="number" step="any"
                                 className="w-full bg-zinc-50 border-none rounded-2xl px-6 py-4 text-sm font-black text-emerald-600 focus:ring-2 focus:ring-emerald-500/10 transition-all"
                                 value={formData.efficiency_constant}
                                 onChange={(e) => updateFormData({ efficiency_constant: Number(e.target.value) })}

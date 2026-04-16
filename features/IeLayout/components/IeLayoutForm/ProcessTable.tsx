@@ -83,14 +83,14 @@ export const ProcessTable = ({
                                 </td>
                                 <td className="px-1 py-1.5 text-center">
                                     <input
-                                        type="number" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
+                                        type="number" step="any" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
                                         value={detail.handling_position_value}
                                         onChange={(e) => updateDetail(globalIdx, 'handling_position_value', Number(e.target.value))}
                                     />
                                 </td>
                                 <td className="px-1 py-1.5 text-center">
                                     <input
-                                        type="number" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
+                                        type="number" step="any" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
                                         value={detail.length}
                                         onChange={(e) => updateDetail(globalIdx, 'length', Number(e.target.value))}
                                     />
