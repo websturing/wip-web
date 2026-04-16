@@ -12,7 +12,10 @@ import { useIeLayoutForm } from '../hooks/useIeLayoutForm';
 // Premium Modular Components
 import { FormFooterSummary } from '../components/IeLayoutForm/FormFooterSummary';
 import { LayoutConfigCard } from '../components/IeLayoutForm/LayoutConfigCard';
+import { LineBalancingChart } from '../components/IeLayoutForm/LineBalancingChart';
 import { WorkflowSection } from '../components/IeLayoutForm/WorkflowSection';
+
+
 
 export const IeLayoutFormPage = () => {
     const params = useParams();
@@ -80,7 +83,14 @@ export const IeLayoutFormPage = () => {
                         updateFormData={(data) => setFormData(prev => ({ ...prev, ...data }))}
                     />
 
+                    {/* Real-time Line Balancing Visualization */}
+                    <LineBalancingChart
+                        details={formData.details || []}
+                        efficiency={formData.efficiency_constant}
+                    />
+
                     {/* Section Management Header */}
+
                     <div className="lg:col-span-12 flex items-center justify-between mt-6">
                         <div className="flex flex-col">
                             <h2 className="text-xl font-black text-zinc-900 uppercase tracking-tight">Workflow Arsitektur</h2>
