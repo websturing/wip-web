@@ -284,6 +284,9 @@ export const Productivity = () => {
                                                             <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
                                                                 <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
                                                             </button>
+                                                            <button onClick={() => ProductivityService.exportExcel(item.id)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90">
+                                                                <Icon icon="solar:file-download-bold-duotone" className="w-3.5 h-3.5" />
+                                                            </button>
                                                             <button onClick={async () => {
                                                                 if (confirm('Delete this record?')) {
                                                                     await ProductivityService.delete(item.id);

@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api";
+import { apiClient, BASE_URL } from "@/lib/api";
 
 export class ProductivityService {
     private static resource = '/productivity';
@@ -32,5 +32,9 @@ export class ProductivityService {
     static async delete(id: string) {
         const response = await apiClient.delete(`${this.resource}/${id}`);
         return await response.json();
+    }
+
+    static exportExcel(id: string) {
+        window.open(`${BASE_URL}${this.resource}/${id}/export`, '_blank');
     }
 }

@@ -1,6 +1,6 @@
 import { getSession } from "next-auth/react";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export const apiClient = {
     async fetch(endpoint: string, options: RequestInit = {}) {
