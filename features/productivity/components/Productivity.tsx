@@ -64,7 +64,7 @@ export const Productivity = () => {
                         <Icon icon="solar:chart-square-bold-duotone" className="w-8 h-8" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-zinc-900 tracking-tight uppercase leading-none">Productivity Intelligence</h1>
+                        <h1 className="text-2xl font-black text-zinc-900 tracking-tight uppercase leading-none">Productivity</h1>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                             <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-none">Real-time Performance Synchronization</p>
@@ -111,31 +111,6 @@ export const Productivity = () => {
                         <span>New Log</span>
                     </button>
                 </div>
-            </div>
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                    { label: 'Total Output', value: data.reduce((sum, item) => sum + (Number(item.output) || 0), 0), icon: 'solar:box-bold-duotone', color: 'blue' },
-                    { label: 'Avg Efficiency', value: '78%', icon: 'solar:bolt-bold-duotone', color: 'emerald' },
-                    { label: 'Active Lines', value: new Set(data.map(i => i.line_id)).size, icon: 'solar:transmission-bold-duotone', color: 'amber' },
-                    { label: 'Variance', value: '-120', icon: 'solar:danger-triangle-bold-duotone', color: 'red' },
-                ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-zinc-100 shadow-sm flex items-center gap-5 group hover:border-zinc-900 transition-all">
-                        <div className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center p-3 shadow-lg group-hover:scale-110 transition-transform",
-                            stat.color === 'blue' ? "bg-blue-50 text-blue-500" :
-                                stat.color === 'emerald' ? "bg-emerald-50 text-emerald-500" :
-                                    stat.color === 'amber' ? "bg-amber-50 text-amber-500" : "bg-red-50 text-red-500"
-                        )}>
-                            <Icon icon={stat.icon} className="w-full h-full" />
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 leading-none mb-2">{stat.label}</p>
-                            <p className="text-xl font-black text-zinc-900 tracking-tighter leading-none">{stat.value}</p>
-                        </div>
-                    </div>
-                ))}
             </div>
 
             <div className="bg-white rounded-2xl border border-zinc-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] overflow-hidden">

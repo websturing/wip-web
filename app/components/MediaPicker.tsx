@@ -64,7 +64,7 @@ export const MediaPicker = ({ open, onOpenChange, onSelect }: MediaPickerProps) 
                 <DialogHeader className="p-8 border-b border-zinc-100 shrink-0">
                     <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight uppercase flex items-center gap-3">
                         <Icon icon="solar:gallery-bold-duotone" className="w-8 h-8 text-blue-500" />
-                        <span>Select Intelligence Asset</span>
+                        <span>Select Asset</span>
                     </DialogTitle>
                 </DialogHeader>
 
@@ -93,7 +93,7 @@ export const MediaPicker = ({ open, onOpenChange, onSelect }: MediaPickerProps) 
                             className="h-12 px-6 bg-zinc-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:bg-zinc-800 disabled:opacity-50 shrink-0 transition-all active:scale-95 shadow-lg"
                         >
                             {isUploading ? <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" /> : <Icon icon="solar:cloud-upload-bold" className="w-4 h-4" />}
-                            <span>Quick Inject</span>
+                            <span>Quick Upload</span>
                         </button>
                     </div>
 
