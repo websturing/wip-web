@@ -42,6 +42,7 @@ function CreateProductionForm({ id }: { id?: string }) {
         variant: 'success'
     });
     const [errors, setErrors] = useState<Record<string, boolean>>({});
+    const [partTypes, setPartTypes] = useState<Record<number, string>>({});
 
     const showToast = (title: string, message: string, variant: 'success' | 'destructive' = 'success') => {
         setToast({ open: true, title, message, variant });
@@ -64,6 +65,7 @@ function CreateProductionForm({ id }: { id?: string }) {
             {
                 lot_id: '',
                 color: '',
+                part: '',
                 sizes: [
                     { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                     { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -105,27 +107,37 @@ function CreateProductionForm({ id }: { id?: string }) {
                     const p = res.data;
 
                     // Map items to form structure
-                    const mappedItems = p.items.map((item: any) => ({
-                        id: item.id,
-                        lot_id: item.lot_id,
-                        color: item.color,
-                        sizes: item.details.map((d: any) => ({
-                            size_name: d.size_name,
-                            qty_input: d.qty_input,
-                            qty_output: d.qty_output,
-                            order_mi: 0,
-                            cut_qty: 0,
-                            recorded_input: 0,
-                            recorded_output: 0
-                        }))
-                    }));
-
                     setFormData({
                         production_date: p.production_date,
                         line_id: p.line_id,
                         entry_mode: p.items[0]?.details.length === 1 && p.items[0]?.details[0].size_name === 'TOTAL' ? 'output' : 'per-size',
                         remarks: p.remarks || '',
-                        items: mappedItems
+                        items: p.items.map((item: any) => {
+                            let color = item.color || '';
+                            let part = '';
+                            if (color.endsWith(' (TOP)')) {
+                                color = color.replace(' (TOP)', '');
+                                part = 'TOP';
+                            } else if (color.endsWith(' (PANT)')) {
+                                color = color.replace(' (PANT)', '');
+                                part = 'PANT';
+                            }
+                            return {
+                                id: item.id,
+                                lot_id: item.lot_id,
+                                color: color,
+                                part: part,
+                                sizes: item.details.map((d: any) => ({
+                                    size_name: d.size_name,
+                                    qty_input: d.qty_input,
+                                    qty_output: d.qty_output,
+                                    order_mi: 0,
+                                    cut_qty: 0,
+                                    recorded_input: 0,
+                                    recorded_output: 0
+                                }))
+                            };
+                        })
                     });
 
                     // Trigger hydration for each item AFTER lots are set
@@ -135,7 +147,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                         lot_code: l.lot_code || ''
                     })) : [];
 
-                    mappedItems.forEach(async (item: any, idx: number) => {
+                    p.items.forEach(async (item: any, idx: number) => {
                         fetchLotDetailsWithLots(item.lot_id, idx, currentLots);
                     });
                 }
@@ -160,6 +172,12 @@ function CreateProductionForm({ id }: { id?: string }) {
                 );
 
                 setLotDetails(prev => ({ ...prev, [itemIdx]: bodyColors }));
+                const cuttingPartType = json.data.part_type ||
+                    bodyColors[0]?.part_type ||
+                    json.data.summary_by_color[0]?.part_type ||
+                    json.data.summary_by_gl?.[0]?.laying_plannings?.[0]?.part_type ||
+                    '';
+                setPartTypes(prev => ({ ...prev, [itemIdx]: cuttingPartType }));
 
                 // If in Edit mode, we don't want to overwrite the color and sizes with defaults
                 // but we DO want to hydrate the order_mi and cut_qty
@@ -207,6 +225,15 @@ function CreateProductionForm({ id }: { id?: string }) {
                     ...prev,
                     [itemIdx]: bodyColors
                 }));
+                const cuttingPartType = json.data.part_type ||
+                    bodyColors[0]?.part_type ||
+                    json.data.summary_by_color[0]?.part_type ||
+                    json.data.summary_by_gl?.[0]?.laying_plannings?.[0]?.part_type ||
+                    '';
+                setPartTypes(prev => ({
+                    ...prev,
+                    [itemIdx]: cuttingPartType
+                }));
 
                 if (bodyColors.length === 1) {
                     const colorData = bodyColors[0];
@@ -225,7 +252,9 @@ function CreateProductionForm({ id }: { id?: string }) {
         let recordedSummary: Record<string, any> = {};
         if (lotId && color) {
             try {
-                const res = await ProductionService.getSummary(lotId, color);
+                const part = item.part;
+                const finalColor = part ? `${color} (${part})` : color;
+                const res = await ProductionService.getSummary(lotId, finalColor);
                 if (res && res.status === 'success') {
                     recordedSummary = res.data;
                 }
@@ -281,6 +310,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                 {
                     lot_id: '',
                     color: '',
+                    part: '',
                     sizes: [
                         { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                         { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -313,11 +343,12 @@ function CreateProductionForm({ id }: { id?: string }) {
         setIsLoading(true);
         try {
             const cleanedItems = formData.items.map(item => {
+                const finalColor = item.part ? `${item.color} (${item.part})` : item.color;
                 if (formData.entry_mode === 'output') {
                     const totalEntry = item.sizes.find(s => s.size_name === 'TOTAL');
-                    return { ...item, sizes: totalEntry ? [totalEntry] : [] };
+                    return { ...item, color: finalColor, sizes: totalEntry ? [totalEntry] : [] };
                 }
-                return { ...item, sizes: item.sizes.filter(s => s.size_name !== 'TOTAL') };
+                return { ...item, color: finalColor, sizes: item.sizes.filter(s => s.size_name !== 'TOTAL') };
             });
 
             if (isEdit) {
@@ -478,58 +509,94 @@ function CreateProductionForm({ id }: { id?: string }) {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-end">
-                                    <Select
-                                        label="GL Number"
-                                        placeholder="Search GL Code..."
-                                        options={lots}
-                                        value={item.lot_id}
-                                        error={errors[`item-${iIdx}-lot_id`]}
-                                        onChange={async (val) => {
-                                            const newItems = [...formData.items];
-                                            newItems[iIdx].lot_id = String(val);
-                                            newItems[iIdx].color = '';
-                                            newItems[iIdx].sizes = [];
-                                            setFormData({ ...formData, items: newItems });
-                                            fetchLotDetails(String(val), iIdx);
-                                            if (errors[`item-${iIdx}-lot_id`]) {
-                                                setErrors(prev => {
-                                                    const next = { ...prev };
-                                                    delete next[`item-${iIdx}-lot_id`];
-                                                    return next;
-                                                });
-                                            }
-                                        }}
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-start">
+                                    <div className="flex flex-col gap-2">
+                                        <Select
+                                            label="GL Number"
+                                            placeholder="Search GL Code..."
+                                            options={lots}
+                                            value={item.lot_id}
+                                            error={errors[`item-${iIdx}-lot_id`]}
+                                            onChange={async (val) => {
+                                                const newItems = [...formData.items];
+                                                newItems[iIdx].lot_id = String(val);
+                                                newItems[iIdx].color = '';
+                                                newItems[iIdx].part = '';
+                                                newItems[iIdx].sizes = [];
+                                                setFormData({ ...formData, items: newItems });
+                                                fetchLotDetails(String(val), iIdx);
+                                                if (errors[`item-${iIdx}-lot_id`]) {
+                                                    setErrors(prev => {
+                                                        const next = { ...prev };
+                                                        delete next[`item-${iIdx}-lot_id`];
+                                                        return next;
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                        {partTypes[iIdx] && (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-lg w-fit ml-1 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                <Icon icon="solar:info-circle-bold-duotone" className="w-3.5 h-3.5 text-zinc-500" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">
+                                                    Cutting Type: <span className="text-blue-600">{partTypes[iIdx]}</span>
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                     {item.lot_id && (
-                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Color Variant</label>
-                                            {lotDetails[iIdx] ? (
-                                                <Select
-                                                    placeholder="Choose Color..."
-                                                    options={lotDetails[iIdx].map(c => ({ id: c.color, label: c.color }))}
-                                                    value={item.color}
-                                                    error={errors[`item-${iIdx}-color`]}
-                                                    onChange={(val) => {
-                                                        const colorData = lotDetails[iIdx].find(c => c.color === val);
-                                                        updateItemColor(iIdx, String(val), colorData?.size_breakdown);
-                                                        if (errors[`item-${iIdx}-color`]) {
-                                                            setErrors(prev => {
-                                                                const next = { ...prev };
-                                                                delete next[`item-${iIdx}-color`];
-                                                                return next;
-                                                            });
-                                                        }
-                                                    }}
-                                                />
-                                            ) : (
-                                                <input
-                                                    className="w-full bg-white border border-zinc-100 h-12 rounded-xl px-4 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 transition-all font-bold text-[13px]"
-                                                    placeholder="Enter color..."
-                                                    value={item.color}
-                                                    onChange={(e) => updateItemColor(iIdx, e.target.value)}
-                                                />
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                            {(partTypes[iIdx] || "").toUpperCase().includes("TOP") && (partTypes[iIdx] || "").toUpperCase().includes("PANT") && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Select Part</label>
+                                                    <Select
+                                                        placeholder="Choose Part..."
+                                                        options={[
+                                                            { id: 'TOP', label: 'TOP' },
+                                                            { id: 'PANT', label: 'PANT' }
+                                                        ]}
+                                                        value={item.part}
+                                                        onChange={(val) => {
+                                                            const newItems = [...formData.items];
+                                                            newItems[iIdx].part = String(val);
+                                                            setFormData({ ...formData, items: newItems });
+                                                            // Trigger summary refresh if color is already selected
+                                                            if (item.color) {
+                                                                const colorData = lotDetails[iIdx].find(c => c.color === item.color);
+                                                                updateItemColor(iIdx, item.color, colorData?.size_breakdown);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
                                             )}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Color Variant</label>
+                                                {lotDetails[iIdx] ? (
+                                                    <Select
+                                                        placeholder="Choose Color..."
+                                                        options={lotDetails[iIdx].map(c => ({ id: c.color, label: c.color }))}
+                                                        value={item.color}
+                                                        error={errors[`item-${iIdx}-color`]}
+                                                        onChange={(val) => {
+                                                            const colorData = lotDetails[iIdx].find(c => c.color === val);
+                                                            updateItemColor(iIdx, String(val), colorData?.size_breakdown);
+                                                            if (errors[`item-${iIdx}-color`]) {
+                                                                setErrors(prev => {
+                                                                    const next = { ...prev };
+                                                                    delete next[`item-${iIdx}-color`];
+                                                                    return next;
+                                                                });
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        className="w-full bg-white border border-zinc-100 h-12 rounded-xl px-4 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 transition-all font-bold text-[13px]"
+                                                        placeholder="Enter color..."
+                                                        value={item.color}
+                                                        onChange={(e) => updateItemColor(iIdx, e.target.value)}
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
