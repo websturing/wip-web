@@ -133,9 +133,20 @@ export const ProductivityFormPage = () => {
                 if (res.status === 'success') {
                     const lineOutput = res.data.filter((p: any) => String(p.line_id) === String(formData.line_id));
 
-                    // 1. Handle GLs/Lots (Reset to match current production)
-                    const lotIds = Array.from(new Set(lineOutput.flatMap((p: any) => p.items?.map((i: any) => i.lot_id)).filter(Boolean))) as string[];
-                    await handleLotSelection(lotIds);
+                    // 1. Handle GLs/Lots + Sections (Automated pairing)
+                    const lotSectionPairs = lineOutput.flatMap((p: any) =>
+                        p.items?.map((i: any) => ({
+                            lot_id: String(i.lot_id),
+                            section: i.section || 'all'
+                        }))
+                    ).filter(Boolean);
+
+                    // De-duplicate pairs
+                    const uniquePairs = Array.from(
+                        new Set(lotSectionPairs.map((p: any) => JSON.stringify(p)))
+                    ).map((s: any) => JSON.parse(s) as { lot_id: string, section: string });
+
+                    await handleLotSectionAutoFill(uniquePairs);
 
                     // 2. Handle Manpower (Matching Girl / Helper)
                     const totalMatching = lineOutput.reduce((sum: number, p: any) => sum + (Number(p.man_power_matching) || 0), 0);
@@ -159,6 +170,49 @@ export const ProductivityFormPage = () => {
 
         autoFillStyles();
     }, [formData.line_id, formData.date, lots]);
+
+    const handleLotSectionAutoFill = async (pairs: { lot_id: string, section: string }[]) => {
+        // Fetch new ones in parallel
+        const configs = await Promise.all(pairs.map(async (pair) => {
+            const lotInfo = lots.find(l => l.id === pair.lot_id);
+            let defaults = {
+                smv: 0,
+                last_step: 0,
+                target_plan: 0,
+                manpower: 0,
+                plan_manpower: 0,
+                sewer: 0,
+                plan_sewer: 0,
+                working_hour: 8,
+                section: pair.section,
+                media_id: undefined as string | undefined,
+                media_url: undefined as string | undefined
+            };
+
+            try {
+                const res = await ProductivityService.getLastInfo(pair.lot_id);
+                if (res.status === 'success' && res.data) {
+                    defaults = {
+                        ...defaults,
+                        smv: parseFloat(res.data.smv || 0),
+                        target_plan: parseFloat(res.data.target_plan || 0),
+                        plan_manpower: parseFloat(res.data.plan_manpower || 0),
+                        sewer: parseFloat(res.data.sewer || 0),
+                        media_id: res.data.media_id,
+                        media_url: res.data.media_url
+                    };
+                }
+            } catch (e) { }
+
+            return {
+                lot_id: pair.lot_id,
+                label: lotInfo?.label,
+                ...defaults
+            };
+        }));
+
+        setFormData(prev => ({ ...prev, lot_configs: configs }));
+    };
 
     const handleLotSelection = async (ids: (string | number)[]) => {
         const prevLotIds = formData.lot_configs.map(c => c.lot_id);
@@ -188,15 +242,11 @@ export const ProductivityFormPage = () => {
                 const res = await ProductivityService.getLastInfo(String(lotId));
                 if (res.status === 'success' && res.data) {
                     defaults = {
+                        ...defaults,
                         smv: parseFloat(res.data.smv || 0),
-                        last_step: 0,
                         target_plan: parseFloat(res.data.target_plan || 0),
-                        manpower: 0,
                         plan_manpower: parseFloat(res.data.plan_manpower || 0),
                         sewer: parseFloat(res.data.sewer || 0),
-                        plan_sewer: 0,
-                        working_hour: 8,
-                        section: res.data.section || 'all',
                         media_id: res.data.media_id,
                         media_url: res.data.media_url
                     };
@@ -213,9 +263,10 @@ export const ProductivityFormPage = () => {
         setFormData(prev => ({ ...prev, lot_configs: [...existingConfigs, ...newConfigs] }));
     };
 
-    const updateLotConfig = (lotId: string, field: keyof LotConfig, value: any) => {
+    const updateLotConfig = (index: number, field: keyof LotConfig, value: any) => {
         setFormData(prev => {
-            const nextConfigs = prev.lot_configs.map(c => c.lot_id === lotId ? { ...c, [field]: value } : c);
+            const nextConfigs = [...prev.lot_configs];
+            nextConfigs[index] = { ...nextConfigs[index], [field]: value };
             return { ...prev, lot_configs: nextConfigs };
         });
     };
@@ -347,17 +398,17 @@ export const ProductivityFormPage = () => {
                     </div>
                     {formData.lot_configs.length > 0 ? (
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                            {formData.lot_configs.map((config) => (
-                                <div key={config.lot_id} className="bg-white rounded-[3rem] border border-zinc-100 p-10 shadow-sm group hover:border-zinc-900 transition-all duration-500 relative overflow-hidden">
+                            {formData.lot_configs.map((config, cIdx) => (
+                                <div key={`${config.lot_id}-${config.section}-${cIdx}`} className="bg-white rounded-[3rem] border border-zinc-100 p-10 shadow-sm group hover:border-zinc-900 transition-all duration-500 relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-6">
-                                        <button onClick={() => setFormData({ ...formData, lot_configs: formData.lot_configs.filter(c => c.lot_id !== config.lot_id) })} className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                                        <button onClick={() => setFormData({ ...formData, lot_configs: formData.lot_configs.filter((_, i) => i !== cIdx) })} className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
                                             <Icon icon="solar:trash-bin-trash-bold" className="w-5 h-5" />
                                         </button>
                                     </div>
 
                                     <div className="mb-10 flex gap-6 items-start">
                                         <div
-                                            onClick={() => setPickingMediaFor(config.lot_id)}
+                                            onClick={() => setPickingMediaFor(`${config.lot_id}-${cIdx}`)}
                                             className="w-24 h-24 rounded-2xl bg-zinc-50 border border-zinc-100 flex-shrink-0 overflow-hidden group/img relative cursor-pointer hover:border-blue-500 transition-all shadow-sm"
                                         >
                                             {config.media_url ? (
@@ -394,7 +445,7 @@ export const ProductivityFormPage = () => {
                                                     { id: 'outline', label: 'Outline' }
                                                 ]}
                                                 value={config.section || 'all'}
-                                                onChange={(val) => updateLotConfig(config.lot_id, 'section', String(val))}
+                                                onChange={(val) => updateLotConfig(cIdx, 'section', String(val))}
                                                 placeholder="Select Section"
                                             />
                                         </div>
@@ -406,7 +457,7 @@ export const ProductivityFormPage = () => {
                                             <input
                                                 type="number"
                                                 value={config.plan_manpower}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'plan_manpower', Number(e.target.value))}
+                                                onChange={(e) => updateLotConfig(cIdx, 'plan_manpower', Number(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-500 outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
                                             />
@@ -418,7 +469,7 @@ export const ProductivityFormPage = () => {
                                             <input
                                                 type="number"
                                                 value={config.manpower}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'manpower', Number(e.target.value))}
+                                                onChange={(e) => updateLotConfig(cIdx, 'manpower', Number(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-blue-50/30 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none border border-blue-100 focus:border-blue-400 focus:bg-white transition-all"
                                             />
@@ -429,7 +480,7 @@ export const ProductivityFormPage = () => {
                                             <input
                                                 type="number"
                                                 value={config.working_hour}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'working_hour', Number(e.target.value))}
+                                                onChange={(e) => updateLotConfig(cIdx, 'working_hour', Number(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-800 outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
                                             />
@@ -443,9 +494,9 @@ export const ProductivityFormPage = () => {
                                                 value={config.smv}
                                                 onChange={(e) => {
                                                     const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
-                                                    updateLotConfig(config.lot_id, 'smv', val as any);
+                                                    updateLotConfig(cIdx, 'smv', val as any);
                                                 }}
-                                                onBlur={() => updateLotConfig(config.lot_id, 'smv', Number(config.smv) || 0)}
+                                                onBlur={() => updateLotConfig(cIdx, 'smv', Number(config.smv) || 0)}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold tabular-nums outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
                                             />
@@ -456,7 +507,7 @@ export const ProductivityFormPage = () => {
                                             <input
                                                 type="number"
                                                 value={config.last_step}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'last_step', Number(e.target.value))}
+                                                onChange={(e) => updateLotConfig(cIdx, 'last_step', Number(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold tabular-nums outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
                                             />
@@ -467,7 +518,7 @@ export const ProductivityFormPage = () => {
                                             <input
                                                 type="number"
                                                 value={config.target_plan}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'target_plan', Number(e.target.value))}
+                                                onChange={(e) => updateLotConfig(cIdx, 'target_plan', Number(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-zinc-900 h-14 rounded-2xl px-6 text-xl font-black text-emerald-400 tabular-nums outline-none border border-zinc-800 focus:border-emerald-500 transition-all shadow-xl"
                                             />
@@ -556,10 +607,9 @@ export const ProductivityFormPage = () => {
                     onOpenChange={(open) => !open && setPickingMediaFor(null)}
                     onSelect={(media) => {
                         if (pickingMediaFor) {
-                            setFormData(prev => ({
-                                ...prev,
-                                lot_configs: prev.lot_configs.map(c => c.lot_id === pickingMediaFor ? { ...c, media_id: media.id, media_url: media.url } : c)
-                            }));
+                            const [lotId, cIdx] = pickingMediaFor.split('-');
+                            updateLotConfig(Number(cIdx), 'media_id', media.id);
+                            updateLotConfig(Number(cIdx), 'media_url', media.url);
                             setPickingMediaFor(null);
                         }
                     }}
