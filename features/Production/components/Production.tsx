@@ -465,7 +465,7 @@ export const Production = () => {
                                             <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
                                         </button>
                                     </div>
-                                    <div className="flex-1 overflow-y-auto p-10 space-y-4 font-sans hover-scrollbar">
+                                    <div className="flex-1 overflow-y-auto  p-10 space-y-4 font-sans hover-scrollbar">
                                         {groupedData[selectedGroupKey].entries.map((p: any, pIdx: number) => (
                                             <div key={pIdx} className="bg-zinc-50/50 rounded-3xl border border-zinc-100 p-6 hover:border-blue-100 transition-colors">
                                                 <div className="flex flex-col gap-6 mb-6 pb-6 border-b border-zinc-100">
@@ -479,18 +479,16 @@ export const Production = () => {
                                                                     <span className="text-[11px] font-black text-zinc-900 uppercase tracking-tight leading-tight">{p.customerName}</span>
                                                                     <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{p.styleNo}</span>
                                                                 </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[9px] font-black bg-zinc-900 text-white px-1.5 py-0.5 rounded shadow-sm">GL {p.glNo}</span>
-                                                                    <span className="text-[9px] font-black bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded">LOT {p.lotClean}</span>
-                                                                    {p.remarks && (
-                                                                        <span className="text-[9px] font-bold text-orange-500 italic truncate max-w-[150px]">"{p.remarks}"</span>
-                                                                    )}
-                                                                </div>
+
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
-                                                                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[9px] font-black bg-zinc-900 text-white px-1.5 py-0.5 rounded shadow-sm">GL {p.glNo}</span>
+                                                                <span className="text-[9px] font-black bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded">LOT {p.lotClean}</span>
+                                                                {p.remarks && (
+                                                                    <span className="text-[9px] font-bold text-orange-500 italic truncate max-w-[150px]">"{p.remarks}"</span>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-1">
                                                                 <PermissionGuard permission="production.update">
@@ -515,6 +513,9 @@ export const Production = () => {
                                                         </div>
                                                     </div>
 
+                                                    <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded">
+                                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                    </div>
                                                     {/* Size Breakdown */}
                                                     <div className="space-y-3">
                                                         <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block px-1">Size Breakdown (PK)</span>
