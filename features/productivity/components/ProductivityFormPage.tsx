@@ -38,10 +38,16 @@ export const ProductivityFormPage = () => {
     const [formData, setFormData] = useState({
         id: null,
         line_id: '',
-        date: new Date().toISOString().split('T')[0],
+        date: (() => {
+            const date = new Date();
+            date.setDate(date.getDate() - 1);
+            return date.toISOString().split('T')[0];
+        })(),
         sewer: 1,
         lot_configs: [] as LotConfig[]
     });
+    const [isAutoFilling, setIsAutoFilling] = useState(false);
+    const [lastSynced, setLastSynced] = useState({ line_id: '', date: '' });
 
     // Total target sum across all lots
     const currentTargetSum = useMemo(() => {
@@ -94,6 +100,10 @@ export const ProductivityFormPage = () => {
                         sewer: parseFloat(item.sewer || 0),
                         lot_configs: configs
                     });
+                    setLastSynced({
+                        line_id: item.line_id,
+                        date: item.date ? (typeof item.date === 'string' ? item.date.split('T')[0] : new Date(item.date).toISOString().split('T')[0]) : '',
+                    });
                 }
             }).finally(() => setIsLoading(false));
         }
@@ -101,25 +111,34 @@ export const ProductivityFormPage = () => {
 
     // Auto-fill GLs from Production Output if line is selected
     useEffect(() => {
-        if (!formData.line_id || !formData.date || !!formData.id || lots.length === 0) return;
+        // Prevent sync on mount (especially for edit mode) or if nothing changed
+        if (formData.line_id === lastSynced.line_id && formData.date === lastSynced.date) return;
+        if (!formData.line_id || !formData.date || lots.length === 0) return;
 
         const autoFillStyles = async () => {
+            setIsAutoFilling(true);
             try {
                 const res = await ProductionService.getAll(formData.date);
                 if (res.status === 'success') {
                     const lineOutput = res.data.filter((p: any) => String(p.line_id) === String(formData.line_id));
-                    const lotIds = Array.from(new Set(lineOutput.flatMap((p: any) => p.items?.map((i: any) => i.lot_id)).filter(Boolean))) as string[];
 
-                    if (lotIds.length > 0) {
-                        const currentIds = formData.lot_configs.map(c => c.lot_id);
-                        const hasNew = lotIds.some(id => !currentIds.includes(id));
-                        if (hasNew) {
-                            handleLotSelection(Array.from(new Set([...currentIds, ...lotIds])));
-                        }
+                    // 1. Handle GLs/Lots (Reset to match current production)
+                    const lotIds = Array.from(new Set(lineOutput.flatMap((p: any) => p.items?.map((i: any) => i.lot_id)).filter(Boolean))) as string[];
+                    await handleLotSelection(lotIds);
+
+                    // 2. Handle Manpower (Matching Girl / Helper)
+                    const totalMatching = lineOutput.reduce((sum: number, p: any) => sum + (Number(p.man_power_matching) || 0), 0);
+                    if (totalMatching > 0) {
+                        setFormData(prev => ({ ...prev, sewer: totalMatching }));
                     }
+
+                    // Mark as synced
+                    setLastSynced({ line_id: formData.line_id, date: formData.date });
                 }
             } catch (error) {
                 console.error('Failed to auto-select styles:', error);
+            } finally {
+                setIsAutoFilling(false);
             }
         };
 
@@ -128,11 +147,13 @@ export const ProductivityFormPage = () => {
 
     const handleLotSelection = async (ids: (string | number)[]) => {
         const prevLotIds = formData.lot_configs.map(c => c.lot_id);
-        const newConfigs = [...formData.lot_configs];
-        const finalConfigs = newConfigs.filter(c => ids.includes(c.lot_id));
         const addedIds = ids.filter(id => !prevLotIds.includes(String(id)));
 
-        for (const lotId of addedIds) {
+        // Keep existing ones that are still in ids
+        const existingConfigs = formData.lot_configs.filter(c => ids.includes(c.lot_id));
+
+        // Fetch new ones in parallel
+        const newConfigs = await Promise.all(addedIds.map(async (lotId) => {
             const lotInfo = lots.find(l => l.id === lotId);
             let defaults = {
                 smv: 0,
@@ -151,7 +172,7 @@ export const ProductivityFormPage = () => {
                     defaults = {
                         smv: parseFloat(res.data.smv || 0),
                         last_step: 0,
-                        target_plan: parseFloat(res.data.target_plan || 0), // Use previous if exists
+                        target_plan: parseFloat(res.data.target_plan || 0),
                         manpower: 0,
                         plan_manpower: parseFloat(res.data.plan_manpower || 0),
                         sewer: parseFloat(res.data.sewer || 0),
@@ -161,13 +182,14 @@ export const ProductivityFormPage = () => {
                 }
             } catch (e) { }
 
-            finalConfigs.push({
+            return {
                 lot_id: String(lotId),
                 label: lotInfo?.label,
                 ...defaults
-            });
-        }
-        setFormData(prev => ({ ...prev, lot_configs: finalConfigs }));
+            };
+        }));
+
+        setFormData(prev => ({ ...prev, lot_configs: [...existingConfigs, ...newConfigs] }));
     };
 
     const updateLotConfig = (lotId: string, field: keyof LotConfig, value: number) => {
@@ -272,6 +294,12 @@ export const ProductivityFormPage = () => {
                             />
                         </div>
 
+                        {isAutoFilling && (
+                            <div className="flex items-center gap-2 text-zinc-400 animate-pulse ml-auto bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-100">
+                                <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Syncing from Production...</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
