@@ -7,9 +7,10 @@ export const apiClient = {
         const session = await getSession();
         const token = (session as any)?.accessToken;
 
+        const isFormData = options.body instanceof FormData;
         const headers: HeadersInit = {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
             ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             ...options.headers,
         };
