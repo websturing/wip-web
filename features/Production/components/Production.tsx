@@ -15,7 +15,7 @@ import { Icon } from '@/app/components/ui/Icon';
 import { Select } from '@/app/components/ui/Select';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useProduction } from '../hooks/useProduction';
 import { ProductionService } from '../services/ProductionService';
 
@@ -130,6 +130,7 @@ export const Production = () => {
 
     // Need expandedCards back for Card View
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
     const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: number | null; loading: boolean }>({
         open: false,
         id: null,
@@ -355,81 +356,162 @@ export const Production = () => {
                                 </thead>
                                 <tbody className="divide-y divide-zinc-50">
                                     {Object.entries(groupedData).map(([key, data]: [string, any]) => {
-                                        const allColors = Array.from(new Set(data.entries.map((e: any) => e.color)));
+                                        const uniqueBuyers = Array.from(new Set(data.entries.map((e: any) => e.customerName)));
+                                        const uniqueGlLots = Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}`)));
+                                        const isExpanded = expandedRows[key];
 
                                         return (
-                                            <tr key={key} className="hover:bg-zinc-50/30 transition-colors group">
-                                                <td className="px-4 py-6">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LINE CENTER</span>
-                                                        <span className="text-zinc-900 font-black tracking-tight">{data.lineName}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-6">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">LOG ENTRIES</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="bg-zinc-900 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm">
-                                                                {data.entries.length} LOGS
+                                            <Fragment key={key}>
+                                                <tr
+                                                    onClick={() => setExpandedRows(prev => ({ ...prev, [key]: !prev[key] }))}
+                                                    className={cn(
+                                                        "hover:bg-zinc-50/50 transition-all cursor-pointer border-b border-zinc-50",
+                                                        isExpanded && "bg-zinc-50/80 shadow-inner"
+                                                    )}
+                                                >
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={cn(
+                                                                "w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white shadow-sm transition-all",
+                                                                isExpanded ? "bg-zinc-900 scale-105" : "bg-blue-600"
+                                                            )}>
+                                                                <span className="text-[8px] font-black leading-none mb-0.5">LINE</span>
+                                                                <span className="text-sm font-black leading-none">{data.lineName}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">CENTER</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="bg-zinc-900 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm">
+                                                                        {data.entries.length} ACTIVITY LOGS
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-6">
-                                                    <div className="flex flex-col gap-1.5">
-                                                        {Array.from(new Set(data.entries.map((e: any) => `${e.customerName}|${e.styleNo}`))).map((cs: any, i: number) => {
-                                                            const [cust, style] = cs.split('|');
-                                                            return (
-                                                                <div key={i} className="flex flex-col leading-tight">
-                                                                    <span className="text-zinc-900 font-black text-[11px] uppercase truncate max-w-[180px]">{cust}</span>
-                                                                    <span className="text-zinc-400 font-bold text-[9px] uppercase tracking-wider truncate max-w-[180px]">{style}</span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-6">
-                                                    <div className="flex flex-col gap-2">
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}`))).map((glLot: any, i: number) => {
-                                                                const [gl, lot] = glLot.split('|');
-                                                                return (
-                                                                    <span key={i} className="bg-zinc-900 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm uppercase tracking-widest">
-                                                                        GL: {gl} <span className="text-blue-400 ml-1">LOT {lot}</span>
+                                                    </td>
+
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">Buyers</span>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {uniqueBuyers.map((buyer, i) => (
+                                                                    <span key={i} className="text-zinc-900 font-black text-[11px] uppercase whitespace-nowrap">
+                                                                        {buyer}{i < uniqueBuyers.length - 1 ? ',' : ''}
                                                                     </span>
-                                                                );
-                                                            })}
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {allColors.map((c: any, i: number) => (
-                                                                <span key={i} className="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded border border-blue-100 uppercase tracking-widest">
-                                                                    {c}
-                                                                </span>
-                                                            ))}
+                                                    </td>
+
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-2">
+                                                            <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none">GL / Lot Breakdown</span>
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {uniqueGlLots.slice(0, 2).map((glLot: any, i: number) => {
+                                                                    const [gl, lot] = glLot.split('|');
+                                                                    return (
+                                                                        <span key={i} className="bg-zinc-100 text-zinc-900 text-[9px] font-black px-2 py-1 rounded border border-zinc-200 uppercase tracking-widest">
+                                                                            GL: {gl} <span className="text-blue-600 ml-1">LOT {lot}</span>
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                                {uniqueGlLots.length > 2 && (
+                                                                    <span className="bg-zinc-900 text-white text-[9px] font-black px-2 py-1 rounded shadow-sm uppercase tracking-widest">
+                                                                        +{uniqueGlLots.length - 2} MORE
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-6 text-right">
-                                                    <div className="flex flex-col items-end">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="text-[9px] font-black text-zinc-400 uppercase">IN:</span>
-                                                            <span className="text-sm font-black text-zinc-900">{data.total_in}</span>
+                                                    </td>
+
+                                                    <td className="px-6 py-5 text-right">
+                                                        <div className="flex flex-col items-end">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-[9px] font-black text-zinc-400 uppercase">Input:</span>
+                                                                <span className="text-sm font-black text-zinc-900">{data.total_in}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[9px] font-black text-blue-400 uppercase">Output:</span>
+                                                                <span className="text-base font-black text-blue-600 tracking-tight">{data.total_out}</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[9px] font-black text-blue-400 uppercase">OUT:</span>
-                                                            <span className="text-base font-black text-blue-600 tracking-tight">{data.total_out}</span>
+                                                    </td>
+
+                                                    <td className="px-6 py-5 text-center">
+                                                        <div className={cn(
+                                                            "w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-400 transition-all",
+                                                            isExpanded && "rotate-180 bg-zinc-900 text-white"
+                                                        )}>
+                                                            <Icon icon="solar:alt-arrow-down-bold" className="w-4 h-4" />
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-6 text-center">
-                                                    <button
-                                                        onClick={() => setSelectedGroupKey(key)}
-                                                        className="w-10 h-10 rounded-xl bg-zinc-50 hover:bg-zinc-900 hover:text-white border border-zinc-100 transition-all flex items-center justify-center text-zinc-400 shadow-sm mx-auto group-hover:scale-110 active:scale-95"
-                                                    >
-                                                        <Icon icon="solar:eye-bold-duotone" className="w-5 h-5" />
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                                    </td>
+                                                </tr>
+
+                                                {isExpanded && (
+                                                    <tr className="bg-zinc-50/30 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <td colSpan={5} className="p-0">
+                                                            <div className="p-8 pb-12 border-x-2 border-b-2 border-white rounded-b-[2rem] shadow-inner space-y-6">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">Detailed Activity Log Breakdown</h4>
+                                                                    <div className="flex items-center gap-4">
+                                                                        <button
+                                                                            onClick={() => setSelectedGroupKey(key)}
+                                                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg"
+                                                                        >
+                                                                            <Icon icon="solar:eye-bold-duotone" className="w-4 h-4" />
+                                                                            <span>Full View</span>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                                                    {data.entries.map((p: any, pIdx: number) => (
+                                                                        <div key={pIdx} className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-sm group/card hover:border-blue-200 transition-all">
+                                                                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-50">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="bg-zinc-900 text-white px-2.5 py-1 rounded-lg text-[9px] font-black">
+                                                                                        {new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                    </div>
+                                                                                    <div className="flex flex-col leading-none">
+                                                                                        <span className="text-[11px] font-black text-zinc-900 uppercase tracking-tight">{p.customerName}</span>
+                                                                                        <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter mt-0.5">{p.styleNo}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex items-center justify-between gap-4 mb-4">
+                                                                                <div className="flex flex-col gap-1.5 flex-1">
+                                                                                    <div className="flex items-center gap-1.5">
+                                                                                        <span className="bg-zinc-100 text-zinc-900 text-[8px] font-black px-1.5 py-0.5 rounded border border-zinc-200">GL {p.glNo}</span>
+                                                                                        <span className="bg-blue-50 text-blue-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-blue-100">LOT {p.lotClean}</span>
+                                                                                    </div>
+                                                                                    <div className="text-[10px] font-black text-zinc-900 uppercase tracking-widest">{p.color}</div>
+                                                                                </div>
+                                                                                <div className="flex flex-col items-end">
+                                                                                    <span className="text-[9px] font-black text-blue-400 uppercase leading-none mb-1">Output</span>
+                                                                                    <span className="text-lg font-black text-blue-600 leading-none">{p.qty_out}</span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-50">
+                                                                                <PermissionGuard permission="production.update">
+                                                                                    <button onClick={() => router.push(`/admin/production/edit/${p.id}`)} className="p-2 bg-zinc-50 rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-white transition-all shadow-sm">
+                                                                                        <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
+                                                                                    </button>
+                                                                                </PermissionGuard>
+                                                                                <PermissionGuard permission="production.delete">
+                                                                                    <button onClick={() => setConfirmDelete({ open: true, id: p.id, loading: false })} className="p-2 bg-zinc-50 rounded-lg text-zinc-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                                                                                        <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
+                                                                                    </button>
+                                                                                </PermissionGuard>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
                                         );
                                     })}
                                 </tbody>
