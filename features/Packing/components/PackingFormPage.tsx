@@ -32,6 +32,7 @@ export default function PackingFormPage() {
             {
                 lot_id: '',
                 color: '',
+                part: '',
                 sizes: [
                     { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                     { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -43,6 +44,7 @@ export default function PackingFormPage() {
     });
 
     const [lotDetails, setLotDetails] = useState<Record<number, any[]>>({});
+    const [partTypes, setPartTypes] = useState<Record<number, string>>({});
 
     useEffect(() => {
         // Fetch Lots
@@ -78,6 +80,15 @@ export default function PackingFormPage() {
                     ...prev,
                     [itemIdx]: bodyColors
                 }));
+                const cuttingPartType = json.data.part_type ||
+                    bodyColors[0]?.part_type ||
+                    json.data.summary_by_color[0]?.part_type ||
+                    json.data.summary_by_gl?.[0]?.laying_plannings?.[0]?.part_type ||
+                    '';
+                setPartTypes(prev => ({
+                    ...prev,
+                    [itemIdx]: cuttingPartType
+                }));
 
                 if (bodyColors.length === 1) {
                     const colorData = bodyColors[0];
@@ -96,7 +107,9 @@ export default function PackingFormPage() {
         let recordedSummary: Record<string, any> = {};
         if (lotId && color) {
             try {
-                const res = await PackingService.getSummary(lotId, color);
+                const part = item.part;
+                const finalColor = part ? `${color} (${part})` : color;
+                const res = await PackingService.getSummary(lotId, finalColor);
                 if (res && res.status === 'success') {
                     recordedSummary = res.data;
                 }
@@ -151,6 +164,7 @@ export default function PackingFormPage() {
                 {
                     lot_id: '',
                     color: '',
+                    part: '',
                     sizes: [
                         { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                         { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -171,11 +185,12 @@ export default function PackingFormPage() {
         setIsLoading(true);
         try {
             const cleanedItems = formData.items.map(item => {
+                const finalColor = item.part ? `${item.color} (${item.part})` : item.color;
                 if (formData.entry_mode === 'output') {
                     const totalEntry = item.sizes.find(s => s.size_name === 'TOTAL');
-                    return { ...item, sizes: totalEntry ? [totalEntry] : [] };
+                    return { ...item, color: finalColor, sizes: totalEntry ? [totalEntry] : [] };
                 }
-                return { ...item, sizes: item.sizes.filter(s => s.size_name !== 'TOTAL') };
+                return { ...item, color: finalColor, sizes: item.sizes.filter(s => s.size_name !== 'TOTAL') };
             });
 
             await PackingService.create({ ...formData, items: cleanedItems });
@@ -304,41 +319,77 @@ export default function PackingFormPage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 items-end">
-                                    <Select
-                                        label="GL Number"
-                                        placeholder="Search GL Code..."
-                                        options={lots}
-                                        value={item.lot_id}
-                                        onChange={async (val) => {
-                                            const newItems = [...formData.items];
-                                            newItems[iIdx].lot_id = String(val);
-                                            newItems[iIdx].color = '';
-                                            newItems[iIdx].sizes = [];
-                                            setFormData({ ...formData, items: newItems });
-                                            fetchLotDetails(String(val), iIdx);
-                                        }}
-                                    />
+                                    <div className="flex flex-col gap-2">
+                                        <Select
+                                            label="GL Number"
+                                            placeholder="Search GL Code..."
+                                            options={lots}
+                                            value={item.lot_id}
+                                            onChange={async (val) => {
+                                                const newItems = [...formData.items];
+                                                newItems[iIdx].lot_id = String(val);
+                                                newItems[iIdx].color = '';
+                                                newItems[iIdx].part = '';
+                                                newItems[iIdx].sizes = [];
+                                                setFormData({ ...formData, items: newItems });
+                                                fetchLotDetails(String(val), iIdx);
+                                            }}
+                                        />
+                                        {partTypes[iIdx] && (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-lg w-fit ml-1 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                <Icon icon="solar:info-circle-bold-duotone" className="w-3.5 h-3.5 text-zinc-500" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">
+                                                    Cutting Type: <span className="text-emerald-600">{partTypes[iIdx]}</span>
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                     {item.lot_id && (
-                                        <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-700">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Color Variant</label>
-                                            {lotDetails[iIdx] ? (
-                                                <Select
-                                                    placeholder="Choose Color..."
-                                                    options={lotDetails[iIdx].map(c => ({ id: c.color, label: c.color }))}
-                                                    value={item.color}
-                                                    onChange={(val) => {
-                                                        const colorData = lotDetails[iIdx].find(c => c.color === val);
-                                                        updateItemColor(iIdx, String(val), colorData?.size_breakdown);
-                                                    }}
-                                                />
-                                            ) : (
-                                                <input
-                                                    className="w-full bg-white border border-zinc-100 h-14 rounded-2xl px-6 focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all font-black text-sm tracking-tight"
-                                                    placeholder="e.g. Navy Blue"
-                                                    value={item.color}
-                                                    onChange={(e) => updateItemColor(iIdx, e.target.value)}
-                                                />
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                                            {(partTypes[iIdx] || "").toUpperCase().includes("TOP") && (partTypes[iIdx] || "").toUpperCase().includes("PANT") && (
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Select Part</label>
+                                                    <Select
+                                                        placeholder="Choose Part..."
+                                                        options={[
+                                                            { id: 'TOP', label: 'TOP' },
+                                                            { id: 'PANT', label: 'PANT' }
+                                                        ]}
+                                                        value={item.part}
+                                                        onChange={(val) => {
+                                                            const newItems = [...formData.items];
+                                                            newItems[iIdx].part = String(val);
+                                                            setFormData({ ...formData, items: newItems });
+                                                            // Trigger summary refresh if color is already selected
+                                                            if (item.color) {
+                                                                const colorData = lotDetails[iIdx].find(c => c.color === item.color);
+                                                                updateItemColor(iIdx, item.color, colorData?.size_breakdown);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
                                             )}
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Color Variant</label>
+                                                {lotDetails[iIdx] ? (
+                                                    <Select
+                                                        placeholder="Choose Color..."
+                                                        options={lotDetails[iIdx].map(c => ({ id: c.color, label: c.color }))}
+                                                        value={item.color}
+                                                        onChange={(val) => {
+                                                            const colorData = lotDetails[iIdx].find(c => c.color === val);
+                                                            updateItemColor(iIdx, String(val), colorData?.size_breakdown);
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        className="w-full bg-white border border-zinc-100 h-14 rounded-2xl px-6 focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/30 transition-all font-black text-sm tracking-tight"
+                                                        placeholder="e.g. Navy Blue"
+                                                        value={item.color}
+                                                        onChange={(e) => updateItemColor(iIdx, e.target.value)}
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

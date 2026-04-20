@@ -37,7 +37,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         {
             title: 'Master Data',
             items: [
-                { name: 'Garment Reference', path: '/admin/reference', icon: 'solar:database-bold-duotone', badge: null }
+                { name: 'Garment Reference', path: '/admin/reference', icon: 'solar:database-bold-duotone', badge: null },
+                { name: 'Media Library', path: '/admin/media', icon: 'solar:gallery-bold-duotone', badge: null }
             ]
         },
         {
