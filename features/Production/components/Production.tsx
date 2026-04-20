@@ -354,8 +354,8 @@ export const Production = () => {
                                 </thead>
                                 <tbody className="divide-y divide-zinc-50">
                                     {Object.entries(groupedData).map(([key, data]: [string, any]) => {
-                                        const uniqueBuyers = Array.from(new Set(data.entries.map((e: any) => e.customerName as string)));
-                                        const uniqueGlLots = Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}` as string)));
+                                        const uniqueBuyers: string[] = Array.from(new Set(data.entries.map((e: any) => e.customerName as string)));
+                                        const uniqueGlLots: string[] = Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}` as string)));
                                         const isExpanded = expandedRows[key];
 
                                         return (
@@ -382,7 +382,7 @@ export const Production = () => {
                                                     <td className="px-6 py-5">
                                                         <div className="flex flex-col gap-1">
                                                             <div className="flex flex-wrap gap-2">
-                                                                {uniqueBuyers.map((buyer, i) => (
+                                                                {uniqueBuyers.map((buyer: string, i: number) => (
                                                                     <span key={i} className="text-zinc-900 font-black text-[11px] uppercase whitespace-nowrap">
                                                                         {buyer}{i < uniqueBuyers.length - 1 ? ',' : ''}
                                                                     </span>
