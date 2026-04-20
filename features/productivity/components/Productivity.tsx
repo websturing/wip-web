@@ -12,7 +12,8 @@ import { ProductivityService } from '../services/ProductivityService';
 export const Productivity = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [date, setDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const [date, setDate] = useState(searchParams.get('date') || yesterday);
     const [data, setData] = useState<any[]>([]);
     const [productionData, setProductionData] = useState<any[]>([]);
     const [cumulativeSummaries, setCumulativeSummaries] = useState<Record<string, any>>({});
@@ -136,14 +137,17 @@ export const Productivity = () => {
                 <div className="flex items-center gap-3 bg-zinc-50 p-1.5 rounded-xl border border-zinc-100 shadow-sm">
                     <DatePicker
                         value={date}
-                        onChange={(val) => setDate(val)}
+                        onChange={(val) => {
+                            setDate(val);
+                            router.push(`/admin/productivity?date=${val}`, { scroll: false });
+                        }}
                         className="w-[200px]"
                     />
 
                     <div className="h-4 w-[1px] bg-zinc-200 mx-1"></div>
 
                     <Button
-                        onClick={() => router.push('/admin/productivity/create')}
+                        onClick={() => router.push(`/admin/productivity/create?date=${date}`)}
                         className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg px-4 h-9 flex items-center gap-2 transition-all active:scale-95 shadow-sm"
                     >
                         <Icon icon="solar:add-circle-bold" className="w-3.5 h-3.5" />
@@ -267,9 +271,9 @@ export const Productivity = () => {
                                         const cumulativeOutput = Number(cumulativeSummaries[l.id]?.total_output || 0);
 
                                         const smv = Number(l.pivot?.smv || 0);
-                                        const pMp = Number(l.pivot?.manpower || item.manpower || 0);
-                                        const pSewer = Number(l.pivot?.sewer || item.sewer || 0);
-                                        const pWH = Number(l.pivot?.working_hour || item.working_hour || 8);
+                                        const pMp = lots.length === 1 ? Number(item.manpower) : (Number(l.pivot?.manpower) || (lIdx === 0 ? Number(item.manpower) : 0));
+                                        const pSewer = lots.length === 1 ? Number(item.sewer) : (Number(l.pivot?.sewer) || (lIdx === 0 ? Number(item.sewer) : 0));
+                                        const pWH = lots.length === 1 ? Number(item.working_hour) : (Number(l.pivot?.working_hour) || (lIdx === 0 ? Number(item.working_hour) : 8));
 
                                         const dailyTarget = smv > 0 ? Math.round(((pMp + pSewer) * pWH * 60) / smv) : 0;
                                         const achieved = dailyTarget > 0 ? Math.round((lineOutput / dailyTarget) * 100) : 0;
@@ -307,14 +311,18 @@ export const Productivity = () => {
                                                 </td>
                                                 <td className="px-3 py-2 text-center">
                                                     <span className="text-[10px] font-bold text-blue-600">
-                                                        {Number(l.pivot?.manpower || (lIdx === 0 ? item.manpower : 0))} <span className="text-zinc-300 mx-0.5 text-[8px]">/</span> <span className="text-zinc-400 font-medium">{Number(l.pivot?.plan_manpower || (lIdx === 0 ? item.plan_manpower : 0))}</span>
+                                                        {lots.length === 1 ? Number(item.manpower) : (Number(l.pivot?.manpower) || (lIdx === 0 ? Number(item.manpower) : 0))} <span className="text-zinc-300 mx-0.5 text-[8px]">/</span> <span className="text-zinc-400 font-medium">{lots.length === 1 ? Number(item.plan_manpower) : (Number(l.pivot?.plan_manpower) || (lIdx === 0 ? Number(item.plan_manpower) : 0))}</span>
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-black text-emerald-600">{Number(l.pivot?.sewer || (lIdx === 0 ? item.sewer : 0))}</span>
+                                                    <span className="text-[10px] font-black text-emerald-600">
+                                                        {lots.length === 1 ? Number(item.sewer) : (Number(l.pivot?.sewer) || (lIdx === 0 ? Number(item.sewer) : 0))}
+                                                    </span>
                                                 </td>
                                                 <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-bold text-zinc-500">{Number(l.pivot?.working_hour || (lIdx === 0 ? item.working_hour : 8))}H</span>
+                                                    <span className="text-[10px] font-bold text-zinc-500">
+                                                        {Number(l.pivot?.working_hour) || (lIdx === 0 ? Number(item.working_hour) : 8)}H
+                                                    </span>
                                                 </td>
                                                 <td className="px-3 py-2 text-center">
                                                     <span className="text-[9px] font-black text-zinc-400">{Number(smv)}</span>
@@ -341,7 +349,7 @@ export const Productivity = () => {
                                                 </td>
                                                 <td className="px-3 py-2 text-right">
                                                     {lIdx === 0 ? (
-                                                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="flex items-center justify-end gap-1.5 transition-all">
                                                             <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
                                                                 <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
                                                             </button>
@@ -374,10 +382,10 @@ export const Productivity = () => {
                                             }, 0);
 
                                         // Variables
-                                        const mpPlan = Number(l.pivot?.plan_manpower || item.plan_manpower || 0);
+                                        const mpPlan = lots.length === 1 ? Number(item.plan_manpower) : (Number(l.pivot?.plan_manpower) || (lIdx === 0 ? Number(item.plan_manpower) : 0));
                                         const targetPlan = Number(l.pivot?.target_plan || 0);
-                                        const mpActual = (Number(l.pivot?.manpower || 0) + Number(l.pivot?.sewer || 0)) || (Number(item.manpower || 0) + Number(item.sewer || 0)) || 0;
-                                        const workingHour = Number(l.pivot?.working_hour || item.working_hour || 8);
+                                        const mpActual = lots.length === 1 ? (Number(item.manpower) + Number(item.sewer)) : ((Number(l.pivot?.manpower) + Number(l.pivot?.sewer)) || (lIdx === 0 ? (Number(item.manpower) + Number(item.sewer)) : 0) || 0);
+                                        const workingHour = lots.length === 1 ? Number(item.working_hour) : (Number(l.pivot?.working_hour) || (lIdx === 0 ? Number(item.working_hour) : 8));
 
                                         // 6. Target Actual ((Target Plan / MP plan) * MP actual))
                                         const smv = Number(l.pivot?.smv || 0);

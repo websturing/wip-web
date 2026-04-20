@@ -39,6 +39,9 @@ export const ProductivityFormPage = () => {
         id: null,
         line_id: '',
         date: (() => {
+            const spDate = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('date') : null;
+            if (spDate) return spDate;
+
             const date = new Date();
             date.setDate(date.getDate() - 1);
             return date.toISOString().split('T')[0];
@@ -129,7 +132,11 @@ export const ProductivityFormPage = () => {
                     // 2. Handle Manpower (Matching Girl / Helper)
                     const totalMatching = lineOutput.reduce((sum: number, p: any) => sum + (Number(p.man_power_matching) || 0), 0);
                     if (totalMatching > 0) {
-                        setFormData(prev => ({ ...prev, sewer: totalMatching }));
+                        setFormData(prev => ({
+                            ...prev,
+                            sewer: totalMatching,
+                            lot_configs: prev.lot_configs.map((c, i) => i === 0 ? { ...c, sewer: totalMatching } : c)
+                        }));
                     }
 
                     // Mark as synced
@@ -211,6 +218,7 @@ export const ProductivityFormPage = () => {
                 ...formData,
                 manpower: formData.lot_configs.reduce((sum, c) => sum + (Number(c.manpower) || 0), 0),
                 plan_manpower: formData.lot_configs.reduce((sum, c) => sum + (Number(c.plan_manpower) || 0), 0),
+                sewer: formData.lot_configs.reduce((sum, c) => sum + (Number(c.sewer) || 0), 0),
                 plan_sewer: 0,
                 working_hour: formData.lot_configs[0]?.working_hour || 8,
                 lot_data: formData.lot_configs
@@ -284,14 +292,10 @@ export const ProductivityFormPage = () => {
                             />
                         </div>
                         <div className="space-y-2 flex flex-col">
-                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1 cursor-help" title="Matching Girl">Matching Girl / Helper</label>
-                            <input
-                                type="number"
-                                value={formData.sewer}
-                                onChange={(e) => setFormData({ ...formData, sewer: Number(e.target.value) })}
-                                onFocus={(e) => e.target.select()}
-                                className="w-[180px] bg-emerald-50 h-[50px] rounded-xl px-4 text-sm font-black text-emerald-700 outline-none border border-emerald-100 focus:border-emerald-400 focus:bg-white transition-all shadow-sm"
-                            />
+                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1 cursor-help" title="Matching Girl Total">Total MG / Helper</label>
+                            <div className="w-[180px] bg-emerald-50 h-[50px] rounded-xl px-4 flex items-center text-sm font-black text-emerald-700 border border-emerald-100 shadow-sm">
+                                {formData.lot_configs.reduce((sum, c) => sum + (Number(c.sewer) || 0), 0)} PAX
+                            </div>
                         </div>
 
                         {isAutoFilling && (
@@ -359,6 +363,17 @@ export const ProductivityFormPage = () => {
                                                 onChange={(e) => updateLotConfig(config.lot_id, 'manpower', Number(e.target.value))}
                                                 onFocus={(e) => e.target.select()}
                                                 className="w-full bg-blue-50/30 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none border border-blue-100 focus:border-blue-400 focus:bg-white transition-all"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Actual MG</label>
+                                            <input
+                                                type="number"
+                                                value={config.sewer}
+                                                onChange={(e) => updateLotConfig(config.lot_id, 'sewer', Number(e.target.value))}
+                                                onFocus={(e) => e.target.select()}
+                                                className="w-full bg-emerald-50/30 h-14 rounded-2xl px-5 text-lg font-black text-emerald-700 outline-none border border-emerald-100 focus:border-emerald-400 focus:bg-white transition-all"
                                             />
                                         </div>
 
