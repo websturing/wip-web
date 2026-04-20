@@ -104,6 +104,14 @@ export const Productivity = () => {
                     />
 
                     <button
+                        onClick={() => ProductivityService.exportDailyReport(currentDate)}
+                        className="h-12 px-6 bg-white border border-zinc-200 text-zinc-600 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-sm hover:bg-zinc-50 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        <Icon icon="solar:file-text-bold-duotone" className="w-4 h-4 text-emerald-500" />
+                        <span>Export Daily</span>
+                    </button>
+
+                    <button
                         onClick={() => router.push(`/admin/productivity/create?date=${currentDate}`)}
                         className="h-12 px-8 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                     >
@@ -284,7 +292,7 @@ export const Productivity = () => {
                                                             <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
                                                                 <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
                                                             </button>
-                                                            <button onClick={() => ProductivityService.exportExcel(item.id)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90">
+                                                            <button onClick={() => ProductivityService.exportExcel(item.id, `Productivity_${item.line?.name || 'Line'}_${item.date}.xlsx`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90">
                                                                 <Icon icon="solar:file-download-bold-duotone" className="w-3.5 h-3.5" />
                                                             </button>
                                                             <button onClick={async () => {

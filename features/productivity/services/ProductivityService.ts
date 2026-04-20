@@ -1,4 +1,4 @@
-import { apiClient, BASE_URL } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 
 export class ProductivityService {
     private static resource = '/productivity';
@@ -34,7 +34,11 @@ export class ProductivityService {
         return await response.json();
     }
 
-    static exportExcel(id: string) {
-        window.open(`${BASE_URL}${this.resource}/${id}/export`, '_blank');
+    static async exportExcel(id: string, fileName: string) {
+        await apiClient.download(`${this.resource}/${id}/export`, fileName);
+    }
+
+    static async exportDailyReport(date: string) {
+        await apiClient.download(`${this.resource}/export-daily?date=${date}`, `Daily_Productivity_${date}.xlsx`);
     }
 }

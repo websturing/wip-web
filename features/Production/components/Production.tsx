@@ -354,8 +354,8 @@ export const Production = () => {
                                 </thead>
                                 <tbody className="divide-y divide-zinc-50">
                                     {Object.entries(groupedData).map(([key, data]: [string, any]) => {
-                                        const uniqueBuyers = Array.from(new Set(data.entries.map((e: any) => e.customerName)));
-                                        const uniqueGlLots = Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}`)));
+                                        const uniqueBuyers = Array.from(new Set(data.entries.map((e: any) => e.customerName as string)));
+                                        const uniqueGlLots = Array.from(new Set(data.entries.map((e: any) => `${e.glNo}|${e.lotClean}` as string)));
                                         const isExpanded = expandedRows[key];
 
                                         return (
