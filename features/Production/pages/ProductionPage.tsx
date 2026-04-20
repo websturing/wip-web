@@ -18,7 +18,7 @@ export default function ProductionPage() {
                 description="Standardized production workflow management for Sewing lines."
             />
 
-            <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+            <div className="bg-white  overflow-hidden">
                 <Production />
             </div>
         </div>

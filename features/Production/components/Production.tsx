@@ -166,7 +166,7 @@ export const Production = () => {
 
     return (
         <>
-            <div className="p-4 md:p-8 max-w-[1440px] mx-auto">
+            <div className="p-2  mx-auto">
                 {/* Header Actions */}
                 <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-12">
                     <div className="flex items-start gap-5">
@@ -260,7 +260,7 @@ export const Production = () => {
                                     >
                                         <div className="flex items-center justify-between w-full mb-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex flex-col items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                                <div className="w-12 h-12 rounded-2xl bg-zinc-100 text-zinc-900 flex flex-col items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                                                     <span className="text-[10px] font-black leading-none mb-0.5">LINE</span>
                                                     <span className="text-sm font-black leading-none">{data.lineName}</span>
                                                 </div>
@@ -347,11 +347,10 @@ export const Production = () => {
                                 <thead>
                                     <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                         <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Production Line</th>
-                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Log</th>
-                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none w-48">Buyer & Style</th>
-                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">GL / Lot / Color</th>
-                                        <th className="px-4 py-4 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Total Qty</th>
-                                        <th className="px-4 py-4 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">View</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Buyer</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none w-48">GL Log</th>
+                                        <th className="px-4 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">Total Qty</th>
+                                        <th className="px-4 py-4 text-right text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-50">
@@ -369,80 +368,81 @@ export const Production = () => {
                                                         isExpanded && "bg-zinc-50/80 shadow-inner"
                                                     )}
                                                 >
-                                                    <td className="px-6 py-5">
+                                                    <td className="px-5 py-5">
                                                         <div className="flex items-center gap-3">
                                                             <div className={cn(
-                                                                "w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white shadow-sm transition-all",
-                                                                isExpanded ? "bg-zinc-900 scale-105" : "bg-blue-600"
+                                                                "w-20 h-10 rounded-xl flex flex-col items-center justify-center border border-zinc-200 transition-all",
+                                                                isExpanded ? "bg-zinc-900 scale-105 text-white" : "bg-zinc-100 text-zinc-900"
                                                             )}>
                                                                 <span className="text-[8px] font-black leading-none mb-0.5">LINE</span>
                                                                 <span className="text-sm font-black leading-none">{data.lineName}</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">CENTER</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="bg-zinc-900 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm">
-                                                                        {data.entries.length} ACTIVITY LOGS
-                                                                    </div>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     </td>
 
                                                     <td className="px-6 py-5">
                                                         <div className="flex flex-col gap-1">
-                                                            <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none mb-1">Buyers</span>
                                                             <div className="flex flex-wrap gap-2">
                                                                 {uniqueBuyers.map((buyer, i) => (
                                                                     <span key={i} className="text-zinc-900 font-black text-[11px] uppercase whitespace-nowrap">
                                                                         {buyer}{i < uniqueBuyers.length - 1 ? ',' : ''}
                                                                     </span>
                                                                 ))}
+
+
                                                             </div>
                                                         </div>
                                                     </td>
 
                                                     <td className="px-6 py-5">
-                                                        <div className="flex flex-col gap-2">
-                                                            <span className="text-zinc-400 text-[10px] font-black uppercase tracking-widest leading-none">GL / Lot Breakdown</span>
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {uniqueGlLots.slice(0, 2).map((glLot: any, i: number) => {
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <div className="flex items-center justify-between gap-1.5  bg-zinc-100 text-zinc-900  font-black px-2 py-1 rounded border border-zinc-200">
+                                                                {uniqueGlLots.slice(0, 1).map((glLot: any, i: number) => {
                                                                     const [gl, lot] = glLot.split('|');
                                                                     return (
-                                                                        <span key={i} className="bg-zinc-100 text-zinc-900 text-[9px] font-black px-2 py-1 rounded border border-zinc-200 uppercase tracking-widest">
-                                                                            GL: {gl} <span className="text-blue-600 ml-1">LOT {lot}</span>
+                                                                        <span key={i} className="uppercase tracking-widest text-[11px]">
+                                                                            {gl}<span className="text-blue-600 ">-0{lot}</span>
                                                                         </span>
                                                                     );
                                                                 })}
-                                                                {uniqueGlLots.length > 2 && (
-                                                                    <span className="bg-zinc-900 text-white text-[9px] font-black px-2 py-1 rounded shadow-sm uppercase tracking-widest">
-                                                                        +{uniqueGlLots.length - 2} MORE
+                                                                {uniqueGlLots.length > 1 && (
+                                                                    <span className="ml-2 w-15 bg-zinc-900 text-white text-[9px] font-black px-2 py-1 rounded shadow-sm ">
+                                                                        +{uniqueGlLots.length - 1} More
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </div>
                                                     </td>
 
-                                                    <td className="px-6 py-5 text-right">
+                                                    <td className="px-6 py-5 text-right min-w-[140px]">
                                                         <div className="flex flex-col items-end">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-[9px] font-black text-zinc-400 uppercase">Input:</span>
+                                                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-tighter">Day Input</span>
                                                                 <span className="text-sm font-black text-zinc-900">{data.total_in}</span>
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-[9px] font-black text-blue-400 uppercase">Output:</span>
-                                                                <span className="text-base font-black text-blue-600 tracking-tight">{data.total_out}</span>
+                                                                <span className="text-[9px] font-black text-teal-600 uppercase tracking-tighter">Day Output</span>
+                                                                <span className="text-lg font-black text-teal-600 tracking-tight leading-none">{data.total_out}</span>
                                                             </div>
+
+
                                                         </div>
                                                     </td>
 
-                                                    <td className="px-6 py-5 text-center">
+                                                    <td className="px-6 py-5 text-center flex gap-1.5">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-400 transition-all",
                                                             isExpanded && "rotate-180 bg-zinc-900 text-white"
                                                         )}>
                                                             <Icon icon="solar:alt-arrow-down-bold" className="w-4 h-4" />
                                                         </div>
+                                                        <button
+                                                            onClick={() => setSelectedGroupKey(key)}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-zinc-100 text-zinc-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all "
+                                                        >
+                                                            <Icon icon="solar:eye-bold-duotone" className="w-4 h-4" />
+                                                            <span>Full View</span>
+                                                        </button>
                                                     </td>
                                                 </tr>
 
