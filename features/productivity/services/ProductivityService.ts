@@ -38,7 +38,13 @@ export class ProductivityService {
         await apiClient.download(`${this.resource}/${id}/export`, fileName);
     }
 
-    static async exportDailyReport(date: string) {
-        await apiClient.download(`${this.resource}/export-daily?date=${date}`, `Daily_Productivity_${date}.xlsx`);
+    static async exportDailyReport(date: string, lineIds?: string[]) {
+        let url = `${this.resource}/export-daily?date=${date}`;
+        if (lineIds && lineIds.length > 0) {
+            lineIds.forEach(id => {
+                url += `&line_ids[]=${id}`;
+            });
+        }
+        await apiClient.download(url, `Daily_Productivity_${date}.xlsx`);
     }
 }

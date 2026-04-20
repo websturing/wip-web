@@ -1,5 +1,6 @@
 'use client';
 
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/app/components/ui/Dialog";
 import { Icon } from '@/app/components/ui/Icon';
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,6 +27,25 @@ export const Productivity = () => {
     const [productionData, setProductionData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'daily' | 'summary'>('daily');
+
+    const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+    const [selectedLineIds, setSelectedLineIds] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (isExportDialogOpen && data.length > 0) {
+            setSelectedLineIds(Array.from(new Set(data.map(i => String(i.line_id)))));
+        }
+    }, [isExportDialogOpen, data]);
+
+    const availableLines = useMemo(() => {
+        const linesMap = new Map();
+        data.forEach(item => {
+            if (item.line) {
+                linesMap.set(String(item.line_id), item.line.name);
+            }
+        });
+        return Array.from(linesMap.entries()).map(([id, name]) => ({ id, name }));
+    }, [data]);
 
     const handleDateChange = (newDate: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -90,7 +110,7 @@ export const Productivity = () => {
                                 activeTab === 'summary' ? "bg-zinc-900 text-white shadow-xl" : "text-zinc-400 hover:text-zinc-900"
                             )}
                         >
-                            Buyer Pivot
+                            Target Sewing Output
                         </button>
                     </div>
 
@@ -104,7 +124,7 @@ export const Productivity = () => {
                     />
 
                     <button
-                        onClick={() => ProductivityService.exportDailyReport(currentDate)}
+                        onClick={() => setIsExportDialogOpen(true)}
                         className="h-12 px-6 bg-white border border-zinc-200 text-zinc-600 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-sm hover:bg-zinc-50 active:scale-95 transition-all flex items-center gap-2"
                     >
                         <Icon icon="solar:file-text-bold-duotone" className="w-4 h-4 text-emerald-500" />
@@ -129,7 +149,7 @@ export const Productivity = () => {
                                 <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                     <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Line</th>
                                     <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Visual</th>
-                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">Buyer & Style</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">Buyer / Style</th>
                                     <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">GL / Lot</th>
                                     <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MP (Act/Pln)</th>
                                     <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MG</th>
@@ -144,7 +164,7 @@ export const Productivity = () => {
                             ) : (
                                 <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                     <th className="px-3 py-3 text-left text-[9px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50/50">Visual</th>
-                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">Buyer & Style</th>
+                                    <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">Buyer / Style</th>
                                     <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[110px]">GL / Lot</th>
                                     <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Plan</th>
                                     <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Tgt Plan</th>
@@ -202,6 +222,7 @@ export const Productivity = () => {
                                         const manpower = lots.length === 1 ? Number(item.manpower) : (Number(l.pivot?.manpower) || (lIdx === 0 ? Number(item.manpower) : 0));
                                         const mg = lots.length === 1 ? Number(item.sewer) : (Number(l.pivot?.sewer) || (lIdx === 0 ? Number(item.sewer) : 0));
                                         const wh = lots.length === 1 ? Number(item.working_hour) : (Number(l.pivot?.working_hour) || Number(item.working_hour));
+                                        const section = l.pivot?.section || 'all';
 
                                         // Formula: (MP + MG) * WH * 60 / SMV
                                         const dailyTarget = smv > 0
@@ -238,7 +259,7 @@ export const Productivity = () => {
                                                 </td>
                                                 <td className="px-3 py-2">
                                                     <div className="flex flex-col leading-tight">
-                                                        <span className="text-[10px] font-black text-zinc-900 uppercase truncate max-w-[130px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
+                                                        <span className="text-[10px] font-extrabold text-amber-600 uppercase truncate max-w-[130px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
                                                         <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[130px]">{l.style_no || 'Unknown Style'}</span>
                                                     </div>
                                                 </td>
@@ -246,6 +267,9 @@ export const Productivity = () => {
                                                     <div className="flex flex-col scale-95 origin-left">
                                                         <span className="text-[10px] font-bold text-zinc-700">{glNumber}</span>
                                                         <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
+                                                        <div className="mt-1">
+                                                            <span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1 py-0.5 rounded uppercase tracking-tighter shadow-sm border border-blue-100/50">{section}</span>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-2 text-center">
@@ -331,6 +355,7 @@ export const Productivity = () => {
                                             const mpVal = Number(l.pivot?.manpower || item.manpower || 0);
                                             const mgVal = Number(l.pivot?.sewer || item.sewer || 0);
                                             const whVal = Number(l.pivot?.working_hour || item.working_hour || 8);
+                                            const section = l.pivot?.section || 'all';
 
                                             const tgtAct = smvVal > 0 ? Math.floor(((mpVal + mgVal) * whVal * 60) / smvVal) : 0;
                                             const tgtPlan = Number(l.pivot?.target_plan || item.target_plan || 0);
@@ -364,6 +389,9 @@ export const Productivity = () => {
                                                         <div className="flex flex-col scale-90 origin-left">
                                                             <span className="text-[10px] font-bold text-zinc-700">{l.gl_group?.gl_number}</span>
                                                             <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {l.lot_code?.replace(/^0+/, '')}</span>
+                                                            <div className="mt-1">
+                                                                <span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1 py-0.5 rounded uppercase tracking-tighter border border-blue-100/50">{section}</span>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-2 py-2 text-center text-[10px] font-bold text-zinc-500 tabular-nums bg-zinc-50/30">
@@ -409,6 +437,97 @@ export const Productivity = () => {
                     </table>
                 </div>
             </div>
+            {/* Export Selection Dialog */}
+            <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+                <DialogContent className="max-w-md bg-white rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+                    <DialogHeader className="p-8 bg-zinc-900 text-white">
+                        <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+                            <Icon icon="solar:file-text-bold-duotone" className="w-6 h-6 text-emerald-400" />
+                            Select Lines to Export
+                        </DialogTitle>
+                        <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest mt-1">Daily Report: {currentDate}</p>
+                    </DialogHeader>
+
+                    <div className="p-8 space-y-4">
+                        <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+                            <span className="text-[10px] font-black uppercase text-zinc-400">Available Lines</span>
+                            <button
+                                onClick={() => {
+                                    if (selectedLineIds.length === availableLines.length) setSelectedLineIds([]);
+                                    else setSelectedLineIds(availableLines.map(l => l.id));
+                                }}
+                                className="text-[10px] font-black text-blue-600 uppercase hover:underline"
+                            >
+                                {selectedLineIds.length === availableLines.length ? 'Unselect All' : 'Select All'}
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                            {availableLines.length > 0 ? availableLines.map((line) => (
+                                <label
+                                    key={line.id}
+                                    className={cn(
+                                        "flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer group",
+                                        selectedLineIds.includes(line.id)
+                                            ? "bg-zinc-900 border-zinc-900 text-white"
+                                            : "bg-zinc-50 border-zinc-100 text-zinc-600 hover:border-zinc-300"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={cn(
+                                            "w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs",
+                                            selectedLineIds.includes(line.id) ? "bg-zinc-800" : "bg-white shadow-sm"
+                                        )}>
+                                            {line.name}
+                                        </div>
+                                        <span className="font-bold text-sm">Line {line.name}</span>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={selectedLineIds.includes(line.id)}
+                                        onChange={() => {
+                                            if (selectedLineIds.includes(line.id)) {
+                                                setSelectedLineIds(prev => prev.filter(id => id !== line.id));
+                                            } else {
+                                                setSelectedLineIds(prev => [...prev, line.id]);
+                                            }
+                                        }}
+                                    />
+                                    {selectedLineIds.includes(line.id) && (
+                                        <Icon icon="solar:check-circle-bold" className="w-5 h-5 text-emerald-400" />
+                                    )}
+                                </label>
+                            )) : (
+                                <div className="py-10 text-center text-zinc-400">
+                                    <Icon icon="solar:ghost-bold" className="w-8 h-8 mx-auto opacity-20 mb-2" />
+                                    <p className="text-[10px] font-black uppercase">No active lines today</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter className="p-8 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between sm:justify-between">
+                        <button
+                            onClick={() => setIsExportDialogOpen(false)}
+                            className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            disabled={selectedLineIds.length === 0}
+                            onClick={async () => {
+                                await ProductivityService.exportDailyReport(currentDate, selectedLineIds);
+                                setIsExportDialogOpen(false);
+                            }}
+                            className="bg-zinc-900 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 disabled:hover:scale-100 flex items-center gap-2"
+                        >
+                            <Icon icon="solar:file-download-bold" className="w-4 h-4" />
+                            Generate Report
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

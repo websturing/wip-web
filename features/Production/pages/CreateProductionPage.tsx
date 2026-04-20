@@ -66,6 +66,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                 lot_id: '',
                 color: '',
                 part: '',
+                section: 'all',
                 sizes: [
                     { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                     { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -127,6 +128,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                                 lot_id: item.lot_id,
                                 color: color,
                                 part: part,
+                                section: item.section || 'all',
                                 sizes: item.details.map((d: any) => ({
                                     size_name: d.size_name,
                                     qty_input: d.qty_input,
@@ -311,6 +313,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                     lot_id: '',
                     color: '',
                     part: '',
+                    section: 'all',
                     sizes: [
                         { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                         { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -596,6 +599,24 @@ function CreateProductionForm({ id }: { id?: string }) {
                                                         onChange={(e) => updateItemColor(iIdx, e.target.value)}
                                                     />
                                                 )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Work Section</label>
+                                                <Select
+                                                    placeholder="Select Section..."
+                                                    options={[
+                                                        { id: 'all', label: 'All Sections' },
+                                                        { id: 'offline', label: 'Offline' },
+                                                        { id: 'inline', label: 'Inline' },
+                                                        { id: 'outline', label: 'Outline' }
+                                                    ]}
+                                                    value={item.section || 'all'}
+                                                    onChange={(val) => {
+                                                        const newItems = [...formData.items];
+                                                        newItems[iIdx].section = String(val);
+                                                        setFormData({ ...formData, items: newItems });
+                                                    }}
+                                                />
                                             </div>
                                         </div>
                                     )}
