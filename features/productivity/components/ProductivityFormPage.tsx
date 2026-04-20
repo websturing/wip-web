@@ -1,5 +1,6 @@
 'use client';
 
+import { MediaPicker } from '@/app/components/MediaPicker';
 import { DatePicker } from '@/app/components/ui/DatePicker';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
@@ -22,6 +23,8 @@ interface LotConfig {
     sewer: number;
     plan_sewer: number;
     working_hour: number;
+    media_id?: string;
+    media_url?: string;
 }
 
 export const ProductivityFormPage = () => {
@@ -49,6 +52,7 @@ export const ProductivityFormPage = () => {
         sewer: 1,
         lot_configs: [] as LotConfig[]
     });
+    const [pickingMediaFor, setPickingMediaFor] = useState<string | null>(null);
     const [isAutoFilling, setIsAutoFilling] = useState(false);
     const [lastSynced, setLastSynced] = useState({ line_id: '', date: '' });
 
@@ -94,6 +98,8 @@ export const ProductivityFormPage = () => {
                         sewer: parseFloat(l.pivot?.sewer || 0),
                         plan_sewer: parseFloat(l.pivot?.plan_sewer || 0),
                         working_hour: parseFloat(l.pivot?.working_hour || 8),
+                        media_id: l.pivot?.media_id,
+                        media_url: l.pivot?.media?.url
                     })) : [];
 
                     setFormData({
@@ -170,7 +176,9 @@ export const ProductivityFormPage = () => {
                 plan_manpower: 0,
                 sewer: 0,
                 plan_sewer: 0,
-                working_hour: 8
+                working_hour: 8,
+                media_id: undefined as string | undefined,
+                media_url: undefined as string | undefined
             };
 
             try {
@@ -184,7 +192,9 @@ export const ProductivityFormPage = () => {
                         plan_manpower: parseFloat(res.data.plan_manpower || 0),
                         sewer: parseFloat(res.data.sewer || 0),
                         plan_sewer: 0,
-                        working_hour: 8
+                        working_hour: 8,
+                        media_id: res.data.media_id,
+                        media_url: res.data.media_url
                     };
                 }
             } catch (e) { }
@@ -199,7 +209,7 @@ export const ProductivityFormPage = () => {
         setFormData(prev => ({ ...prev, lot_configs: [...existingConfigs, ...newConfigs] }));
     };
 
-    const updateLotConfig = (lotId: string, field: keyof LotConfig, value: number) => {
+    const updateLotConfig = (lotId: string, field: keyof LotConfig, value: any) => {
         setFormData(prev => {
             const nextConfigs = prev.lot_configs.map(c => c.lot_id === lotId ? { ...c, [field]: value } : c);
             return { ...prev, lot_configs: nextConfigs };
@@ -218,7 +228,7 @@ export const ProductivityFormPage = () => {
                 ...formData,
                 manpower: formData.lot_configs.reduce((sum, c) => sum + (Number(c.manpower) || 0), 0),
                 plan_manpower: formData.lot_configs.reduce((sum, c) => sum + (Number(c.plan_manpower) || 0), 0),
-                sewer: formData.lot_configs.reduce((sum, c) => sum + (Number(c.sewer) || 0), 0),
+                sewer: Number(formData.sewer) || 0,
                 plan_sewer: 0,
                 working_hour: formData.lot_configs[0]?.working_hour || 8,
                 lot_data: formData.lot_configs
@@ -291,11 +301,19 @@ export const ProductivityFormPage = () => {
                                 placeholder="Select Line"
                             />
                         </div>
-                        <div className="space-y-2 flex flex-col">
+                        <div className="space-y-2">
                             <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1 cursor-help" title="Matching Girl Total">Total MG / Helper</label>
-                            <div className="w-[180px] bg-emerald-50 h-[50px] rounded-xl px-4 flex items-center text-sm font-black text-emerald-700 border border-emerald-100 shadow-sm">
-                                {formData.lot_configs.reduce((sum, c) => sum + (Number(c.sewer) || 0), 0)} PAX
-                            </div>
+                            <input
+                                type="text"
+                                value={formData.sewer}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                    setFormData({ ...formData, sewer: val as any });
+                                }}
+                                onBlur={() => setFormData({ ...formData, sewer: Number(formData.sewer) || 0 })}
+                                onFocus={(e) => e.target.select()}
+                                className="w-[180px] bg-emerald-50 h-[50px] rounded-xl px-4 text-sm font-black text-emerald-800 border border-emerald-100 shadow-sm outline-none focus:border-emerald-500 transition-all font-mono"
+                            />
                         </div>
 
                         {isAutoFilling && (
@@ -333,12 +351,31 @@ export const ProductivityFormPage = () => {
                                         </button>
                                     </div>
 
-                                    <div className="mb-10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">Operational Unit</p>
+                                    <div className="mb-10 flex gap-6 items-start">
+                                        <div
+                                            onClick={() => setPickingMediaFor(config.lot_id)}
+                                            className="w-24 h-24 rounded-2xl bg-zinc-50 border border-zinc-100 flex-shrink-0 overflow-hidden group/img relative cursor-pointer hover:border-blue-500 transition-all shadow-sm"
+                                        >
+                                            {config.media_url ? (
+                                                <img src={config.media_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-300">
+                                                    <Icon icon="solar:camera-bold" className="w-6 h-6 mb-1" />
+                                                    <span className="text-[7px] font-black uppercase text-zinc-400">Add Asset</span>
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Icon icon="solar:pen-bold" className="w-5 h-5 text-white" />
+                                            </div>
                                         </div>
-                                        <h4 className="text-2xl font-black text-zinc-900 tracking-tight leading-none truncate pr-12">{config.label}</h4>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">Operational Unit</p>
+                                            </div>
+                                            <h4 className="text-2xl font-black text-zinc-900 tracking-tight leading-none truncate pr-12">{config.label}</h4>
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -365,19 +402,6 @@ export const ProductivityFormPage = () => {
                                                 className="w-full bg-blue-50/30 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none border border-blue-100 focus:border-blue-400 focus:bg-white transition-all"
                                             />
                                         </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Actual MG</label>
-                                            <input
-                                                type="number"
-                                                value={config.sewer}
-                                                onChange={(e) => updateLotConfig(config.lot_id, 'sewer', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-emerald-50/30 h-14 rounded-2xl px-5 text-lg font-black text-emerald-700 outline-none border border-emerald-100 focus:border-emerald-400 focus:bg-white transition-all"
-                                            />
-                                        </div>
-
-
 
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">WH (Hours)</label>
@@ -470,7 +494,7 @@ export const ProductivityFormPage = () => {
                             </div>
                             <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
                                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">MG Headcount</span>
-                                <span className="text-sm font-black text-emerald-600">{formData.sewer} PAX</span>
+                                <span className="text-sm font-black text-emerald-600">{formData.sewer}</span>
                             </div>
                             <div className="space-y-3">
                                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Configured Styles ({formData.lot_configs.length})</span>
@@ -505,6 +529,20 @@ export const ProductivityFormPage = () => {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
+                <MediaPicker
+                    open={pickingMediaFor !== null}
+                    onOpenChange={(open) => !open && setPickingMediaFor(null)}
+                    onSelect={(media) => {
+                        if (pickingMediaFor) {
+                            setFormData(prev => ({
+                                ...prev,
+                                lot_configs: prev.lot_configs.map(c => c.lot_id === pickingMediaFor ? { ...c, media_id: media.id, media_url: media.url } : c)
+                            }));
+                            setPickingMediaFor(null);
+                        }
+                    }}
+                />
             </div>
         </div>
     );

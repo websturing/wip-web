@@ -62,8 +62,7 @@ export const Production = () => {
 
     // Apply filters and group by GL + Lot
     const groupedData = useMemo(() => {
-        if (!productions) return {};
-
+        if (!Array.isArray(productions)) return {};
         const groups: Record<string, any> = {};
 
         productions.forEach((p: any) => {
@@ -98,8 +97,8 @@ export const Production = () => {
                     lotClean,
                     customerName: item.lot?.gl_group?.customer?.name || 'Unknown Buyer',
                     styleNo: item.lot?.style_no || 'Unknown Style',
-                    qty_in: item.details.reduce((sum: number, d: any) => sum + d.qty_input, 0),
-                    qty_out: item.details.reduce((sum: number, d: any) => sum + d.qty_output, 0),
+                    qty_in: (item.details || []).reduce((sum: number, d: any) => sum + d.qty_input, 0),
+                    qty_out: (item.details || []).reduce((sum: number, d: any) => sum + d.qty_output, 0),
                     color: item.color,
                     item_details: item.details
                 };
