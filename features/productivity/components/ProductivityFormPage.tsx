@@ -23,6 +23,7 @@ interface LotConfig {
     sewer: number;
     plan_sewer: number;
     working_hour: number;
+    section?: string;
     media_id?: string;
     media_url?: string;
 }
@@ -98,6 +99,7 @@ export const ProductivityFormPage = () => {
                         sewer: parseFloat(l.pivot?.sewer || 0),
                         plan_sewer: parseFloat(l.pivot?.plan_sewer || 0),
                         working_hour: parseFloat(l.pivot?.working_hour || 8),
+                        section: l.pivot?.section || 'all',
                         media_id: l.pivot?.media_id,
                         media_url: l.pivot?.media?.url
                     })) : [];
@@ -177,6 +179,7 @@ export const ProductivityFormPage = () => {
                 sewer: 0,
                 plan_sewer: 0,
                 working_hour: 8,
+                section: 'all',
                 media_id: undefined as string | undefined,
                 media_url: undefined as string | undefined
             };
@@ -193,6 +196,7 @@ export const ProductivityFormPage = () => {
                         sewer: parseFloat(res.data.sewer || 0),
                         plan_sewer: 0,
                         working_hour: 8,
+                        section: res.data.section || 'all',
                         media_id: res.data.media_id,
                         media_url: res.data.media_url
                     };
@@ -379,6 +383,23 @@ export const ProductivityFormPage = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        {/* Work Section selector */}
+                                        <div className="md:col-span-2 space-y-2">
+                                            <label className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-1">Work Section</label>
+                                            <Select
+                                                options={[
+                                                    { id: 'all', label: 'All Sections' },
+                                                    { id: 'offline', label: 'Offline' },
+                                                    { id: 'inline', label: 'Inline' },
+                                                    { id: 'outline', label: 'Outline' }
+                                                ]}
+                                                value={config.section || 'all'}
+                                                onChange={(val) => updateLotConfig(config.lot_id, 'section', String(val))}
+                                                placeholder="Select Section"
+                                            />
+                                        </div>
+
+                                        <div className="md:col-span-2 hidden lg:block"></div>
                                         {/* Plan Resources */}
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 cursor-help" title="Manpower">Plan MP</label>

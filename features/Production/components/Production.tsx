@@ -100,6 +100,7 @@ export const Production = () => {
                     qty_in: (item.details || []).reduce((sum: number, d: any) => sum + d.qty_input, 0),
                     qty_out: (item.details || []).reduce((sum: number, d: any) => sum + d.qty_output, 0),
                     color: item.color,
+                    section: item.section,
                     item_details: item.details
                 };
 
@@ -308,8 +309,10 @@ export const Production = () => {
                                                                 <span className="bg-zinc-800 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">GL {p.glNo}</span>
                                                                 <span className="bg-zinc-100 text-zinc-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-zinc-200">LOT {p.lotClean}</span>
                                                             </div>
-                                                            <div className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50">
+                                                            <div className="bg-blue-50 px-2 py-0.5 rounded border border-blue-100/50 flex items-center gap-2">
                                                                 <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                                <span className="w-1 h-1 rounded-full bg-blue-300"></span>
+                                                                <span className="text-[9px] font-extrabold text-blue-400 uppercase tracking-tighter">{p.section || 'all'}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -484,6 +487,7 @@ export const Production = () => {
                                                                                         <span className="bg-blue-50 text-blue-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-blue-100">LOT {p.lotClean}</span>
                                                                                     </div>
                                                                                     <div className="text-[10px] font-black text-zinc-900 uppercase tracking-widest">{p.color}</div>
+                                                                                    <div className="text-[8px] font-black text-blue-500 uppercase tracking-widest mt-0.5">Section: {p.section || 'all'}</div>
                                                                                 </div>
                                                                                 <div className="flex flex-col items-end">
                                                                                     <span className="text-[9px] font-black text-blue-400 uppercase leading-none mb-1">Output</span>
@@ -594,8 +598,9 @@ export const Production = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded">
+                                                    <div className="px-4 py-1.5 bg-blue-50 border border-blue-100 rounded flex items-center justify-between">
                                                         <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{p.color}</span>
+                                                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Section: {p.section || 'all'}</span>
                                                     </div>
                                                     {/* Size Breakdown */}
                                                     <div className="space-y-3">
