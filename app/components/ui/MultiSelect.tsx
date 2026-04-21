@@ -16,6 +16,7 @@ interface MultiSelectProps {
     onChange: (val: (string | number)[]) => void;
     placeholder?: string;
     className?: string;
+    disabled?: boolean;
 }
 
 export const MultiSelect = ({
@@ -23,7 +24,8 @@ export const MultiSelect = ({
     value = [],
     onChange,
     placeholder = "Select multiple...",
-    className
+    className,
+    disabled
 }: MultiSelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,21 +50,23 @@ export const MultiSelect = ({
 
     return (
         <div className={cn("space-y-1.5", className)}>
-            <Popover.Root open={open} onOpenChange={setOpen}>
+            <Popover.Root open={open} onOpenChange={disabled ? () => { } : setOpen}>
                 <Popover.Trigger asChild>
                     <button
                         type="button"
+                        disabled={disabled}
                         className={cn(
-                            "w-full bg-zinc-50 border border-zinc-100 h-12 py-1.5 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
+                            "w-full bg-zinc-50 border border-zinc-100 min-h-12 py-1.5 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
                             "hover:border-zinc-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200",
-                            open && "border-blue-200 ring-2 ring-blue-500/20 bg-white"
+                            open && "border-blue-200 ring-2 ring-blue-500/20 bg-white",
+                            disabled && "opacity-50 cursor-not-allowed"
                         )}
                     >
-                        <div className="flex flex-wrap gap-1.5 py-1">
+                        <div className="flex flex-wrap gap-1.5 py-1 overflow-y-auto max-h-[100px] custom-scrollbar">
                             {selectedOptions.length > 0 ? (
                                 selectedOptions.map(opt => (
-                                    <span key={opt.id} className="bg-zinc-900 text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 group/tag">
-                                        {opt.label}
+                                    <span key={opt.id} className="bg-zinc-900 text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 group/tag max-w-[120px]">
+                                        <span className="truncate">{opt.label}</span>
                                         <Icon
                                             icon="solar:close-circle-bold"
                                             className="w-3 h-3 text-white/40 group-hover/tag:text-white cursor-pointer"

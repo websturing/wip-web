@@ -101,7 +101,7 @@ export const ProductivityFormPage = () => {
                         working_hour: parseFloat(l.pivot?.working_hour || 8),
                         section: l.pivot?.section || 'all',
                         media_id: l.pivot?.media_id,
-                        media_url: l.pivot?.media?.url
+                        media_url: l.pivot?.media_url || l.pivot?.media?.url
                     })) : [];
 
                     setFormData({
@@ -408,7 +408,7 @@ export const ProductivityFormPage = () => {
 
                                     <div className="mb-10 flex gap-6 items-start">
                                         <div
-                                            onClick={() => setPickingMediaFor(`${config.lot_id}-${cIdx}`)}
+                                            onClick={() => setPickingMediaFor(`${config.lot_id}|${cIdx}`)}
                                             className="w-24 h-24 rounded-2xl bg-zinc-50 border border-zinc-100 flex-shrink-0 overflow-hidden group/img relative cursor-pointer hover:border-blue-500 transition-all shadow-sm"
                                         >
                                             {config.media_url ? (
@@ -607,7 +607,7 @@ export const ProductivityFormPage = () => {
                     onOpenChange={(open) => !open && setPickingMediaFor(null)}
                     onSelect={(media) => {
                         if (pickingMediaFor) {
-                            const [lotId, cIdx] = pickingMediaFor.split('-');
+                            const [_, cIdx] = pickingMediaFor.split('|');
                             updateLotConfig(Number(cIdx), 'media_id', media.id);
                             updateLotConfig(Number(cIdx), 'media_url', media.url);
                             setPickingMediaFor(null);

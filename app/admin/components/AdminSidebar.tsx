@@ -52,10 +52,17 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         },
 
         {
-            title: 'Warehouse - Logistics',
+            title: 'Logistics',
             items: [
                 { name: 'Packing Feed', path: '/admin/packing', icon: 'solar:box-bold-duotone', badge: null },
-                { name: 'WIP Dashboard', path: '/admin/wip', icon: 'solar:pie-chart-bold-duotone', badge: null }
+                { name: 'WIP Dashboard', path: '/admin/wip', icon: 'solar:pie-chart-bold-duotone', badge: null },
+            ],
+            badgeSection: 'NEW'
+        },
+        {
+            title: 'Report',
+            items: [
+                { name: 'Balance Report', path: '/admin/report/balance-size', icon: 'solar:checklist-minimalistic-bold-duotone', badge: null }
             ],
             badgeSection: 'NEW'
         },

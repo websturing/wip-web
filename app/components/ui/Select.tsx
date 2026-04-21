@@ -18,6 +18,7 @@ interface SelectProps {
     label?: string;
     className?: string;
     error?: boolean;
+    disabled?: boolean;
 }
 
 export const Select = ({
@@ -27,7 +28,8 @@ export const Select = ({
     placeholder = "Select an option...",
     label,
     className,
-    error
+    error,
+    disabled
 }: SelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,15 +50,17 @@ export const Select = ({
                 </label>
             )}
 
-            <Popover.Root open={open} onOpenChange={setOpen}>
+            <Popover.Root open={open} onOpenChange={disabled ? () => { } : setOpen}>
                 <Popover.Trigger asChild>
                     <button
                         type="button"
+                        disabled={disabled}
                         className={cn(
                             "w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
                             "hover:border-zinc-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200",
                             error && "border-red-500 bg-red-50/10 focus:ring-red-500/20 focus:border-red-500",
-                            open && !error && "border-blue-200 ring-2 ring-blue-500/20 bg-white"
+                            open && !error && "border-blue-200 ring-2 ring-blue-500/20 bg-white",
+                            disabled && "opacity-50 cursor-not-allowed"
                         )}
                     >
                         <span className={cn(
