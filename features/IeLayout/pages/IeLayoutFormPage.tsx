@@ -42,6 +42,7 @@ export const IeLayoutFormPage = () => {
     const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState<{ open: boolean, sectionName: string }>({ open: false, sectionName: '' });
 
+<<<<<<< HEAD
     const addSection = () => {
         if (newSectionName && !availableSections.includes(newSectionName.toUpperCase())) {
             setAvailableSections(prev => [...prev, newSectionName.toUpperCase()]);
@@ -52,6 +53,193 @@ export const IeLayoutFormPage = () => {
         }
     };
 
+=======
+    const breadcrumbItems: BreadcrumbItem[] = [
+        { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
+        { label: 'Engineering', icon: 'solar:programming-bold-duotone' },
+        { label: 'IE Layouts', href: '/admin/ielayout', icon: 'solar:layers-bold-duotone' },
+        { label: id ? 'Modify Specs' : 'Initialize Specs', icon: 'solar:add-circle-bold-duotone' },
+    ];
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            setIsFetching(true);
+            try {
+                const [opsData, lotsData] = await Promise.all([
+                    IeLayoutService.getOperations(),
+                    IeLayoutService.getLots()
+                ]);
+                setOperations(opsData);
+                setLots(lotsData);
+
+                if (id) {
+                    const layoutData = await IeLayoutService.getById(id as string);
+                    if (layoutData) {
+                        const sanitizedDetails = (layoutData.details || []).map(d => ({
+                            ...d,
+                            section: d.section || 'INLINE',
+                            handling_position_value: Number(d.handling_position_value || 0),
+                            length: Number(d.length || 0),
+                            machine_turn: Number(d.machine_turn || 0),
+                            man_power: Number(d.man_power || 0),
+                            std_time: Number(d.std_time || 0),
+                            target_hour: Number(d.target_hour || 0),
+                            target_day: Number(d.target_day || 0),
+                            smv: Number(d.smv || 0)
+                        }));
+                        setFormData({
+                            ...layoutData,
+                            price: Number(layoutData.price || 0),
+                            efficiency_constant: Number(layoutData.efficiency_constant || 1),
+                            total_smv: Number(layoutData.total_smv || 0),
+                            man_power_sewer: Number(layoutData.man_power_sewer || 0),
+                            man_power_matching: Number(layoutData.man_power_matching || 0),
+                            man_power_qc: Number(layoutData.man_power_qc || 0),
+                            man_power_others: Number(layoutData.man_power_others || 0),
+                            details: sanitizedDetails
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load data:', error);
+            } finally {
+                setIsFetching(false);
+            }
+        };
+        loadInitialData();
+    }, [id]);
+
+    const calculateRowMetrics = (detail: TimeStudy, efficiency: number) => {
+        const key = detail.machine_type.toUpperCase();
+        const turn = MACHINE_TURNS[key] || detail.machine_turn || 0;
+
+        const posHandling = detail.handling_position_value || 0;
+        const sewLength = detail.length || 0;
+
+        const rawStdTime = posHandling > 0 ? (sewLength * turn) + posHandling : 0;
+        const stdTime = Math.ceil(rawStdTime * 100) / 100;
+
+        const targetHour = (posHandling > 0 && stdTime > 0) ? (3600 * efficiency) / stdTime : 0;
+        const targetDay = targetHour * 8;
+        const smv = targetHour > 0 ? 60 / targetHour : 0;
+
+        return {
+            ...detail,
+            machine_turn: turn,
+            std_time: stdTime,
+            target_hour: targetHour,
+            target_day: targetDay,
+            smv: smv
+        };
+    };
+
+    const addOperation = (section: OperationSection) => {
+        const newDetail: TimeStudy = {
+            operation_id: '',
+            operation_name: '',
+            section: section,
+            handling_position: 'Seated',
+            handling_position_value: 0,
+            length: 0,
+            man_power: 1,
+            sequence: (formData.details?.length || 0) + 1,
+            machine_type: '',
+            machine_turn: 0
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            details: [...(prev.details || []), newDetail]
+        }));
+    };
+
+    const removeOperation = (indexInDetails: number) => {
+        const newDetails = [...(formData.details || [])];
+        newDetails.splice(indexInDetails, 1);
+        setFormData(prev => ({ ...prev, details: newDetails }));
+    };
+
+    const updateDetail = (indexInDetails: number, field: keyof TimeStudy, value: any) => {
+        setFormData(prev => {
+            const newDetails = [...(prev.details || [])];
+            let detail = { ...newDetails[indexInDetails], [field]: value };
+
+            if (field === 'operation_name') {
+                const op = operations.find(o => o.name.toLowerCase() === value.toLowerCase());
+                if (op) {
+                    detail.operation_id = op.id;
+                    detail.machine_type = op.machine_type;
+                    detail.sequence = op.sequence || detail.sequence;
+                } else {
+                    detail.operation_id = '';
+                }
+            }
+
+            if (['length', 'machine_type', 'handling_position_value', 'machine_turn', 'operation_name'].includes(field as string)) {
+                detail = calculateRowMetrics(detail, prev.efficiency_constant || 1);
+            }
+
+            newDetails[indexInDetails] = detail;
+            return { ...prev, details: newDetails };
+        });
+    };
+
+    const handleSubmit = async () => {
+        if (!formData.name) return alert('Layout name is required');
+
+        // Calculate totals before saving
+        const totalSmv = formData.details?.reduce((acc, d) => acc + (d.smv || 0), 0) || 0;
+
+        // Final data preparation
+        const submitData = {
+            ...formData,
+            total_smv: totalSmv,
+            // Ensure no circular references or extra frontend-only objects are passed if necessary
+            // (The backend sanitization I added will handle this, but it's good practice)
+        };
+
+        setIsLoading(true);
+        try {
+            if (id) {
+                await IeLayoutService.update(id as string, submitData);
+            } else {
+                await IeLayoutService.create(submitData);
+            }
+            router.push('/admin/ielayout');
+        } catch (error) {
+            console.error('Failed to save layout:', error);
+            alert('Error saving layout. Please verify all operations have been correctly initialized.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const formatInt = (num: any) => {
+        const val = Number(num);
+        if (isNaN(val)) return '0';
+        return Math.round(val).toString();
+    };
+
+    const formatPrec = (num: any) => {
+        const val = Number(num);
+        if (isNaN(val) || val === 0) return '0';
+        return parseFloat(val.toFixed(3)).toString();
+    };
+
+    const sectionTotals = useMemo(() => {
+        const totals: Record<OperationSection, { smv: number, mp: number }> = {
+            OUTLINE: { smv: 0, mp: 0 },
+            OFFLINE: { smv: 0, mp: 0 },
+            INLINE: { smv: 0, mp: 0 }
+        };
+        formData.details?.forEach(d => {
+            totals[d.section].smv += (d.smv || 0);
+            totals[d.section].mp += (d.man_power || 0);
+        });
+        return totals;
+    }, [formData.details]);
+
+>>>>>>> 1ea9ecd (-)
     if (isFetching) return (
         <div className="p-32 flex flex-col items-center justify-center gap-6">
             <div className="w-16 h-16 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin shadow-2xl"></div>
