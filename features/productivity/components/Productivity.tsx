@@ -248,8 +248,8 @@ export const Productivity = () => {
                                                 </td>
                                                 <td className="px-3 py-2">
                                                     <div className="w-10 h-10 rounded-lg bg-zinc-100 overflow-hidden border border-zinc-200 shadow-sm">
-                                                        {l.pivot?.media?.url ? (
-                                                            <img src={l.pivot.media.url} alt="" className="w-full h-full object-cover" />
+                                                        {(l.pivot?.media_url || l.pivot?.media?.url) ? (
+                                                            <img src={l.pivot.media_url || l.pivot.media.url} alt="" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-zinc-300">
                                                                 <Icon icon="solar:gallery-bold-duotone" className="w-4 h-4 opacity-30" />
@@ -370,8 +370,8 @@ export const Productivity = () => {
                                                 <tr key={`${item.id}-${l.id}`} className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100">
                                                     <td className="px-3 py-2">
                                                         <div className="w-10 h-10 rounded-lg bg-zinc-100 overflow-hidden border border-zinc-200">
-                                                            {l.pivot?.media?.url ? (
-                                                                <img src={l.pivot.media.url} alt="" className="w-full h-full object-cover" />
+                                                            {(l.pivot?.media_url || l.pivot?.media?.url) ? (
+                                                                <img src={l.pivot.media_url || l.pivot.media.url} alt="" className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-zinc-300">
                                                                     <Icon icon="solar:gallery-bold-duotone" className="w-4 h-4 opacity-30" />

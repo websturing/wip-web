@@ -54,7 +54,7 @@ export const WorkflowSection = ({
             className={cn(
                 "transition-all duration-500",
                 !isActive && "opacity-60",
-                draggedSection === section && "scale-[0.98] opacity-50 border-2 border-dashed border-blue-400 rounded-[0.5rem]"
+                draggedSection === section && "scale-[0.98] opacity-50 border-2 border-dashed border-blue-400 rounded-[2.5rem]"
             )}
         >
             <div className={cn(
@@ -87,7 +87,7 @@ export const WorkflowSection = ({
             </div>
 
             <div className={cn(
-                "rounded-[1rem] overflow-hidden border border-zinc-100 shadow-xl shadow-zinc-200/40 relative group",
+                "rounded-[2.5rem] overflow-hidden border border-zinc-100 shadow-xl shadow-zinc-200/40 relative group",
                 draggedSection === section && "opacity-0"
             )}>
                 <ProcessTable

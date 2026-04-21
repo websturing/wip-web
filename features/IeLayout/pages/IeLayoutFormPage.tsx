@@ -1,12 +1,14 @@
 'use client';
 
+import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { ConfirmationDialog } from '@/app/components/ui/ConfirmationDialog';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Toast, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from '@/app/components/ui/Toast';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
+import { OperationSection, TimeStudy } from "../types";
 import { useIeLayoutForm } from '../hooks/useIeLayoutForm';
 
 // Premium Modular Components
@@ -14,8 +16,6 @@ import { FormFooterSummary } from '../components/IeLayoutForm/FormFooterSummary'
 import { LayoutConfigCard } from '../components/IeLayoutForm/LayoutConfigCard';
 import { LineBalancingChart } from '../components/IeLayoutForm/LineBalancingChart';
 import { WorkflowSection } from '../components/IeLayoutForm/WorkflowSection';
-
-
 
 export const IeLayoutFormPage = () => {
     const params = useParams();
@@ -42,6 +42,13 @@ export const IeLayoutFormPage = () => {
     const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState<{ open: boolean, sectionName: string }>({ open: false, sectionName: '' });
 
+    const breadcrumbItems: BreadcrumbItem[] = [
+        { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
+        { label: 'Engineering', icon: 'solar:programming-bold-duotone' },
+        { label: 'IE Layouts', href: '/admin/ielayout', icon: 'solar:layers-bold-duotone' },
+        { label: id ? 'Modify Specs' : 'Initialize Specs', icon: 'solar:add-circle-bold-duotone' },
+    ];
+
     const addSection = () => {
         if (newSectionName && !availableSections.includes(newSectionName.toUpperCase())) {
             setAvailableSections(prev => [...prev, newSectionName.toUpperCase()]);
@@ -51,6 +58,20 @@ export const IeLayoutFormPage = () => {
             setTimeout(() => setShowSuccessToast(false), 3000);
         }
     };
+
+    const sectionTotals = useMemo(() => {
+        const totals: Record<string, { smv: number, mp: number }> = {};
+        availableSections.forEach(s => {
+            totals[s] = { smv: 0, mp: 0 };
+        });
+        formData.details?.forEach(d => {
+            if (totals[d.section]) {
+                totals[d.section].smv += (d.smv || 0);
+                totals[d.section].mp += (d.man_power || 0);
+            }
+        });
+        return totals;
+    }, [formData.details, availableSections]);
 
     if (isFetching) return (
         <div className="p-32 flex flex-col items-center justify-center gap-6">
@@ -63,6 +84,7 @@ export const IeLayoutFormPage = () => {
         <div className="pb-32">
             <ToastProvider>
                 <PageHeader
+                    breadcrumbItems={breadcrumbItems}
                     title={id ? 'Refine Architecture' : 'Initialize IE Layout'}
                     description="Crafting the skeleton of production efficiency through high-precision time study modeling."
                     action={
@@ -228,4 +250,4 @@ export const IeLayoutFormPage = () => {
             <style jsx>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
         </div>
     );
-}
+};

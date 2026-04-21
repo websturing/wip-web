@@ -83,14 +83,14 @@ export const ProcessTable = ({
                                 </td>
                                 <td className="px-1 py-1.5 text-center">
                                     <input
-                                        type="number" step="any" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
+                                        type="number" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
                                         value={detail.handling_position_value}
                                         onChange={(e) => updateDetail(globalIdx, 'handling_position_value', Number(e.target.value))}
                                     />
                                 </td>
                                 <td className="px-1 py-1.5 text-center">
                                     <input
-                                        type="number" step="any" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
+                                        type="number" className="w-full bg-transparent border-none text-center text-[11px] font-black text-zinc-900 p-0"
                                         value={detail.length}
                                         onChange={(e) => updateDetail(globalIdx, 'length', Number(e.target.value))}
                                     />
@@ -114,9 +114,7 @@ export const ProcessTable = ({
                                 <td className="px-1 py-1.5 text-center bg-emerald-50/20 font-black text-[11px] text-emerald-600">{formatPrec(detail.std_time)}</td>
                                 <td className="px-1 py-1.5 text-center bg-indigo-50/20 font-black text-[11px] text-indigo-600 text-xs">{formatInt(detail.target_hour)}</td>
                                 <td className="px-1 py-1.5 text-center text-[10px] font-bold text-zinc-400">{formatInt(detail.target_day)}</td>
-                                <td className="px-3 py-1.5 text-right bg-zinc-50/20 font-black text-[11px] text-zinc-900">
-                                    {formatPrec((detail.smv || 0) / (detail.man_power || 1))}
-                                </td>
+                                <td className="px-3 py-1.5 text-right bg-zinc-50/20 font-black text-[11px] text-zinc-900">{formatPrec(detail.smv)}</td>
                                 <td className="px-4 py-1.5 text-center">
                                     <button onClick={() => removeOperation(globalIdx)} className="transition-all text-zinc-200 hover:text-red-500">
                                         <Icon icon="solar:trash-bin-trash-bold" className="w-3.5 h-3.5" />
