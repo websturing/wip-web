@@ -37,15 +37,36 @@ export const Productivity = () => {
         }
     }, [isExportDialogOpen, data]);
 
+    // Custom sorting for Lines (Day Shift first, then Night Shift)
+    const sortedData = useMemo(() => {
+        if (!data) return [];
+        return [...data].sort((a, b) => {
+            const nameA = a.line?.name || '';
+            const nameB = b.line?.name || '';
+
+            const isNSA = nameA.toUpperCase().includes('NS');
+            const isNSB = nameB.toUpperCase().includes('NS');
+
+            // NS lines go to the end
+            if (isNSA !== isNSB) {
+                return isNSA ? 1 : -1;
+            }
+
+            // Within same category, natural sort (A1, A2, A10)
+            return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+        });
+    }, [data]);
+
     const availableLines = useMemo(() => {
         const linesMap = new Map();
-        data.forEach(item => {
+        // Use sortedData to maintain consistent sequence in export dialog
+        sortedData.forEach(item => {
             if (item.line) {
                 linesMap.set(String(item.line_id), item.line.name);
             }
         });
         return Array.from(linesMap.entries()).map(([id, name]) => ({ id, name }));
-    }, [data]);
+    }, [sortedData]);
 
     const handleDateChange = (newDate: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -67,13 +88,13 @@ export const Productivity = () => {
     // Grouping by Buyer logic (for summary)
     const groupedByBuyer = useMemo(() => {
         const groups: { [key: string]: any[] } = {};
-        data.forEach(item => {
+        sortedData.forEach(item => {
             const buyer = item.lots?.[0]?.gl_group?.customer?.name || 'Unknown Buyer';
             if (!groups[buyer]) groups[buyer] = [];
             groups[buyer].push(item);
         });
         return groups;
-    }, [data]);
+    }, [sortedData]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
@@ -200,7 +221,7 @@ export const Productivity = () => {
                                     </td>
                                 </tr>
                             ) : activeTab === 'daily' ? (
-                                data.map((item) => {
+                                sortedData.map((item) => {
                                     const lots = (item.lots && item.lots.length > 0) ? item.lots : (item.lot ? [item.lot] : []);
 
                                     return lots.map((l: any, lIdx: number) => {
