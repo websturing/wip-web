@@ -30,6 +30,7 @@ export const Productivity = () => {
 
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
     const [selectedLineIds, setSelectedLineIds] = useState<string[]>([]);
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
     useEffect(() => {
         if (isExportDialogOpen && data.length > 0) {
@@ -59,7 +60,6 @@ export const Productivity = () => {
 
     const availableLines = useMemo(() => {
         const linesMap = new Map();
-        // Use sortedData to maintain consistent sequence in export dialog
         sortedData.forEach(item => {
             if (item.line) {
                 linesMap.set(String(item.line_id), item.line.name);
@@ -74,6 +74,10 @@ export const Productivity = () => {
         router.push(`/admin/productivity?${params.toString()}`);
     };
 
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
     useEffect(() => {
         setIsLoading(true);
         Promise.all([
@@ -85,7 +89,20 @@ export const Productivity = () => {
         }).finally(() => setIsLoading(false));
     }, [currentDate]);
 
-    // Grouping by Buyer logic (for summary)
+    // Helper to group lots in a productivity record by their shared operational config
+    const getGroupedLots = (item: any) => {
+        const groups: { [key: string]: any[] } = {};
+        const lots = (item.lots && item.lots.length > 0) ? item.lots : (item.lot ? [item.lot] : []);
+
+        lots.forEach((l: any) => {
+            const configKey = `${l.pivot?.smv}-${l.pivot?.manpower}-${l.pivot?.working_hour}-${l.pivot?.section}`;
+            if (!groups[configKey]) groups[configKey] = [];
+            groups[configKey].push(l);
+        });
+        return Object.values(groups);
+    };
+
+    // Grouping by Buyer logic (for summary tab grouping)
     const groupedByBuyer = useMemo(() => {
         const groups: { [key: string]: any[] } = {};
         sortedData.forEach(item => {
@@ -98,7 +115,7 @@ export const Productivity = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
-            {/* Header section identical to other pages */}
+            {/* Header section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
                 <div className="flex items-center gap-6">
                     <div className="bg-zinc-900 p-4 rounded-[1.5rem] text-white shadow-2xl">
@@ -222,147 +239,20 @@ export const Productivity = () => {
                                 </tr>
                             ) : activeTab === 'daily' ? (
                                 sortedData.map((item) => {
-                                    const lots = (item.lots && item.lots.length > 0) ? item.lots : (item.lot ? [item.lot] : []);
+                                    const groupedLots = getGroupedLots(item);
 
-                                    return lots.map((l: any, lIdx: number) => {
-                                        // Calculate production output for this specific style ON THIS LINE
-                                        // Safety: Use a Map to prevent double-counting if there are duplicate size entries for the same item
-                                        const lineOutput = productionData
-                                            .filter(p => String(p.line_id) === String(item.line_id))
-                                            .flatMap(p => p.items || [])
-                                            .filter(pi => String(pi.lot_id) === String(l.id))
-                                            .reduce((sum, pi) => {
-                                                const itemQty = (pi.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0);
-                                                return sum + itemQty;
-                                            }, 0);
+                                    return groupedLots.map((lotGroup: any[], gIdx: number) => {
+                                        const firstLot = lotGroup[0];
+                                        const rowId = `${item.id}-${gIdx}`;
+                                        const isExpanded = expandedRows.includes(rowId);
 
-                                        // PRIORITY LOGIC:
-                                        // 1. If multi-lot: use pivot values
-                                        // 2. If single-lot: use main Productivity model attributes as fallback
-                                        const smv = lots.length === 1 ? Number(item.smv) : (Number(l.pivot?.smv) || Number(item.smv));
-                                        const manpower = lots.length === 1 ? Number(item.manpower) : (Number(l.pivot?.manpower) || (lIdx === 0 ? Number(item.manpower) : 0));
-                                        const mg = lots.length === 1 ? Number(item.sewer) : (Number(l.pivot?.sewer) || (lIdx === 0 ? Number(item.sewer) : 0));
-                                        const wh = lots.length === 1 ? Number(item.working_hour) : (Number(l.pivot?.working_hour) || Number(item.working_hour));
-                                        const section = l.pivot?.section || 'all';
+                                        const combinedGLs = lotGroup.map(l => l.gl_group?.gl_number).filter(Boolean).join(' + ');
+                                        const combinedLots = lotGroup.map(l => l.lot_code?.replace(/^0+/, '')).filter(Boolean).join(' + ');
+                                        const combinedStyles = Array.from(new Set(lotGroup.map(l => l.style_no).filter(Boolean))).join(' / ');
+                                        const combinedBuyers = Array.from(new Set(lotGroup.map(l => l.gl_group?.customer?.name).filter(Boolean))).join(' / ');
 
-                                        // Formula: (MP + MG) * WH * 60 / SMV
-                                        const dailyTarget = smv > 0
-                                            ? Math.floor(((manpower + mg) * wh * 60) / smv)
-                                            : 0;
-
-                                        const achieved = dailyTarget > 0 ? Math.round((lineOutput / dailyTarget) * 100) : 0;
-                                        const balance = dailyTarget - lineOutput;
-
-                                        // Formatting Lot Code
-                                        const lotCode = l.lot_code?.replace(/^0+/, '');
-                                        const glNumber = l.gl_group?.gl_number || '';
-
-                                        return (
-                                            <tr key={`${item.id}-${l.id}`} className="group hover:bg-zinc-50/50 transition-colors">
-                                                <td className="px-3 py-2">
-                                                    {lIdx === 0 && (
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                                            <span className="text-[10px] font-black text-zinc-900 uppercase">{item.line?.name}</span>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <div className="w-10 h-10 rounded-lg bg-zinc-100 overflow-hidden border border-zinc-200 shadow-sm">
-                                                        {(l.pivot?.media_url || l.pivot?.media?.url) ? (
-                                                            <img src={l.pivot.media_url || l.pivot.media.url} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-zinc-300">
-                                                                <Icon icon="solar:gallery-bold-duotone" className="w-4 h-4 opacity-30" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <div className="flex flex-col leading-tight">
-                                                        <span className="text-[10px] font-extrabold text-amber-600 uppercase truncate max-w-[130px]">{l.gl_group?.customer?.name || 'Unknown Buyer'}</span>
-                                                        <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[130px]">{l.style_no || 'Unknown Style'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <div className="flex flex-col scale-95 origin-left">
-                                                        <span className="text-[10px] font-bold text-zinc-700">{glNumber}</span>
-                                                        <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {lotCode}</span>
-                                                        <div className="mt-1">
-                                                            <span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1 py-0.5 rounded uppercase tracking-tighter shadow-sm border border-blue-100/50">{section}</span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-bold text-blue-600">
-                                                        {manpower} <span className="text-zinc-300 mx-0.5 text-[8px]">/</span> <span className="text-zinc-400 font-medium">{lots.length === 1 ? Number(item.plan_manpower) : (Number(l.pivot?.plan_manpower) || (lIdx === 0 ? Number(item.plan_manpower) : 0))}</span>
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-black text-emerald-600">
-                                                        {mg}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-bold text-zinc-500">
-                                                        {wh}H
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <span className="text-[9px] font-black text-zinc-400">{Number(smv)}</span>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-bold text-zinc-800 tabular-nums">{Number(dailyTarget)}</span>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <span className="text-[10px] font-extrabold text-blue-600 tabular-nums">{Number(lineOutput)}</span>
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    <div className={cn(
-                                                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[7px] font-black tracking-widest uppercase",
-                                                        achieved >= 100 ? "bg-emerald-100 text-emerald-700" : achieved >= 80 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
-                                                    )}>
-                                                        {achieved}%
-                                                    </div>
-                                                </td>
-                                                <td className={cn(
-                                                    "px-3 py-2 text-center text-[9px] font-bold tabular-nums",
-                                                    balance > 0 ? "text-zinc-500" : "text-emerald-500"
-                                                )}>
-                                                    {balance}
-                                                </td>
-                                                <td className="px-3 py-2 text-right">
-                                                    {lIdx === 0 ? (
-                                                        <div className="flex items-center justify-end gap-1.5 transition-all">
-                                                            <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
-                                                                <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
-                                                            </button>
-                                                            <button onClick={() => ProductivityService.exportExcel(item.id, `Productivity_${item.line?.name || 'Line'}_${item.date}.xlsx`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90">
-                                                                <Icon icon="solar:file-download-bold-duotone" className="w-3.5 h-3.5" />
-                                                            </button>
-                                                            <button onClick={async () => {
-                                                                if (confirm('Delete this record?')) {
-                                                                    await ProductivityService.delete(item.id);
-                                                                    setData(prev => prev.filter(i => i.id !== item.id));
-                                                                }
-                                                            }} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90">
-                                                                <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-8"></div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    });
-                                })
-                            ) : (
-                                Object.entries(groupedByBuyer).map(([buyer, items]) => {
-                                    return items.map((item, iIdx) => {
-                                        const lots = (item.lots && item.lots.length > 0) ? item.lots : (item.lot ? [item.lot] : []);
-                                        return lots.map((l: any, lIdx: number) => {
-                                            const totalOutput = productionData
+                                        const groupOutput = lotGroup.reduce((totalSum, l) => {
+                                            const lotOutput = productionData
                                                 .filter(p => String(p.line_id) === String(item.line_id))
                                                 .flatMap(p => p.items || [])
                                                 .filter(pi => String(pi.lot_id) === String(l.id))
@@ -370,29 +260,34 @@ export const Productivity = () => {
                                                     const itemQty = (pi.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0);
                                                     return sum + itemQty;
                                                 }, 0);
+                                            return totalSum + lotOutput;
+                                        }, 0);
 
-                                            // Formulas exactly match productivity dash logic
-                                            const smvVal = Number(l.pivot?.smv || item.smv || 0);
-                                            const mpVal = Number(l.pivot?.manpower || item.manpower || 0);
-                                            const mgVal = Number(l.pivot?.sewer || item.sewer || 0);
-                                            const whVal = Number(l.pivot?.working_hour || item.working_hour || 8);
-                                            const section = l.pivot?.section || 'all';
+                                        const smv = Number(lotGroup.length === 1 && !item.lots?.length ? item.smv : firstLot.pivot?.smv);
+                                        const manpower = Number(lotGroup.length === 1 && !item.lots?.length ? item.manpower : firstLot.pivot?.manpower);
+                                        const mg = Number(lotGroup.length === 1 && !item.lots?.length ? item.sewer : firstLot.pivot?.sewer);
+                                        const wh = Number(lotGroup.length === 1 && !item.lots?.length ? item.working_hour : firstLot.pivot?.working_hour);
+                                        const section = firstLot.pivot?.section || 'all';
 
-                                            const tgtAct = smvVal > 0 ? Math.floor(((mpVal + mgVal) * whVal * 60) / smvVal) : 0;
-                                            const tgtPlan = Number(l.pivot?.target_plan || item.target_plan || 0);
+                                        const dailyTarget = smv > 0 ? Math.floor(((manpower + mg) * wh * 60) / smv) : 0;
+                                        const achieved = dailyTarget > 0 ? Math.round((groupOutput / dailyTarget) * 100) : 0;
+                                        const balance = dailyTarget - groupOutput;
 
-                                            const diffLStep = (Number(l.pivot?.last_step || 0) - totalOutput);
-                                            const diffTAct = (totalOutput - tgtAct);
-                                            const pctTAct = tgtAct > 0 ? Math.round((totalOutput / tgtAct) * 100) : 0;
-                                            const diffTPln = (totalOutput - tgtPlan);
-                                            const pctTPln = tgtPlan > 0 ? Math.round((totalOutput / tgtPlan) * 100) : 0;
-
-                                            return (
-                                                <tr key={`${item.id}-${l.id}`} className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100">
+                                        return (
+                                            <Fragment key={rowId}>
+                                                <tr className="group hover:bg-zinc-50/50 transition-colors">
+                                                    <td className="px-3 py-2">
+                                                        {gIdx === 0 && (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                                                <span className="text-[10px] font-black text-zinc-900 uppercase">{item.line?.name}</span>
+                                                            </div>
+                                                        )}
+                                                    </td>
                                                     <td className="px-3 py-2">
                                                         <div className="w-10 h-10 rounded-lg bg-zinc-100 overflow-hidden border border-zinc-200">
-                                                            {(l.pivot?.media_url || l.pivot?.media?.url) ? (
-                                                                <img src={l.pivot.media_url || l.pivot.media.url} alt="" className="w-full h-full object-cover" />
+                                                            {(firstLot.pivot?.media_url || firstLot.pivot?.media?.url) ? (
+                                                                <img src={firstLot.pivot.media_url || firstLot.pivot.media.url} alt="" className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-zinc-300">
                                                                     <Icon icon="solar:gallery-bold-duotone" className="w-4 h-4 opacity-30" />
@@ -400,55 +295,212 @@ export const Productivity = () => {
                                                             )}
                                                         </div>
                                                     </td>
-                                                    <td className="px-2 py-2">
-                                                        <div className="flex flex-col leading-tight min-w-[100px]">
-                                                            <span className="text-[10px] font-black text-zinc-900 uppercase truncate">{item.line?.name}</span>
-                                                            <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate">{l.gl_group?.customer?.name} - {l.style_no}</span>
+                                                    <td className="px-3 py-2">
+                                                        <div className="flex flex-col leading-tight">
+                                                            <span className="text-[10px] font-extrabold text-amber-600 uppercase truncate max-w-[130px]">{combinedBuyers || 'Unknown Buyer'}</span>
+                                                            <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate max-w-[130px]">{combinedStyles || 'Unknown Style'}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-2 py-2">
-                                                        <div className="flex flex-col scale-90 origin-left">
-                                                            <span className="text-[10px] font-bold text-zinc-700">{l.gl_group?.gl_number}</span>
-                                                            <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {l.lot_code?.replace(/^0+/, '')}</span>
+                                                    <td className="px-3 py-2">
+                                                        <div className="flex flex-col scale-95 origin-left">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-bold text-zinc-700">{combinedGLs}</span>
+                                                                {lotGroup.length > 1 && (
+                                                                    <button
+                                                                        onClick={() => toggleRow(rowId)}
+                                                                        className={cn(
+                                                                            "p-0.5 rounded bg-zinc-50 border border-zinc-200 text-zinc-400 hover:text-zinc-900 transition-all",
+                                                                            isExpanded && "rotate-180 bg-zinc-900 text-white border-zinc-900"
+                                                                        )}
+                                                                    >
+                                                                        <Icon icon="solar:alt-arrow-down-bold" className="w-2.5 h-2.5" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {combinedLots}</span>
                                                             <div className="mt-1">
-                                                                <span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1 py-0.5 rounded uppercase tracking-tighter border border-blue-100/50">{section}</span>
+                                                                <span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1 py-0.5 rounded uppercase tracking-tighter shadow-sm border border-blue-100/50">{section}</span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-2 py-2 text-center text-[10px] font-bold text-zinc-500 tabular-nums bg-zinc-50/30">
-                                                        {Number(l.pivot?.plan_manpower || 0)}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className="text-[10px] font-bold text-blue-600">
+                                                            {manpower} <span className="text-zinc-300 mx-0.5 text-[8px]">/</span> <span className="text-zinc-400 font-medium">{lotGroup.length === 1 && !item.lots?.length ? Number(item.plan_manpower) : Number(firstLot.pivot?.plan_manpower || 0)}</span>
+                                                        </span>
                                                     </td>
-                                                    <td className="px-2 py-2 text-center text-[10px] font-black text-emerald-600 tabular-nums bg-zinc-50/30">
-                                                        {tgtPlan}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className="text-[10px] font-black text-emerald-600">{mg}</span>
                                                     </td>
-                                                    <td className="px-2 py-2 text-center text-[10px] font-black text-blue-600 tabular-nums">
-                                                        {mpVal + mgVal}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className="text-[10px] font-bold text-zinc-500">{wh}H</span>
                                                     </td>
-                                                    <td className="px-2 py-2 text-center text-[10px] font-black text-zinc-900 tabular-nums bg-zinc-50/30">
-                                                        {tgtAct}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className="text-[9px] font-black text-zinc-400">{Number(smv)}</span>
                                                     </td>
-                                                    <td className="px-2 py-2 text-center text-[10px] font-black text-blue-700 tabular-nums">
-                                                        {totalOutput}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className="text-[10px] font-bold text-zinc-800 tabular-nums">{Number(dailyTarget)}</span>
                                                     </td>
-                                                    <td className="px-2 py-2 text-center text-[10px] font-bold text-orange-500 tabular-nums">
-                                                        {l.pivot?.last_step || 0}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <span className="text-[10px] font-extrabold text-blue-600 tabular-nums">{Number(groupOutput)}</span>
                                                     </td>
-                                                    <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums", diffLStep < 0 ? "text-emerald-500" : "text-amber-600")}>
-                                                        {diffLStep}
+                                                    <td className="px-3 py-2 text-center">
+                                                        <div className={cn(
+                                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[7px] font-black tracking-widest uppercase",
+                                                            achieved >= 100 ? "bg-emerald-100 text-emerald-700" : achieved >= 80 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+                                                        )}>
+                                                            {achieved}%
+                                                        </div>
                                                     </td>
-                                                    <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums border-l border-zinc-50", diffTAct < 0 ? "text-red-500" : "text-emerald-600")}>
-                                                        {diffTAct > 0 ? `+${diffTAct}` : diffTAct}
+                                                    <td className={cn("px-3 py-2 text-center text-[9px] font-bold tabular-nums", balance > 0 ? "text-zinc-500" : "text-emerald-500")}>
+                                                        {balance}
                                                     </td>
-                                                    <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums", pctTAct < 80 ? "text-red-500" : pctTAct < 100 ? "text-amber-500" : "text-emerald-500")}>
-                                                        {pctTAct}%
-                                                    </td>
-                                                    <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums border-l border-zinc-50", diffTPln < 0 ? "text-red-500" : "text-emerald-600")}>
-                                                        {diffTPln > 0 ? `+${diffTPln}` : diffTPln}
-                                                    </td>
-                                                    <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums", pctTPln < 80 ? "text-red-500" : pctTPln < 100 ? "text-amber-500" : "text-emerald-500")}>
-                                                        {pctTPln}%
+                                                    <td className="px-3 py-2 text-right">
+                                                        {gIdx === 0 ? (
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-all active:scale-90">
+                                                                    <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button onClick={() => ProductivityService.exportExcel(item.id, `Productivity_${item.line?.name || 'Line'}_${item.date}.xlsx`)} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90">
+                                                                    <Icon icon="solar:file-download-bold-duotone" className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button onClick={async () => {
+                                                                    if (confirm('Delete this record?')) {
+                                                                        await ProductivityService.delete(item.id);
+                                                                        setData(prev => prev.filter(i => i.id !== item.id));
+                                                                    }
+                                                                }} className="p-1 rounded-lg bg-zinc-100 text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-all active:scale-90">
+                                                                    <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        ) : <div className="w-8"></div>}
                                                     </td>
                                                 </tr>
+                                                {/* Breakdown Rows */}
+                                                {lotGroup.length > 1 && isExpanded && lotGroup.map((subL: any) => {
+                                                    const subOutput = productionData
+                                                        .filter(p => String(p.line_id) === String(item.line_id))
+                                                        .flatMap(p => p.items || [])
+                                                        .filter(pi => String(pi.lot_id) === String(subL.id))
+                                                        .reduce((sum, pi) => (sum + (pi.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0)), 0);
+
+                                                    return (
+                                                        <tr key={`sub-${subL.id}`} className="bg-zinc-50/50 border-white border-l-2 border-emerald-400">
+                                                            <td colSpan={3}></td>
+                                                            <td className="px-3 py-1.5">
+                                                                <div className="flex flex-col scale-90 origin-left opacity-70">
+                                                                    <span className="text-[9px] font-black text-zinc-600">{subL.gl_group?.gl_number}</span>
+                                                                    <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {subL.lot_code?.replace(/^0+/, '')}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td colSpan={5}></td>
+                                                            <td className="px-3 py-1.5 text-center">
+                                                                <span className="text-[10px] font-bold text-blue-400 tabular-nums">{subOutput}</span>
+                                                            </td>
+                                                            <td colSpan={3}></td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </Fragment>
+                                        );
+                                    });
+                                })
+                            ) : (
+                                Object.entries(groupedByBuyer).map(([buyer, items]) => {
+                                    return items.map((item) => {
+                                        const groupedLots = getGroupedLots(item);
+                                        return groupedLots.map((lotGroup: any[], gIdx: number) => {
+                                            const firstLot = lotGroup[0];
+                                            const rowId = `sum-${item.id}-${gIdx}`;
+                                            const isExpanded = expandedRows.includes(rowId);
+
+                                            const combinedGLs = lotGroup.map(l => l.gl_group?.gl_number).filter(Boolean).join(' + ');
+                                            const combinedLots = lotGroup.map(l => l.lot_code?.replace(/^0+/, '')).filter(Boolean).join(' + ');
+                                            const combinedStyles = Array.from(new Set(lotGroup.map(l => l.style_no).filter(Boolean))).join(' / ');
+                                            const combinedBuyers = Array.from(new Set(lotGroup.map(l => l.gl_group?.customer?.name).filter(Boolean))).join(' / ');
+
+                                            const groupOutput = lotGroup.reduce((totalSum, l) => {
+                                                const lotOutput = productionData
+                                                    .filter(p => String(p.line_id) === String(item.line_id))
+                                                    .flatMap(p => p.items || [])
+                                                    .filter(pi => String(pi.lot_id) === String(l.id))
+                                                    .reduce((sum, pi) => (sum + (pi.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0)), 0);
+                                                return totalSum + lotOutput;
+                                            }, 0);
+
+                                            const smvVal = Number(firstLot.pivot?.smv || item.smv || 0);
+                                            const mpVal = Number(firstLot.pivot?.manpower || item.manpower || 0);
+                                            const mgVal = Number(firstLot.pivot?.sewer || item.sewer || 0);
+                                            const whVal = Number(firstLot.pivot?.working_hour || item.working_hour || 8);
+                                            const section = firstLot.pivot?.section || 'all';
+
+                                            const tgtAct = smvVal > 0 ? Math.floor(((mpVal + mgVal) * whVal * 60) / smvVal) : 0;
+                                            const tgtPlan = Number(firstLot.pivot?.target_plan || item.target_plan || 0);
+                                            const maxLastStep = Math.max(...lotGroup.map(l => Number(l.pivot?.last_step || 0)));
+
+                                            return (
+                                                <Fragment key={rowId}>
+                                                    <tr className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100">
+                                                        <td className="px-3 py-2">
+                                                            <div className="w-10 h-10 rounded-lg bg-zinc-100 overflow-hidden border border-zinc-200">
+                                                                {(firstLot.pivot?.media_url || firstLot.pivot?.media?.url) ? (
+                                                                    <img src={firstLot.pivot.media_url || firstLot.pivot.media.url} alt="" className="w-full h-full object-cover" />
+                                                                ) : <div className="w-full h-full flex items-center justify-center text-zinc-300"><Icon icon="solar:gallery-bold-duotone" className="w-4 h-4 opacity-30" /></div>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-2 py-2">
+                                                            <div className="flex flex-col leading-tight min-w-[100px]">
+                                                                <span className="text-[10px] font-black text-zinc-900 uppercase truncate">{item.line?.name}</span>
+                                                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest truncate">{combinedBuyers} - {combinedStyles}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-2 py-2">
+                                                            <div className="flex flex-col scale-90 origin-left">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] font-bold text-zinc-700">{combinedGLs}</span>
+                                                                    {lotGroup.length > 1 && (
+                                                                        <button onClick={() => toggleRow(rowId)} className={cn("p-0.5 rounded bg-zinc-50 border border-zinc-200 text-zinc-400", isExpanded && "rotate-180 bg-zinc-900 text-white")}>
+                                                                            <Icon icon="solar:alt-arrow-down-bold" className="w-2.5 h-2.5" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {combinedLots}</span>
+                                                                <div className="mt-1"><span className="text-[7px] font-black bg-blue-50 text-blue-500 px-1 py-0.5 rounded uppercase tracking-tighter border border-blue-100/50">{section}</span></div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-2 py-2 text-center text-[10px] font-bold text-zinc-500 tabular-nums bg-zinc-50/30">{Number(firstLot.pivot?.plan_manpower || 0)}</td>
+                                                        <td className="px-2 py-2 text-center text-[10px] font-black text-emerald-600 tabular-nums bg-zinc-50/30">{tgtPlan}</td>
+                                                        <td className="px-2 py-2 text-center text-[10px] font-black text-blue-600 tabular-nums">{mpVal + mgVal}</td>
+                                                        <td className="px-2 py-2 text-center text-[10px] font-black text-zinc-900 tabular-nums bg-zinc-50/30">{tgtAct}</td>
+                                                        <td className="px-2 py-2 text-center text-[10px] font-black text-blue-700 tabular-nums">{groupOutput}</td>
+                                                        <td className="px-2 py-2 text-center text-[10px] font-bold text-orange-500 tabular-nums">{maxLastStep}</td>
+                                                        <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums", (maxLastStep - groupOutput) < 0 ? "text-emerald-500" : "text-amber-600")}>{maxLastStep - groupOutput}</td>
+                                                        <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums border-l border-zinc-50", (groupOutput - tgtAct) < 0 ? "text-red-500" : "text-emerald-600")}>{groupOutput - tgtAct > 0 ? `+${groupOutput - tgtAct}` : groupOutput - tgtAct}</td>
+                                                        <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums", (tgtAct > 0 ? (groupOutput / tgtAct) * 100 : 0) < 80 ? "text-red-500" : "text-emerald-500")}>{tgtAct > 0 ? Math.round((groupOutput / tgtAct) * 100) : 0}%</td>
+                                                        <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums border-l border-zinc-50", (groupOutput - tgtPlan) < 0 ? "text-red-500" : "text-emerald-600")}>{groupOutput - tgtPlan > 0 ? `+${groupOutput - tgtPlan}` : groupOutput - tgtPlan}</td>
+                                                        <td className={cn("px-2 py-2 text-center text-[10px] font-black tabular-nums", (tgtPlan > 0 ? (groupOutput / tgtPlan) * 100 : 0) < 80 ? "text-red-500" : "text-emerald-500")}>{tgtPlan > 0 ? Math.round((groupOutput / tgtPlan) * 100) : 0}%</td>
+                                                    </tr>
+                                                    {lotGroup.length > 1 && isExpanded && lotGroup.map((subL: any) => {
+                                                        const subOutput = productionData
+                                                            .filter(p => String(p.line_id) === String(item.line_id))
+                                                            .flatMap(p => p.items || [])
+                                                            .filter(pi => String(pi.lot_id) === String(subL.id))
+                                                            .reduce((sum, pi) => (sum + (pi.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0)), 0);
+                                                        return (
+                                                            <tr key={`sum-sub-${subL.id}`} className="bg-zinc-50/50 border-l-2 border-emerald-400">
+                                                                <td colSpan={2}></td>
+                                                                <td className="px-2 py-1.5">
+                                                                    <div className="flex flex-col scale-90 origin-left opacity-70">
+                                                                        <span className="text-[9px] font-black text-zinc-600">{subL.gl_group?.gl_number}</span>
+                                                                        <span className="text-[7px] font-bold text-zinc-400 uppercase">Lot: {subL.lot_code?.replace(/^0+/, '')}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td colSpan={4}></td>
+                                                                <td className="px-2 py-1.5 text-center"><span className="text-[10px] font-bold text-blue-400 tabular-nums">{subOutput}</span></td>
+                                                                <td colSpan={6}></td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </Fragment>
                                             );
                                         });
                                     });
@@ -552,3 +604,5 @@ export const Productivity = () => {
         </div>
     );
 };
+
+const Fragment = ({ children }: { children: React.ReactNode }) => <>{children}</>;

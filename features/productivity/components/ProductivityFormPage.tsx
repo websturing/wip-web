@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Icon } from '@/app/components/ui/Icon';
 import { MultiSelect } from '@/app/components/ui/MultiSelect';
 import { Select } from '@/app/components/ui/Select';
+import { cn } from '@/lib/utils';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ProductionService } from '../../Production/services/ProductionService';
@@ -56,6 +57,7 @@ export const ProductivityFormPage = () => {
     const [pickingMediaFor, setPickingMediaFor] = useState<string | null>(null);
     const [isAutoFilling, setIsAutoFilling] = useState(false);
     const [lastSynced, setLastSynced] = useState({ line_id: '', date: '' });
+    const [selectedMergeIds, setSelectedMergeIds] = useState<string[]>([]);
 
     // Total target sum across all lots
     const currentTargetSum = useMemo(() => {
@@ -122,7 +124,6 @@ export const ProductivityFormPage = () => {
 
     // Auto-fill GLs from Production Output if line is selected
     useEffect(() => {
-        // Prevent sync on mount (especially for edit mode) or if nothing changed
         if (formData.line_id === lastSynced.line_id && formData.date === lastSynced.date) return;
         if (!formData.line_id || !formData.date || lots.length === 0) return;
 
@@ -133,7 +134,6 @@ export const ProductivityFormPage = () => {
                 if (res.status === 'success') {
                     const lineOutput = res.data.filter((p: any) => String(p.line_id) === String(formData.line_id));
 
-                    // 1. Handle GLs/Lots + Sections (Automated pairing)
                     const lotSectionPairs = lineOutput.flatMap((p: any) =>
                         p.items?.map((i: any) => ({
                             lot_id: String(i.lot_id),
@@ -141,14 +141,12 @@ export const ProductivityFormPage = () => {
                         }))
                     ).filter(Boolean);
 
-                    // De-duplicate pairs
                     const uniquePairs = Array.from(
                         new Set(lotSectionPairs.map((p: any) => JSON.stringify(p)))
                     ).map((s: any) => JSON.parse(s) as { lot_id: string, section: string });
 
                     await handleLotSectionAutoFill(uniquePairs);
 
-                    // 2. Handle Manpower (Matching Girl / Helper)
                     const totalMatching = lineOutput.reduce((sum: number, p: any) => sum + (Number(p.man_power_matching) || 0), 0);
                     if (totalMatching > 0) {
                         setFormData(prev => ({
@@ -158,7 +156,6 @@ export const ProductivityFormPage = () => {
                         }));
                     }
 
-                    // Mark as synced
                     setLastSynced({ line_id: formData.line_id, date: formData.date });
                 }
             } catch (error) {
@@ -169,12 +166,11 @@ export const ProductivityFormPage = () => {
         };
 
         autoFillStyles();
-    }, [formData.line_id, formData.date, lots]);
+    }, [formData.line_id, formData.date, lots, lastSynced]);
 
     const handleLotSectionAutoFill = async (pairs: { lot_id: string, section: string }[]) => {
-        // Fetch new ones in parallel
         const configs = await Promise.all(pairs.map(async (pair) => {
-            const lotInfo = lots.find(l => l.id === pair.lot_id);
+            const lotInfo = lots.find(l => String(l.id) === String(pair.lot_id));
             let defaults = {
                 smv: 0,
                 last_step: 0,
@@ -214,16 +210,48 @@ export const ProductivityFormPage = () => {
         setFormData(prev => ({ ...prev, lot_configs: configs }));
     };
 
+    const handleQuickMerge = async (forceAll = false) => {
+        const canMergeAll = formData.lot_configs.length === 2;
+        if (!forceAll && !canMergeAll && selectedMergeIds.length < 2) return;
+
+        setIsAutoFilling(true);
+        try {
+            // Use forceAll or standard selection
+            const toMerge = forceAll ? formData.lot_configs : formData.lot_configs.filter(c => selectedMergeIds.includes(c.lot_id));
+            const remaining = formData.lot_configs.filter(c => !toMerge.find(m => m.lot_id === c.lot_id));
+
+            const mergedConfig: LotConfig = {
+                lot_id: toMerge.map(c => c.lot_id).join(','),
+                label: toMerge.map(c => c.label).join(' + '),
+                smv: toMerge[0].smv,
+                last_step: Math.max(...toMerge.map(c => c.last_step)),
+                target_plan: toMerge.reduce((sum, c) => sum + (Number(c.target_plan) || 0), 0),
+                manpower: toMerge.reduce((sum, c) => sum + (Number(c.manpower) || 0), 0),
+                plan_manpower: toMerge.reduce((sum, c) => sum + (Number(c.plan_manpower) || 0), 0),
+                sewer: Number(formData.sewer) || 0,
+                plan_sewer: 0,
+                working_hour: toMerge[0].working_hour,
+                section: toMerge[0].section || 'all',
+                media_id: toMerge[0].media_id,
+                media_url: toMerge[0].media_url
+            };
+
+            setFormData(prev => ({ ...prev, lot_configs: [mergedConfig, ...remaining] }));
+            setSelectedMergeIds([]); // Reset selection after merge
+        } finally {
+            setIsAutoFilling(false);
+        }
+    };
+
     const handleLotSelection = async (ids: (string | number)[]) => {
-        const prevLotIds = formData.lot_configs.map(c => c.lot_id);
+        const prevLotIds = formData.lot_configs.flatMap(c => c.lot_id.split(','));
         const addedIds = ids.filter(id => !prevLotIds.includes(String(id)));
+        const existingConfigs = formData.lot_configs.filter(c =>
+            c.lot_id.split(',').some(id => ids.includes(id))
+        );
 
-        // Keep existing ones that are still in ids
-        const existingConfigs = formData.lot_configs.filter(c => ids.includes(c.lot_id));
-
-        // Fetch new ones in parallel
         const newConfigs = await Promise.all(addedIds.map(async (lotId) => {
-            const lotInfo = lots.find(l => l.id === lotId);
+            const lotInfo = lots.find(l => String(l.id) === String(lotId));
             let defaults = {
                 smv: 0,
                 last_step: 0,
@@ -279,6 +307,17 @@ export const ProductivityFormPage = () => {
 
         setIsSaving(true);
         try {
+            const processedLotData = formData.lot_configs.flatMap(config => {
+                const ids = config.lot_id.split(',');
+                if (ids.length > 1) {
+                    return ids.map(id => ({
+                        ...config,
+                        lot_id: id,
+                    }));
+                }
+                return [config];
+            });
+
             const payload = {
                 ...formData,
                 manpower: formData.lot_configs.reduce((sum, c) => sum + (Number(c.manpower) || 0), 0),
@@ -286,7 +325,7 @@ export const ProductivityFormPage = () => {
                 sewer: Number(formData.sewer) || 0,
                 plan_sewer: 0,
                 working_hour: formData.lot_configs[0]?.working_hour || 8,
-                lot_data: formData.lot_configs
+                lot_data: processedLotData
             };
             const res = await ProductivityService.save(payload);
             if (res.status === 'success') router.push(`/admin/productivity?date=${formData.date}`);
@@ -305,8 +344,8 @@ export const ProductivityFormPage = () => {
     );
 
     return (
-        <div className="max-w-[1800px] mx-auto space-y-6 animate-in fade-in duration-700 ">
-            {/* Standard Page Header */}
+        <div className="max-w-[1800px] mx-auto space-y-6 animate-in fade-in duration-700">
+            {/* Header */}
             <div className="flex items-center justify-between gap-6 pb-2">
                 <div className="flex items-center gap-6">
                     <div className="bg-zinc-900 p-4 rounded-[1.5rem] text-white shadow-2xl">
@@ -335,8 +374,8 @@ export const ProductivityFormPage = () => {
                 </div>
             </div>
 
+            {/* Selection Section */}
             <div className="grid grid-cols-1 gap-8">
-                {/* Identification & Selection */}
                 <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 relative">
                     <div className="flex flex-wrap items-end gap-6">
                         <div className="space-y-2">
@@ -356,8 +395,8 @@ export const ProductivityFormPage = () => {
                                 placeholder="Select Line"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1 cursor-help" title="Matching Girl Total">Total MG / Helper</label>
+                        <div className="space-y-2 flex flex-col">
+                            <label className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1">Total MG / Helper</label>
                             <input
                                 type="text"
                                 value={formData.sewer}
@@ -366,7 +405,6 @@ export const ProductivityFormPage = () => {
                                     setFormData({ ...formData, sewer: val as any });
                                 }}
                                 onBlur={() => setFormData({ ...formData, sewer: Number(formData.sewer) || 0 })}
-                                onFocus={(e) => e.target.select()}
                                 className="w-[180px] bg-emerald-50 h-[50px] rounded-xl px-4 text-sm font-black text-emerald-800 border border-emerald-100 shadow-sm outline-none focus:border-emerald-500 transition-all font-mono"
                             />
                         </div>
@@ -374,247 +412,285 @@ export const ProductivityFormPage = () => {
                         {isAutoFilling && (
                             <div className="flex items-center gap-2 text-zinc-400 animate-pulse ml-auto bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-100">
                                 <Icon icon="solar:refresh-bold" className="w-4 h-4 animate-spin" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Syncing from Production...</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">Syncing Data...</span>
                             </div>
                         )}
                     </div>
                 </div>
+            </div>
 
-                {/* Granular Style Cards */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between mb-2">
+            {/* Units Section */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-zinc-900 rounded-full"></div>
                             <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest">Operational Units</h3>
                         </div>
-                        <div className="w-[400px]">
-                            <MultiSelect
-                                options={lots}
-                                value={formData.lot_configs.map(c => c.lot_id)}
-                                onChange={handleLotSelection}
-                                placeholder="Add Style / GL..."
-                            />
+
+                        {formData.lot_configs.length === 2 && selectedMergeIds.length === 0 && (
+                            <button
+                                onClick={() => handleQuickMerge(true)}
+                                className="px-6 py-2 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-3 shadow-sm animate-in fade-in duration-500"
+                            >
+                                <Icon icon="solar:globus-bold-duotone" className="w-4 h-4" />
+                                <span>Combine Both Styles</span>
+                            </button>
+                        )}
+
+                        {selectedMergeIds.length > 1 && (
+                            <button
+                                onClick={() => handleQuickMerge(false)}
+                                className="px-6 py-2 bg-zinc-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-all flex items-center gap-3 shadow-xl animate-in zoom-in duration-300"
+                            >
+                                <Icon icon="solar:globus-bold-duotone" className="w-4 h-4 text-emerald-400" />
+                                <span>Combine {selectedMergeIds.length} Selected Styles</span>
+                            </button>
+                        )}
+
+                        {formData.lot_configs.length > 2 && selectedMergeIds.length < 2 && (
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest animate-pulse">Select styles to combine</p>
+                        )}
+                    </div>
+                    <div className="w-[400px]">
+                        <MultiSelect
+                            options={lots}
+                            value={formData.lot_configs.map(c => c.lot_id.split(',')[0])}
+                            onChange={handleLotSelection}
+                            placeholder="Add Style / GL..."
+                        />
+                    </div>
+                </div>
+
+                {formData.lot_configs.length > 0 ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        {formData.lot_configs.map((config, cIdx) => (
+                            <div
+                                key={`${config.lot_id}-${cIdx}`}
+                                onClick={() => {
+                                    if (formData.lot_configs.length > 1) {
+                                        if (selectedMergeIds.includes(config.lot_id)) {
+                                            setSelectedMergeIds(prev => prev.filter(id => id !== config.lot_id));
+                                        } else {
+                                            setSelectedMergeIds(prev => [...prev, config.lot_id]);
+                                        }
+                                    }
+                                }}
+                                className={cn(
+                                    "bg-white rounded-[3rem] border p-10 shadow-sm group hover:border-zinc-900 transition-all duration-500 relative overflow-hidden cursor-default",
+                                    selectedMergeIds.includes(config.lot_id) ? "border-blue-500 ring-4 ring-blue-50 scale-[0.98]" : "border-zinc-100"
+                                )}
+                            >
+                                {/* Selection Indicator */}
+                                {formData.lot_configs.length > 1 && (
+                                    <div className="absolute top-10 left-10 z-20 pointer-events-none">
+                                        <div className={cn(
+                                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                            selectedMergeIds.includes(config.lot_id)
+                                                ? "bg-blue-600 border-blue-600 scale-125"
+                                                : "bg-white border-zinc-200"
+                                        )}>
+                                            {selectedMergeIds.includes(config.lot_id) && <Icon icon="solar:check-bold" className="w-3 h-3 text-white" />}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Selection Indicator */}
+                                {formData.lot_configs.length > 1 && (
+                                    <div className="absolute top-10 left-10 z-20 pointer-events-none">
+                                        <div className={cn(
+                                            "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                            selectedMergeIds.includes(config.lot_id)
+                                                ? "bg-blue-600 border-blue-600 scale-125"
+                                                : "bg-white border-zinc-200"
+                                        )}>
+                                            {selectedMergeIds.includes(config.lot_id) && <Icon icon="solar:check-bold" className="w-3 h-3 text-white" />}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="absolute top-0 right-0 p-6 z-10">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFormData({ ...formData, lot_configs: formData.lot_configs.filter((_, i) => i !== cIdx) });
+                                            setSelectedMergeIds(prev => prev.filter(id => id !== config.lot_id));
+                                        }}
+                                        className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                    >
+                                        <Icon icon="solar:trash-bin-trash-bold" className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className={cn(
+                                    "mb-10 flex gap-6 items-start transition-all",
+                                    formData.lot_configs.length > 1 ? "pl-12" : ""
+                                )}>
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPickingMediaFor(`${config.lot_id}|${cIdx}`);
+                                        }}
+                                        className="w-24 h-24 rounded-2xl bg-zinc-50 border border-zinc-100 flex-shrink-0 overflow-hidden relative cursor-pointer hover:border-blue-500 transition-all"
+                                    >
+                                        {config.media_url ? (
+                                            <img src={config.media_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-300">
+                                                <Icon icon="solar:camera-bold" className="w-6 h-6 mb-1" />
+                                                <span className="text-[7px] font-black uppercase text-zinc-400">Add Asset</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 pt-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">Operational Unit</p>
+                                        </div>
+                                        <h4 className="text-2xl font-black text-zinc-900 tracking-tight truncate pr-12">{config.label}</h4>
+                                        <p className="text-sm pt-2 uppercase text-zinc-400 pr-12">{config.section}</p>
+                                    </div>
+
+
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div className="md:col-span-2 space-y-2" style={{ display: 'none' }}>
+                                        <label className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-1">Work Section</label>
+                                        <Select
+                                            options={[
+                                                { id: 'all', label: 'All Sections' },
+                                                { id: 'offline', label: 'Offline' },
+                                                { id: 'inline', label: 'Inline' },
+                                                { id: 'outline', label: 'Outline' }
+                                            ]}
+                                            value={config.section || 'all'}
+                                            onChange={(val) => updateLotConfig(cIdx, 'section', String(val))}
+                                            placeholder="Select Section"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Plan MP</label>
+                                        <input
+                                            type="number"
+                                            value={config.plan_manpower}
+                                            onChange={(e) => updateLotConfig(cIdx, 'plan_manpower', Number(e.target.value))}
+                                            className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-500 outline-none border border-zinc-100 focus:border-zinc-900 transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2 space-y-2">
+                                        <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Target Plan (PCS)</label>
+                                        <input
+                                            type="number"
+                                            value={config.target_plan}
+                                            onChange={(e) => updateLotConfig(cIdx, 'target_plan', Number(e.target.value))}
+                                            className="w-full bg-blue-100 h-14 rounded-2xl px-6 text-xl font-black text-emerald-400 outline-none border border-blue-200 focus:border-emerald-500 transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-1">Actual MP</label>
+                                        <input
+                                            type="number"
+                                            value={config.manpower}
+                                            onChange={(e) => updateLotConfig(cIdx, 'manpower', Number(e.target.value))}
+                                            className="w-full bg-blue-50/30 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none border border-blue-100 focus:border-blue-400 transition-all"
+                                        />
+                                    </div>
+                                    <div className="md:w-[100px] space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">SMV</label>
+                                        <input
+                                            type="text"
+                                            value={config.smv}
+                                            onChange={(e) => updateLotConfig(cIdx, 'smv', e.target.value.replace(',', '.'))}
+                                            onBlur={() => updateLotConfig(cIdx, 'smv', Number(config.smv) || 0)}
+                                            className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold outline-none border border-zinc-100 focus:border-zinc-900 transition-all"
+                                        />
+                                    </div>
+                                    <div className="md:w-[100px] space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Last Step</label>
+                                        <input
+                                            type="number"
+                                            value={config.last_step}
+                                            onChange={(e) => updateLotConfig(cIdx, 'last_step', Number(e.target.value))}
+                                            className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold outline-none border border-zinc-100 focus:border-zinc-900 transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">WH (Hours)</label>
+                                        <input
+                                            type="number"
+                                            value={config.working_hour}
+                                            onChange={(e) => updateLotConfig(cIdx, 'working_hour', Number(e.target.value))}
+                                            className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-800 outline-none border border-zinc-100 focus:border-zinc-900 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="py-32 flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 rounded-[3rem] text-zinc-300">
+                        <Icon icon="solar:plate-bold-duotone" className="w-16 h-16 opacity-20 mb-4" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Add Styles to Begin Configuration</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="pt-8 flex justify-end">
+                <button
+                    onClick={() => setShowConfirm(true)}
+                    disabled={isSaving || !formData.line_id || formData.lot_configs.length === 0}
+                    className="h-16 px-12 bg-zinc-900 text-white rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 disabled:opacity-50"
+                >
+                    <Icon icon="solar:diskette-bold" className="w-5 h-5" />
+                    <span>{formData.id ? 'Save Changes' : 'Finalize Performance Log'}</span>
+                </button>
+            </div>
+
+            {/* Confirmation Dialog */}
+            <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+                <DialogContent className="max-w-md bg-white rounded-[2.5rem] p-10">
+                    <DialogHeader>
+                        <div className="w-16 h-16 bg-zinc-900 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-xl">
+                            <Icon icon="solar:shield-check-bold-duotone" className="w-8 h-8 text-emerald-400" />
+                        </div>
+                        <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight">CONFIRM LOG ENTRY</DialogTitle>
+                        <DialogDescription className="text-zinc-500 font-bold uppercase tracking-widest text-[10px] mt-2">
+                            Please verify the resources before synchronizing.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-8 space-y-6 text-sm">
+                        <div className="flex justify-between border-b pb-4">
+                            <span className="text-zinc-400 font-black uppercase text-[10px]">Active Line</span>
+                            <span className="font-black text-zinc-900">{lines.find(l => String(l.id) === String(formData.line_id))?.label || 'Unknown'}</span>
+                        </div>
+                        <div className="flex justify-between border-b pb-4">
+                            <span className="text-zinc-400 font-black uppercase text-[10px]">MG Headcount</span>
+                            <span className="font-black text-emerald-600">{formData.sewer}</span>
                         </div>
                     </div>
-                    {formData.lot_configs.length > 0 ? (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                            {formData.lot_configs.map((config, cIdx) => (
-                                <div key={`${config.lot_id}-${config.section}-${cIdx}`} className="bg-white rounded-[3rem] border border-zinc-100 p-10 shadow-sm group hover:border-zinc-900 transition-all duration-500 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-6">
-                                        <button onClick={() => setFormData({ ...formData, lot_configs: formData.lot_configs.filter((_, i) => i !== cIdx) })} className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
-                                            <Icon icon="solar:trash-bin-trash-bold" className="w-5 h-5" />
-                                        </button>
-                                    </div>
 
-                                    <div className="mb-10 flex gap-6 items-start">
-                                        <div
-                                            onClick={() => setPickingMediaFor(`${config.lot_id}|${cIdx}`)}
-                                            className="w-24 h-24 rounded-2xl bg-zinc-50 border border-zinc-100 flex-shrink-0 overflow-hidden group/img relative cursor-pointer hover:border-blue-500 transition-all shadow-sm"
-                                        >
-                                            {config.media_url ? (
-                                                <img src={config.media_url} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-300">
-                                                    <Icon icon="solar:camera-bold" className="w-6 h-6 mb-1" />
-                                                    <span className="text-[7px] font-black uppercase text-zinc-400">Add Asset</span>
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                                <Icon icon="solar:pen-bold" className="w-5 h-5 text-white" />
-                                            </div>
-                                        </div>
+                    <DialogFooter className="flex gap-3">
+                        <button onClick={() => setShowConfirm(false)} className="flex-1 h-14 rounded-2xl border border-zinc-200 text-zinc-400 text-[10px] font-black uppercase">Cancel</button>
+                        <button onClick={() => { setShowConfirm(false); handleSave(); }} className="flex-[2] h-14 bg-zinc-900 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl">Confirm & Sync</button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">Operational Unit</p>
-                                            </div>
-                                            <h4 className="text-2xl font-black text-zinc-900 tracking-tight leading-none truncate pr-12">{config.label}</h4>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        {/* Work Section selector */}
-                                        <div className="md:col-span-2 space-y-2">
-                                            <label className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-1">Work Section</label>
-                                            <Select
-                                                options={[
-                                                    { id: 'all', label: 'All Sections' },
-                                                    { id: 'offline', label: 'Offline' },
-                                                    { id: 'inline', label: 'Inline' },
-                                                    { id: 'outline', label: 'Outline' }
-                                                ]}
-                                                value={config.section || 'all'}
-                                                onChange={(val) => updateLotConfig(cIdx, 'section', String(val))}
-                                                placeholder="Select Section"
-                                            />
-                                        </div>
-
-                                        <div className="md:col-span-2 hidden lg:block"></div>
-                                        {/* Plan Resources */}
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1 cursor-help" title="Manpower">Plan MP</label>
-                                            <input
-                                                type="number"
-                                                value={config.plan_manpower}
-                                                onChange={(e) => updateLotConfig(cIdx, 'plan_manpower', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-500 outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
-                                            />
-                                        </div>
-
-                                        {/* Actual Resources */}
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-1 cursor-help" title="Manpower">Actual MP</label>
-                                            <input
-                                                type="number"
-                                                value={config.manpower}
-                                                onChange={(e) => updateLotConfig(cIdx, 'manpower', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-blue-50/30 h-14 rounded-2xl px-5 text-lg font-black text-blue-700 outline-none border border-blue-100 focus:border-blue-400 focus:bg-white transition-all"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">WH (Hours)</label>
-                                            <input
-                                                type="number"
-                                                value={config.working_hour}
-                                                onChange={(e) => updateLotConfig(cIdx, 'working_hour', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold text-zinc-800 outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
-                                            />
-                                        </div>
-
-                                        {/* Intelligence Metrics */}
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">SMV</label>
-                                            <input
-                                                type="text"
-                                                value={config.smv}
-                                                onChange={(e) => {
-                                                    const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
-                                                    updateLotConfig(cIdx, 'smv', val as any);
-                                                }}
-                                                onBlur={() => updateLotConfig(cIdx, 'smv', Number(config.smv) || 0)}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold tabular-nums outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-1">Last Step</label>
-                                            <input
-                                                type="number"
-                                                value={config.last_step}
-                                                onChange={(e) => updateLotConfig(cIdx, 'last_step', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-zinc-50 h-14 rounded-2xl px-5 text-lg font-bold tabular-nums outline-none border border-zinc-100 focus:border-zinc-900 focus:bg-white transition-all"
-                                            />
-                                        </div>
-
-                                        <div className="md:col-span-2 space-y-2">
-                                            <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Target Plan (PCS)</label>
-                                            <input
-                                                type="number"
-                                                value={config.target_plan}
-                                                onChange={(e) => updateLotConfig(cIdx, 'target_plan', Number(e.target.value))}
-                                                onFocus={(e) => e.target.select()}
-                                                className="w-full bg-zinc-900 h-14 rounded-2xl px-6 text-xl font-black text-emerald-400 tabular-nums outline-none border border-zinc-800 focus:border-emerald-500 transition-all shadow-xl"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="py-32 flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 rounded-[3rem] text-zinc-300">
-                            <Icon icon="solar:plate-bold-duotone" className="w-16 h-16 opacity-20 mb-4" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">Add Styles to Begin Configuration</p>
-                        </div>
-                    )}
-                </div>
-
-                <div className="pt-8 flex justify-end">
-                    <button
-                        onClick={() => setShowConfirm(true)}
-                        disabled={isSaving || !formData.line_id || formData.lot_configs.length === 0}
-                        className="h-16 px-12 bg-zinc-900 text-white rounded-[2rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-zinc-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-4 disabled:opacity-50"
-                    >
-                        <Icon icon="solar:diskette-bold" className="w-5 h-5" />
-                        <span>{formData.id ? 'Save Changes' : 'Finalize & Sync Performance'}</span>
-                    </button>
-                </div>
-
-                {/* Confirmation Dialog */}
-                <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-                    <DialogContent className="max-w-md bg-white border-zinc-100 shadow-2xl rounded-[2.5rem] p-10">
-                        <DialogHeader>
-                            <div className="w-16 h-16 bg-zinc-900 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-xl">
-                                <Icon icon="solar:shield-check-bold-duotone" className="w-8 h-8 text-emerald-400" />
-                            </div>
-                            <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight not-italic">CONFIRM LOG ENTRY</DialogTitle>
-                            <DialogDescription className="text-zinc-500 font-bold uppercase tracking-widest text-[10px] mt-2 leading-relaxed">
-                                Please verify the resources and operational units before synchronizing with the central intelligence.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="py-8 space-y-6">
-                            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
-                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Active Line</span>
-                                <span className="text-sm font-black text-zinc-900">{lines.find(l => String(l.id) === String(formData.line_id))?.label || 'Unknown'}</span>
-                            </div>
-                            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
-                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">MG Headcount</span>
-                                <span className="text-sm font-black text-emerald-600">{formData.sewer}</span>
-                            </div>
-                            <div className="space-y-3">
-                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Configured Styles ({formData.lot_configs.length})</span>
-                                <div className="flex flex-wrap gap-2">
-                                    {formData.lot_configs.map((c, i) => (
-                                        <div key={i} className="px-3 py-1.5 bg-zinc-50 border border-zinc-100 rounded-full text-[9px] font-black text-zinc-600 uppercase">
-                                            {c.label}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-4">
-                            <button
-                                onClick={() => setShowConfirm(false)}
-                                className="flex-1 h-14 rounded-2xl border border-zinc-200 text-zinc-400 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-50 transition-all"
-                            >
-                                Re-Check Data
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowConfirm(false);
-                                    handleSave();
-                                }}
-                                disabled={isSaving}
-                                className="flex-[2] h-14 bg-zinc-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-xl flex items-center justify-center gap-2"
-                            >
-                                {isSaving ? 'Processing...' : 'Confirm & Sync Now'}
-                                <Icon icon="solar:arrow-right-bold" className="w-4 h-4" />
-                            </button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <MediaPicker
-                    open={pickingMediaFor !== null}
-                    onOpenChange={(open) => !open && setPickingMediaFor(null)}
-                    onSelect={(media) => {
-                        if (pickingMediaFor) {
-                            const [_, cIdx] = pickingMediaFor.split('|');
-                            updateLotConfig(Number(cIdx), 'media_id', media.id);
-                            updateLotConfig(Number(cIdx), 'media_url', media.url);
-                            setPickingMediaFor(null);
-                        }
-                    }}
-                />
-            </div>
+            <MediaPicker
+                open={pickingMediaFor !== null}
+                onOpenChange={(open) => !open && setPickingMediaFor(null)}
+                onSelect={(media) => {
+                    if (pickingMediaFor) {
+                        const [_, cIdx] = pickingMediaFor.split('|');
+                        updateLotConfig(Number(cIdx), 'media_id', media.id);
+                        updateLotConfig(Number(cIdx), 'media_url', media.url);
+                        setPickingMediaFor(null);
+                    }
+                }}
+            />
         </div>
     );
 };
