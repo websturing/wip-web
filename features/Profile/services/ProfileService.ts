@@ -8,11 +8,16 @@ export class ProfileService {
 
     static async updateProfile(data: { name: string; email: string }) {
         const response = await apiClient.put('/profile', data);
-        return await response.json();
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Update failed');
+        return result;
     }
 
     static async changePassword(data: any) {
         const response = await apiClient.put('/profile/password', data);
-        return await response.json();
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Password update failed');
+        return result;
     }
+
 }
