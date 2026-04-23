@@ -5,7 +5,6 @@ export const metadata = {
     description: 'Refine production efficiency data.',
 };
 
-export const generateStaticParams = () => [];
 
 export default function EditProductivityPage() {
     return <ProductivityFormPage />;

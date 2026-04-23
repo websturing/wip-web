@@ -81,8 +81,16 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 { name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-bold-duotone', badge: null },
             ],
             badgeSection: 'ADMIN'
+        },
+        {
+            title: 'My Account',
+            items: [
+                { name: 'Profile Settings', path: '/admin/profile', icon: 'solar:user-bold-duotone', badge: null },
+            ],
+            badgeSection: 'SELF'
         }
     ];
+
 
 
     return (
