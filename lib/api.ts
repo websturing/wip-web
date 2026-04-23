@@ -1,11 +1,8 @@
-import { getSession } from "next-auth/react";
-
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export const apiClient = {
     async fetch(endpoint: string, options: RequestInit = {}) {
-        const session = await getSession();
-        const token = (session as any)?.accessToken;
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
         const isFormData = options.body instanceof FormData;
         const headers: HeadersInit = {
@@ -22,11 +19,17 @@ export const apiClient = {
 
         if (response.status === 401) {
             // Handle unauthenticated (optional: redirect to login)
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('auth_user');
+            }
             console.warn('Session expired or unauthenticated');
         }
 
         return response;
     },
+    // ... rest of the functions
+
 
     async get(endpoint: string) {
         return this.fetch(endpoint, { method: 'GET' });

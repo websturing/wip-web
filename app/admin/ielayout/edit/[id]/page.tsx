@@ -5,4 +5,9 @@ export const metadata = {
     description: 'Refine and optimize production layout architecture.',
 };
 
-export default IeLayoutFormPage;
+export const generateStaticParams = () => [];
+
+export default function Page() {
+    return <IeLayoutFormPage />;
+}
+

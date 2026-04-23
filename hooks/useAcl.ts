@@ -1,13 +1,11 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/features/Auth/components/AuthProvider';
 import { useCallback } from 'react';
 
 export const useAcl = () => {
-    const { data: session, status } = useSession();
-    const user = (session as any)?.user;
+    const { user, isLoading } = useAuth();
     const permissions = user?.role?.permissions || [];
-    const isLoading = status === 'loading';
 
     const hasPermission = useCallback((permissionName: string) => {
         // If user is Administrator, they have all access (optional check)
@@ -35,3 +33,4 @@ export const useAcl = () => {
         isLoading
     };
 };
+
