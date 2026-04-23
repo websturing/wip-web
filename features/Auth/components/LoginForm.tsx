@@ -59,7 +59,7 @@ export const LoginForm = () => {
                             <label className="absolute left-6 top-3 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 group-focus-within/input:text-zinc-900 transition-colors">EMAIL ADDRESS</label>
                             <input
                                 type="email"
-                                placeholder="hello@samuelmay.co"
+                                placeholder="[EMAIL_ADDRESS]"
                                 required
                                 className="w-full px-6 pt-7 pb-4 bg-white/60 text-zinc-900 text-sm font-medium rounded-2xl border border-zinc-100 focus:border-zinc-300 focus:bg-white outline-none transition-all placeholder:text-zinc-300"
                                 value={credentials.email}
