@@ -352,7 +352,7 @@ export const Productivity = () => {
                                                                             {tgtAct > 0 ? Math.round((lotOutput / tgtAct) * 100) : 0}%
                                                                         </span>
                                                                     </td>
-                                                                    <td className="px-3 py-2 text-center font-bold">{tgtAct - lotOutput}</td>
+                                                                    <td className="px-3 py-2 text-center font-bold">{lotOutput - tgtAct}</td>
                                                                     <td className="px-3 py-2 text-right">
                                                                         {gIdx === 0 && (
                                                                             <div className="flex items-center justify-end gap-1">
