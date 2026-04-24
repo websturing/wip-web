@@ -293,10 +293,24 @@ export const Productivity = () => {
                                                     )).join(' / ');
 
                                                     const lotOutput = lotGroup.reduce((sum, l) => {
+                                                        const targetSection = (firstLot.pivot?.section || 'ALL').toUpperCase();
                                                         return sum + productionData
                                                             .filter(p => String(p.line_id) === String(item.line_id))
                                                             .flatMap(p => p.items || [])
-                                                            .filter(pi => String(pi.lot_id) === String(l.id))
+                                                            .filter(pi => {
+                                                                const isSameLot = String(pi.lot_id) === String(l.id);
+                                                                const piSection = (pi.section || 'ALL').toUpperCase();
+
+                                                                if (!isSameLot) return false;
+
+                                                                // If productivity is set to OFFLINE, the user said "gausah dihitung"
+                                                                if (targetSection === 'OFFLINE') return false;
+
+                                                                // If productivity is set to ALL or INLINE, count only ALL or INLINE production items
+                                                                // (exclude OFFLINE and OUTLINE if they are different)
+                                                                // Actually the request specifically mentions: "hitung yang inline dan ALL aja"
+                                                                return piSection === 'INLINE' || piSection === 'ALL';
+                                                            })
                                                             .reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
                                                     }, 0);
 
