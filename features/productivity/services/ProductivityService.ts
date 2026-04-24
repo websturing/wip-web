@@ -38,13 +38,12 @@ export class ProductivityService {
         await apiClient.download(`${this.resource}/${id}/export`, fileName);
     }
 
-    static async exportDailyReport(date: string, lineIds?: string[]) {
-        let url = `${this.resource}/export-daily?date=${date}`;
+    static async exportDailyReport(date: string, lineIds?: string[], type: string = 'productivity') {
+        const query = new URLSearchParams({ date, type });
         if (lineIds && lineIds.length > 0) {
-            lineIds.forEach(id => {
-                url += `&line_ids[]=${id}`;
-            });
+            lineIds.forEach(id => query.append('line_ids[]', id));
         }
-        await apiClient.download(url, `Daily_Productivity_${date}.xlsx`);
+
+        await apiClient.download(`${this.resource}/export-daily?${query.toString()}`, `Daily_Productivity_${date}.xlsx`);
     }
 }

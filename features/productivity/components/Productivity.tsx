@@ -29,6 +29,7 @@ export const Productivity = () => {
     const [activeTab, setActiveTab] = useState<'daily' | 'summary'>('daily');
 
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+    const [exportType, setExportType] = useState<'productivity' | 'sewing_output'>('productivity');
     const [selectedLineIds, setSelectedLineIds] = useState<string[]>([]);
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
@@ -466,18 +467,58 @@ export const Productivity = () => {
                             Select Lines to Export
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="p-6 space-y-2 max-h-[400px] overflow-y-auto">
-                        {availableLines.map(l => (
-                            <label key={l.id} className={cn("flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all", selectedLineIds.includes(l.id) ? "bg-zinc-900 border-zinc-900 text-white" : "bg-zinc-50 hover:border-zinc-300")}>
-                                <span className="font-bold">Line {l.name}</span>
-                                <input type="checkbox" checked={selectedLineIds.includes(l.id)} className="hidden" onChange={() => setSelectedLineIds(p => p.includes(l.id) ? p.filter(id => id !== l.id) : [...p, l.id])} />
-                                {selectedLineIds.includes(l.id) && <Icon icon="solar:check-circle-bold" className="w-5 h-5 text-emerald-400" />}
-                            </label>
-                        ))}
+                    <div className="p-6 space-y-6 max-h-[500px] overflow-y-auto">
+                        {/* Report Type Selection */}
+                        <div className="space-y-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Report Type</span>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setExportType('productivity')}
+                                    className={cn(
+                                        "p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all",
+                                        exportType === 'productivity' ? "bg-zinc-900 border-zinc-900 text-white shadow-lg" : "bg-zinc-50 hover:border-zinc-300 text-zinc-500"
+                                    )}
+                                >
+                                    <Icon icon="solar:chart-square-bold-duotone" className="w-6 h-6" />
+                                    <span className="text-[9px] font-black uppercase tracking-tight">Performance</span>
+                                </button>
+                                <button
+                                    onClick={() => setExportType('sewing_output')}
+                                    className={cn(
+                                        "p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all",
+                                        exportType === 'sewing_output' ? "bg-zinc-900 border-zinc-900 text-white shadow-lg" : "bg-zinc-50 hover:border-zinc-300 text-zinc-500"
+                                    )}
+                                >
+                                    <Icon icon="solar:t-shirt-bold-duotone" className="w-6 h-6" />
+                                    <span className="text-[9px] font-black uppercase tracking-tight">Sewing Output</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Selected Lines</span>
+                            <div className="space-y-2">
+                                {availableLines.map(l => (
+                                    <label key={l.id} className={cn("flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all", selectedLineIds.includes(l.id) ? "bg-zinc-900 border-zinc-900 text-white" : "bg-zinc-50 hover:border-zinc-300")}>
+                                        <span className="font-bold">Line {l.name}</span>
+                                        <input type="checkbox" checked={selectedLineIds.includes(l.id)} className="hidden" onChange={() => setSelectedLineIds(p => p.includes(l.id) ? p.filter(id => id !== l.id) : [...p, l.id])} />
+                                        {selectedLineIds.includes(l.id) && <Icon icon="solar:check-circle-bold" className="w-5 h-5 text-emerald-400" />}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter className="p-6 bg-zinc-50 border-t flex justify-between">
                         <button onClick={() => setIsExportDialogOpen(false)} className="px-6 py-2 text-[10px] font-black uppercase text-zinc-400">Cancel</button>
-                        <button onClick={async () => { await ProductivityService.exportDailyReport(currentDate, selectedLineIds); setIsExportDialogOpen(false); }} className="bg-zinc-900 text-white px-8 py-2 rounded-xl font-black uppercase text-[10px]">Generate</button>
+                        <button
+                            onClick={async () => {
+                                await ProductivityService.exportDailyReport(currentDate, selectedLineIds, exportType);
+                                setIsExportDialogOpen(false);
+                            }}
+                            className="bg-zinc-900 text-white px-8 py-2 rounded-xl font-black uppercase text-[10px] shadow-xl shadow-zinc-200 active:scale-95 transition-all"
+                        >
+                            Generate Report
+                        </button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
