@@ -436,9 +436,20 @@ export const ProductivityFormPage = () => {
                                 value={formData.sewer}
                                 onChange={(e) => {
                                     const val = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
-                                    setFormData({ ...formData, sewer: val as any });
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        sewer: val as any,
+                                        lot_configs: prev.lot_configs.map(c => ({ ...c, sewer: Number(val) || 0 }))
+                                    }));
                                 }}
-                                onBlur={() => setFormData({ ...formData, sewer: Number(formData.sewer) || 0 })}
+                                onBlur={() => {
+                                    const val = Number(formData.sewer) || 0;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        sewer: val,
+                                        lot_configs: prev.lot_configs.map(c => ({ ...c, sewer: val }))
+                                    }));
+                                }}
                                 className="w-[180px] bg-emerald-50 h-[50px] rounded-xl px-4 text-sm font-black text-emerald-800 border border-emerald-100 shadow-sm outline-none focus:border-emerald-500 transition-all font-mono"
                             />
                         </div>
@@ -596,7 +607,7 @@ export const ProductivityFormPage = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="md:col-span-2 space-y-2" style={{ display: 'none' }}>
+                                    <div className="md:col-span-2 space-y-2">
                                         <label className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-1">Work Section</label>
                                         <Select
                                             options={[

@@ -123,7 +123,7 @@ export const Productivity = () => {
         const groups: { [key: string]: any[] } = {};
         const lots = (item.lots && item.lots.length > 0) ? item.lots : (item.lot ? [item.lot] : []);
         lots.forEach((l: any) => {
-            const configKey = `${l.pivot?.smv}-${l.pivot?.manpower}-${l.pivot?.working_hour}-${l.pivot?.section}`;
+            const configKey = `${l.pivot?.smv}-${l.pivot?.manpower}-${l.pivot?.sewer}-${l.pivot?.working_hour}-${l.pivot?.section}`;
             if (!groups[configKey]) groups[configKey] = [];
             groups[configKey].push(l);
         });
@@ -314,10 +314,10 @@ export const Productivity = () => {
                                                             .reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
                                                     }, 0);
 
-                                                    const smv = Number(lotGroup.length === 1 && !item.lots?.length ? item.smv : firstLot.pivot?.smv);
-                                                    const mp = Number(lotGroup.length === 1 && !item.lots?.length ? item.manpower : firstLot.pivot?.manpower);
-                                                    const sew = Number(lotGroup.length === 1 && !item.lots?.length ? item.sewer : firstLot.pivot?.sewer);
-                                                    const wh = Number(lotGroup.length === 1 && !item.lots?.length ? item.working_hour : firstLot.pivot?.working_hour);
+                                                    const smv = Number(firstLot.pivot?.smv || item.smv || 0);
+                                                    const mp = Number(item.manpower || 0);
+                                                    const sew = Number(item.sewer || 0);
+                                                    const wh = Number(item.working_hour || 8);
                                                     const tgtAct = smv > 0 ? Math.floor(((mp + sew) * wh * 60) / smv) : 0;
                                                     const tgtPln = Number(firstLot.pivot?.target_plan || item.target_plan || 0);
                                                     const mpPln = Number(firstLot.pivot?.plan_manpower || item.plan_manpower || 0);
@@ -325,8 +325,10 @@ export const Productivity = () => {
                                                     // Collect totals
                                                     groupTarget += tgtAct;
                                                     groupOutput += lotOutput;
-                                                    groupMP += mp;
-                                                    groupSew += sew;
+                                                    if (gIdx === 0) {
+                                                        groupMP += mp;
+                                                        groupSew += sew;
+                                                    }
                                                     groupTPln += tgtPln;
                                                     groupMPPln += mpPln;
 
