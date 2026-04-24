@@ -25,6 +25,7 @@ interface LotConfig {
     plan_sewer: number;
     working_hour: number;
     section?: string;
+    actual_output?: number;
     media_id?: string;
     media_url?: string;
 }
@@ -148,11 +149,41 @@ export const ProductivityFormPage = () => {
                     await handleLotSectionAutoFill(uniquePairs);
 
                     const totalMatching = lineOutput.reduce((sum: number, p: any) => sum + (Number(p.man_power_matching) || 0), 0);
+
+                    // Group output by lot_id and section to match configs
+                    const outputSummary: Record<string, number> = {};
+                    lineOutput.forEach((p: any) => {
+                        p.items?.forEach((i: any) => {
+                            const key = `${i.lot_id}|${i.section || 'all'}`;
+                            const qty = (i.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0);
+                            outputSummary[key] = (outputSummary[key] || 0) + qty;
+                        });
+                    });
+
                     if (totalMatching > 0) {
                         setFormData(prev => ({
                             ...prev,
                             sewer: totalMatching,
-                            lot_configs: prev.lot_configs.map((c, i) => i === 0 ? { ...c, sewer: totalMatching } : c)
+                            lot_configs: prev.lot_configs.map((c, i) => {
+                                const key = `${c.lot_id}|${c.section || 'all'}`;
+                                return {
+                                    ...c,
+                                    sewer: i === 0 ? totalMatching : c.sewer,
+                                    actual_output: outputSummary[key] || 0
+                                };
+                            })
+                        }));
+                    } else {
+                        // Still update actual_output even if matching is 0
+                        setFormData(prev => ({
+                            ...prev,
+                            lot_configs: prev.lot_configs.map((c) => {
+                                const key = `${c.lot_id}|${c.section || 'all'}`;
+                                return {
+                                    ...c,
+                                    actual_output: outputSummary[key] || 0
+                                };
+                            })
                         }));
                     }
 
@@ -181,6 +212,7 @@ export const ProductivityFormPage = () => {
                 plan_sewer: 0,
                 working_hour: 8,
                 section: pair.section,
+                actual_output: 0,
                 media_id: undefined as string | undefined,
                 media_url: undefined as string | undefined
             };
@@ -232,6 +264,7 @@ export const ProductivityFormPage = () => {
                 plan_sewer: 0,
                 working_hour: toMerge[0].working_hour,
                 section: toMerge[0].section || 'all',
+                actual_output: toMerge.reduce((sum, c) => sum + (Number(c.actual_output) || 0), 0),
                 media_id: toMerge[0].media_id,
                 media_url: toMerge[0].media_url
             };
@@ -262,6 +295,7 @@ export const ProductivityFormPage = () => {
                 plan_sewer: 0,
                 working_hour: 8,
                 section: 'all',
+                actual_output: 0,
                 media_id: undefined as string | undefined,
                 media_url: undefined as string | undefined
             };
@@ -547,7 +581,15 @@ export const ProductivityFormPage = () => {
                                             <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">Operational Unit</p>
                                         </div>
                                         <h4 className="text-2xl font-black text-zinc-900 tracking-tight truncate pr-12">{config.label}</h4>
-                                        <p className="text-sm pt-2 uppercase text-zinc-400 pr-12">{config.section}</p>
+                                        <div className="flex items-center gap-3 mt-2">
+                                            <p className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">{config.section}</p>
+                                            {config.actual_output !== undefined && config.actual_output > 0 && (
+                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-md">
+                                                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">Done:</span>
+                                                    <span className="text-[11px] font-black text-blue-600">{config.actual_output.toLocaleString()} PCS</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
 

@@ -73,6 +73,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                 color: '',
                 part: '',
                 section: 'all',
+                remarks: '',
                 sizes: [
                     { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                     { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -155,6 +156,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                                 color: color,
                                 part: part,
                                 section: item.section || 'all',
+                                remarks: item.remarks || '',
                                 sizes: item.details.map((d: any) => ({
                                     size_name: d.size_name,
                                     qty_input: d.qty_input,
@@ -340,6 +342,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                     color: '',
                     part: '',
                     section: 'all',
+                    remarks: '',
                     sizes: [
                         { size_name: 'S', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
                         { size_name: 'M', qty_input: 0, qty_output: 0, order_mi: 0, cut_qty: 0, recorded_input: 0, recorded_output: 0 },
@@ -361,6 +364,7 @@ function CreateProductionForm({ id }: { id?: string }) {
         formData.items.forEach((item, i) => {
             if (!item.lot_id) newErrors[`item-${i}-lot_id`] = true;
             if (!item.color) newErrors[`item-${i}-color`] = true;
+            if (!item.section || item.section === 'all') newErrors[`item-${i}-section`] = true;
         });
 
         if (Object.keys(newErrors).length > 0) {
@@ -637,9 +641,30 @@ function CreateProductionForm({ id }: { id?: string }) {
                                                         { id: 'outline', label: 'Outline' }
                                                     ]}
                                                     value={item.section || 'all'}
+                                                    error={errors[`item-${iIdx}-section`]}
                                                     onChange={(val) => {
                                                         const newItems = [...formData.items];
                                                         newItems[iIdx].section = String(val);
+                                                        setFormData({ ...formData, items: newItems });
+                                                        if (errors[`item-${iIdx}-section`]) {
+                                                            setErrors(prev => {
+                                                                const next = { ...prev };
+                                                                delete next[`item-${iIdx}-section`];
+                                                                return next;
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Internal Remarks</label>
+                                                <input
+                                                    className="w-full bg-white border border-zinc-100 h-12 rounded-xl px-4 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/30 transition-all font-bold text-[13px]"
+                                                    placeholder="Remarks for this GL..."
+                                                    value={item.remarks || ''}
+                                                    onChange={(e) => {
+                                                        const newItems = [...formData.items];
+                                                        newItems[iIdx].remarks = e.target.value;
                                                         setFormData({ ...formData, items: newItems });
                                                     }}
                                                 />
@@ -837,16 +862,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                         );
                     })}
                 </div>
-                <div className="flex-1 space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Daily Remarks</label>
-                    <input
-                        type="text"
-                        placeholder="e.g. Normal flow, Power outage..."
-                        className="w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all font-bold text-[13px]"
-                        value={formData.remarks}
-                        onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                    />
-                </div>
+
 
                 <div className="mt-12 flex flex-col md:flex-row gap-5">
                     <div className="flex-1 flex flex-col md:flex-row gap-5 items-center">
