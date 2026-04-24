@@ -3,6 +3,12 @@
 import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { Button } from '@/app/components/ui/Button';
 import { DatePicker } from '@/app/components/ui/DatePicker';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Select } from '@/app/components/ui/Select';
@@ -78,6 +84,26 @@ function CreateProductionForm({ id }: { id?: string }) {
     });
 
     const [lotDetails, setLotDetails] = useState<Record<number, any[]>>({});
+    const [historyInfo, setHistoryInfo] = useState<{ open: boolean; lotId: string; color: string; sizeName: string; data: any[] }>({
+        open: false,
+        lotId: '',
+        color: '',
+        sizeName: '',
+        data: []
+    });
+
+    const viewHistory = async (lotId: string, color: string, sizeName: string) => {
+        if (!lotId || !color || !sizeName) return;
+        setHistoryInfo(prev => ({ ...prev, open: true, lotId, color, sizeName, data: [] }));
+        try {
+            const res = await ProductionService.getHistory(lotId, color, sizeName);
+            if (res.status === 'success') {
+                setHistoryInfo(prev => ({ ...prev, data: res.data }));
+            }
+        } catch (err) {
+            console.error('Failed to fetch history:', err);
+        }
+    };
 
     useEffect(() => {
         const init = async () => {
@@ -632,8 +658,17 @@ function CreateProductionForm({ id }: { id?: string }) {
                                                             Metrics
                                                         </th>
                                                         {sizesToShow.map((s, idx) => (
-                                                            <th key={idx} className="px-3 py-4 text-center text-[9px] font-black uppercase tracking-widest min-w-[70px]">
-                                                                {s.size_name}
+                                                            <th key={idx} className="px-3 py-4 text-center text-[9px] font-black uppercase tracking-widest min-w-[70px] relative">
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <span>{s.size_name}</span>
+                                                                    <button
+                                                                        onClick={() => viewHistory(item.lot_id, item.color, s.size_name)}
+                                                                        className="p-1 bg-white/10 rounded text-blue-400 hover:bg-white/20 transition-all"
+                                                                        title={`View history for ${s.size_name}`}
+                                                                    >
+                                                                        <Icon icon="solar:history-bold-duotone" className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                </div>
                                                             </th>
                                                         ))}
                                                         {formData.entry_mode === 'per-size' && (
@@ -868,6 +903,88 @@ function CreateProductionForm({ id }: { id?: string }) {
                     </div>
                 </div>
             </Toast>
+
+            {/* History Dialog */}
+            <Dialog open={historyInfo.open} onOpenChange={(open) => setHistoryInfo(prev => ({ ...prev, open }))}>
+                <DialogContent className="max-w-2xl bg-white rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+                    <DialogHeader className="p-8 bg-blue-600 text-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                            <Icon icon="solar:history-bold-duotone" className="w-40 h-40" />
+                        </div>
+                        <div className="relative z-10 flex flex-col gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                                    <Icon icon="solar:history-bold-duotone" className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <DialogTitle className="text-xl font-black uppercase tracking-tight">Production Timeline</DialogTitle>
+                                    <p className="text-[10px] font-bold text-blue-100 uppercase tracking-widest mt-0.5">Audit log for specific size entry</p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-6 text-[11px] font-black uppercase tracking-widest p-4 bg-white/10 rounded-2xl border border-white/10">
+                                <div className="flex flex-col">
+                                    <span className="text-blue-200 text-[8px] mb-1">Lot Reference</span>
+                                    <span className="text-white">{(lots.find(l => String(l.id) === String(historyInfo.lotId))?.label || '')}</span>
+                                </div>
+                                <div className="flex flex-col border-l border-white/10 pl-6">
+                                    <span className="text-blue-200 text-[8px] mb-1">Color Variant</span>
+                                    <span className="text-white">{historyInfo.color}</span>
+                                </div>
+                                <div className="flex flex-col border-l border-white/10 pl-6">
+                                    <span className="text-blue-200 text-[8px] mb-1">Active Size</span>
+                                    <span className="text-yellow-300">{historyInfo.sizeName}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </DialogHeader>
+                    <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar">
+                        {historyInfo.data.length === 0 ? (
+                            <div className="py-20 text-center space-y-3">
+                                <div className="w-16 h-16 border-4 border-zinc-50 border-t-zinc-900 rounded-full animate-spin mx-auto"></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">Searching Chronological logs...</p>
+                            </div>
+                        ) : (
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="border-b-2 border-zinc-900">
+                                        <th className="py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-400">Date</th>
+                                        <th className="py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-400">Line</th>
+                                        <th className="py-4 text-center text-[10px] font-black uppercase tracking-widest text-zinc-400">Input</th>
+                                        <th className="py-4 text-center text-[10px] font-black uppercase tracking-widest text-zinc-400">Output</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-50">
+                                    {historyInfo.data.map((row, idx) => (
+                                        <tr key={idx} className="group hover:bg-zinc-50 transition-all">
+                                            <td className="py-4 text-[13px] font-bold text-zinc-900">
+                                                {new Date(row.production_date).toLocaleDateString()}
+                                            </td>
+                                            <td className="py-4 text-[11px] font-black text-zinc-400 uppercase tracking-widest">
+                                                {row.line_name}
+                                            </td>
+                                            <td className="py-4 text-center text-[14px] font-black text-blue-600">
+                                                {row.qty_input}
+                                            </td>
+                                            <td className="py-4 text-center text-[14px] font-black text-green-600">
+                                                {row.qty_output}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                    <div className="p-6 bg-zinc-50 border-t border-zinc-100 flex justify-end">
+                        <Button
+                            onClick={() => setHistoryInfo(prev => ({ ...prev, open: false }))}
+                            className="h-12 px-8 bg-zinc-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px]"
+                        >
+                            Close History
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -63,8 +63,12 @@ export class ProductionService {
         const response = await apiClient.fetch(`${this.resource}/import`, {
             method: 'POST',
             body: formData,
-            // Header: Accept is automatically added by apiClient.fetch
         });
+        return await response.json();
+    }
+
+    static async getHistory(lotId: string, color: string, sizeName: string) {
+        const response = await apiClient.get(`${this.resource}/history?lot_id=${lotId}&color=${encodeURIComponent(color)}&size_name=${encodeURIComponent(sizeName)}`);
         return await response.json();
     }
 }

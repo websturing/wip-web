@@ -205,7 +205,7 @@ export const Productivity = () => {
                                         <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Line</th>
                                         <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest">Visual</th>
                                         <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">Buyer / Style</th>
-                                        <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">GL / Lot</th>
+                                        <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest scale-95 origin-left">GL</th>
                                         <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MP (Act/Pln)</th>
                                         <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">MG</th>
                                         <th className="px-3 py-3 text-center text-[8px] font-black text-zinc-400 uppercase tracking-widest">WH</th>
@@ -220,7 +220,7 @@ export const Productivity = () => {
                                     <>
                                         <th className="px-3 py-3 text-left text-[9px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50/50">Visual</th>
                                         <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[130px]">Buyer / Style</th>
-                                        <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[110px]">GL / Lot</th>
+                                        <th className="px-3 py-3 text-left text-[8px] font-black text-zinc-400 uppercase tracking-widest w-[110px]">GL</th>
                                         <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Plan</th>
                                         <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">Tgt Plan</th>
                                         <th className="px-2 py-3 text-[7px] font-black text-zinc-400 uppercase tracking-tighter text-center">MP Act</th>
@@ -275,10 +275,18 @@ export const Productivity = () => {
                                                     const rowId = `${item.id}-${gIdx}`;
                                                     const isExpanded = expandedRows.includes(rowId);
 
-                                                    const combinedGLs = lotGroup.map(l => l.gl_group?.gl_number).filter(Boolean).join(' + ');
                                                     const combinedLots = lotGroup.map(l => l.lot_code?.replace(/^0+/, '')).filter(Boolean).join(' + ');
                                                     const combinedStyles = Array.from(new Set(lotGroup.map(l => l.style_no).filter(Boolean))).join(' / ');
                                                     const combinedBuyers = Array.from(new Set(lotGroup.map(l => l.gl_group?.customer?.name).filter(Boolean))).join(' / ');
+                                                    const combinedColors = Array.from(new Set(
+                                                        lotGroup.flatMap(l =>
+                                                            productionData
+                                                                .filter(p => String(p.line_id) === String(item.line_id))
+                                                                .flatMap(p => p.items || [])
+                                                                .filter(pi => String(pi.lot_id) === String(l.id))
+                                                                .map(pi => pi.color)
+                                                        ).filter(Boolean)
+                                                    )).join(' / ');
 
                                                     const lotOutput = lotGroup.reduce((sum, l) => {
                                                         return sum + productionData
@@ -321,9 +329,12 @@ export const Productivity = () => {
                                                                         </div>
                                                                     </td>
                                                                     <td className="px-3 py-2">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="font-bold text-zinc-700">{combinedGLs}</span>
-                                                                            {lotGroup.length > 1 && <button onClick={() => toggleRow(rowId)} className={cn("p-0.5 rounded bg-zinc-50", isExpanded && "rotate-180 bg-zinc-900 text-white")}><Icon icon="solar:alt-arrow-down-bold" className="w-2 h-2" /></button>}
+                                                                        <div className="flex flex-col">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="font-bold text-zinc-700">{combinedLots}</span>
+                                                                                {lotGroup.length > 1 && <button onClick={() => toggleRow(rowId)} className={cn("p-0.5 rounded bg-zinc-50", isExpanded && "rotate-180 bg-zinc-900 text-white")}><Icon icon="solar:alt-arrow-down-bold" className="w-2 h-2" /></button>}
+                                                                            </div>
+                                                                            {combinedColors && <span className="text-[7px] text-zinc-400 font-bold uppercase tracking-wider">{combinedColors}</span>}
                                                                         </div>
                                                                     </td>
                                                                     <td className="px-3 py-2 text-center font-bold text-blue-600">{mp} / <span className="text-zinc-300">{mpPln}</span></td>
@@ -352,7 +363,14 @@ export const Productivity = () => {
                                                                     return (
                                                                         <tr key={`sub-${subL.id}`} className="bg-zinc-50/50 border-l-2 border-emerald-400">
                                                                             <td colSpan={3}></td>
-                                                                            <td className="px-3 py-1.5 opacity-50 font-bold">{subL.gl_group?.gl_number} - Lot {subL.lot_code?.replace(/^0+/, '')}</td>
+                                                                            <td className="px-3 py-1.5 opacity-50 font-bold flex flex-col">
+                                                                                <span>Lot {subL.lot_code?.replace(/^0+/, '')}</span>
+                                                                                {productionData.filter(p => String(p.line_id) === String(item.line_id)).flatMap(p => p.items || []).filter(pi => String(pi.lot_id) === String(subL.id)).map(pi => pi.color).filter(Boolean)[0] && (
+                                                                                    <span className="text-[6px] uppercase tracking-tighter opacity-70">
+                                                                                        {productionData.filter(p => String(p.line_id) === String(item.line_id)).flatMap(p => p.items || []).filter(pi => String(pi.lot_id) === String(subL.id)).map(pi => pi.color).filter(Boolean)[0]}
+                                                                                    </span>
+                                                                                )}
+                                                                            </td>
                                                                             <td colSpan={5}></td>
                                                                             <td className="px-3 py-1.5 text-center font-bold text-blue-400">{sOutput}</td>
                                                                             <td colSpan={3}></td>
@@ -365,21 +383,22 @@ export const Productivity = () => {
                                                         const lastStep = Math.max(...lotGroup.map(l => Number(l.pivot?.last_step || 0)));
                                                         return (
                                                             <tr key={rowId} className="hover:bg-zinc-50">
-                                                                <td className="px-3 py-2 text-center">
-                                                                    <div className="w-8 h-8 rounded bg-zinc-100 overflow-hidden mx-auto">
-                                                                        {(firstLot.pivot?.media_url || firstLot.pivot?.media?.url) && <img src={firstLot.pivot.media_url || firstLot.pivot.media.url} alt="" className="w-full h-full object-cover" />}
+                                                                <td className="px-3 py-2">
+                                                                    <div className="w-8 h-8 rounded-lg bg-zinc-100 overflow-hidden border border-zinc-200">
+                                                                        {(firstLot.pivot?.media_url || firstLot.pivot?.media?.url) ? <img src={firstLot.pivot.media_url || firstLot.pivot.media.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Icon icon="solar:gallery-bold" className="w-3 h-3 text-zinc-300" /></div>}
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-2 py-2">
-                                                                    <div className="flex flex-col leading-tight max-w-[120px]">
-                                                                        <span className="font-black uppercase truncate">{item.line?.name}</span>
-                                                                        <span className="text-[7px] text-zinc-400 truncate">{combinedBuyers} - {combinedStyles}</span>
+                                                                <td className="px-3 py-2 text-[10px]">
+                                                                    <div className="flex flex-col max-w-[120px]">
+                                                                        <span className="font-bold text-zinc-900 uppercase truncate leading-none mb-1">{item.line?.name}</span>
+                                                                        <span className="font-black text-amber-600 truncate" title={combinedBuyers}>{combinedBuyers}</span>
+                                                                        <span className="text-[7px] text-zinc-400 font-bold truncate tracking-widest" title={combinedStyles}>{combinedStyles}</span>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-2 py-2">
+                                                                <td className="px-3 py-2">
                                                                     <div className="flex flex-col">
-                                                                        <span className="font-bold text-zinc-700">{combinedGLs}</span>
-                                                                        <span className="text-[7px] text-zinc-400">Lot: {combinedLots}</span>
+                                                                        <span className="font-bold text-zinc-700">{combinedLots}</span>
+                                                                        {combinedColors && <span className="text-[7px] text-zinc-400 font-bold uppercase tracking-wider">{combinedColors}</span>}
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-2 py-2 text-center font-bold text-zinc-400 bg-zinc-50/50">{mpPln}</td>
