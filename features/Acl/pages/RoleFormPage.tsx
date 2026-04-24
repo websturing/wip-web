@@ -163,7 +163,7 @@ export const RoleFormPage = () => {
                                     <h4 className="text-[12px] font-black text-zinc-900 uppercase tracking-widest">{group.feature}</h4>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-3">
                                     {group.permissions.map((p: any) => {
                                         const isSelected = roleForm.permissions.includes(p.name);
                                         return (
@@ -172,18 +172,23 @@ export const RoleFormPage = () => {
                                                 type="button"
                                                 onClick={() => togglePermission(p.name)}
                                                 className={cn(
-                                                    "flex items-center justify-between px-4 py-3 rounded-xl border transition-all active:scale-95 group/btn",
+                                                    "flex items-center gap-4 w-full p-4 rounded-2xl border transition-all active:scale-[0.98] text-left",
                                                     isSelected
-                                                        ? "bg-zinc-900 border-zinc-900 text-white shadow-lg shadow-zinc-200"
-                                                        : "bg-zinc-50 border-zinc-100 text-zinc-400 hover:border-zinc-300"
+                                                        ? "bg-zinc-900 border-zinc-900 text-white shadow-xl shadow-zinc-200"
+                                                        : "bg-zinc-50 border-zinc-100 text-zinc-500 hover:border-zinc-300"
                                                 )}
                                             >
-                                                <span className="text-[9px] font-black uppercase tracking-tighter">{p.action}</span>
                                                 <div className={cn(
-                                                    "w-4 h-4 rounded-md flex items-center justify-center transition-all",
-                                                    isSelected ? "bg-white/20" : "bg-white border border-zinc-200"
+                                                    "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all",
+                                                    isSelected ? "bg-white/20" : "bg-white border border-zinc-200 shadow-sm"
                                                 )}>
-                                                    {isSelected && <Icon icon="solar:check-circle-bold" className="w-3 h-3 text-white" />}
+                                                    {isSelected && <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-white" />}
+                                                </div>
+                                                <div className="flex flex-col gap-0.5 overflow-hidden">
+                                                    <span className="text-[11px] font-black uppercase tracking-tight leading-normal break-words">
+                                                        {p.label || p.action}
+                                                    </span>
+                                                    <span className="text-[8px] font-black opacity-30 uppercase tracking-[0.1em]">{p.name}</span>
                                                 </div>
                                             </button>
                                         );
