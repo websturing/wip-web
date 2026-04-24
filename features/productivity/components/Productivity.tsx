@@ -276,7 +276,10 @@ export const Productivity = () => {
                                                     const rowId = `${item.id}-${gIdx}`;
                                                     const isExpanded = expandedRows.includes(rowId);
 
-                                                    const combinedLots = lotGroup.map(l => l.lot_code?.replace(/^0+/, '')).filter(Boolean).join(' + ');
+                                                    const section = (firstLot.pivot?.section || 'ALL').toUpperCase();
+                                                    const rawLots = lotGroup.map(l => l.lot_code?.replace(/^0+/, '')).filter(Boolean).join(' + ');
+                                                    const combinedLots = `${rawLots} - (${section})`;
+
                                                     const combinedStyles = Array.from(new Set(lotGroup.map(l => l.style_no).filter(Boolean))).join(' / ');
                                                     const combinedBuyers = Array.from(new Set(lotGroup.map(l => l.gl_group?.customer?.name).filter(Boolean))).join(' / ');
                                                     const combinedColors = Array.from(new Set(
