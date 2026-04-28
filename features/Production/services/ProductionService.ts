@@ -13,8 +13,10 @@ export class ProductionService {
         return await response.json();
     }
 
-    static async getSummary(lotId: string, color: string) {
-        const response = await apiClient.get(`${this.resource}/summary?lot_id=${lotId}&color=${encodeURIComponent(color)}`);
+    static async getSummary(lotId: string, color: string, excludeProductionId?: string | number) {
+        let url = `${this.resource}/summary?lot_id=${lotId}&color=${encodeURIComponent(color)}`;
+        if (excludeProductionId) url += `&exclude_production_id=${excludeProductionId}`;
+        const response = await apiClient.get(url);
         return await response.json();
     }
 

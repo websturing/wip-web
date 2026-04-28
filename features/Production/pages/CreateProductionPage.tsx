@@ -178,7 +178,10 @@ function CreateProductionForm({ id }: { id?: string }) {
                     })) : [];
 
                     p.items.forEach(async (item: any, idx: number) => {
-                        fetchLotDetailsWithLots(item.lot_id, idx, currentLots);
+                        let color = item.color || '';
+                        if (color.endsWith(' (TOP)')) color = color.replace(' (TOP)', '');
+                        else if (color.endsWith(' (PANT)')) color = color.replace(' (PANT)', '');
+                        fetchLotDetailsWithLots(item.lot_id, idx, currentLots, color);
                     });
                 }
             }
@@ -188,7 +191,7 @@ function CreateProductionForm({ id }: { id?: string }) {
         init();
     }, [id]);
 
-    const fetchLotDetailsWithLots = async (lotId: string, itemIdx: number, availableLots: any[]) => {
+    const fetchLotDetailsWithLots = async (lotId: string, itemIdx: number, availableLots: any[], itemColor?: string) => {
         const lot = availableLots.find(l => String(l.id) === String(lotId));
         if (!lot) return;
 
@@ -209,10 +212,11 @@ function CreateProductionForm({ id }: { id?: string }) {
                     '';
                 setPartTypes(prev => ({ ...prev, [itemIdx]: cuttingPartType }));
 
-                // If in Edit mode, we don't want to overwrite the color and sizes with defaults
-                // but we DO want to hydrate the order_mi and cut_qty
+                // If in Edit mode, hydrate order_mi and cut_qty using the passed color
+                // (avoids stale closure on formData.items)
                 if (id) {
-                    const colorData = bodyColors.find((c: any) => c.color === formData.items[itemIdx]?.color);
+                    const resolvedColor = itemColor || '';
+                    const colorData = bodyColors.find((c: any) => c.color === resolvedColor);
                     if (colorData) {
                         setFormData(prev => {
                             const newItems = [...prev.items];
@@ -284,7 +288,7 @@ function CreateProductionForm({ id }: { id?: string }) {
             try {
                 const part = item.part;
                 const finalColor = part ? `${color} (${part})` : color;
-                const res = await ProductionService.getSummary(lotId, finalColor);
+                const res = await ProductionService.getSummary(lotId, finalColor, id);
                 if (res && res.status === 'success') {
                     recordedSummary = res.data;
                 }
