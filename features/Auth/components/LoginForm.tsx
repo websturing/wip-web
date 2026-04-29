@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
 
 export const LoginForm = () => {
@@ -12,6 +12,21 @@ export const LoginForm = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const getAppName = () => {
+        if (!mounted || typeof window === 'undefined') return { prefix: 'WIP', suffix: 'Apps' };
+        const hostname = window.location.hostname;
+        const prefix = hostname.split('.')[0];
+        return { prefix: prefix, suffix: 'WIP' };
+    };
+
+    const { prefix, suffix } = getAppName();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,8 +47,9 @@ export const LoginForm = () => {
         <div className="w-full max-w-[440px] flex flex-col items-center">
             {/* Logo */}
             <div className="mb-14 text-center">
-                <h1 className="text-5xl font-black text-zinc-900 tracking-tighter flex items-center justify-center gap-1">
-                    WIP<span className="text-zinc-400 font-normal text-xs mb-6">Apps</span>
+                <h1 className="text-5xl font-black text-zinc-900 tracking-tighter flex items-center justify-center gap-2">
+                    <span className="capitalize">{prefix}</span>
+                    <span className="text-zinc-400 font-normal text-xs mb-6 uppercase">{suffix}</span>
                 </h1>
                 <p className="text-zinc-500 text-xs font-semibold tracking-[0.2em] uppercase mt-2">Manufacturing Monitoring System</p>
             </div>
