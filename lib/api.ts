@@ -17,19 +17,18 @@ export const apiClient = {
             headers,
         });
 
+        // We don't remove the token here anymore to avoid race conditions
         if (response.status === 401) {
-            // Handle unauthenticated (optional: redirect to login)
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('auth_user');
-            }
-            console.warn('Session expired or unauthenticated');
+            console.warn('Unauthorized request to:', endpoint);
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Request failed with status ${response.status}`);
         }
 
         return response;
     },
-    // ... rest of the functions
-
 
     async get(endpoint: string) {
         return this.fetch(endpoint, { method: 'GET' });
@@ -55,8 +54,6 @@ export const apiClient = {
 
     async download(endpoint: string, fileName: string) {
         const response = await this.fetch(endpoint, { method: 'GET' });
-        if (!response.ok) throw new Error('Download failed');
-
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

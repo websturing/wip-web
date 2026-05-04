@@ -1,23 +1,9 @@
+import { apiClient } from '@/lib/api';
 import { AuthResponse } from '../types';
 
 export class AuthService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-
     static async login(credentials: { email: string; password: string }): Promise<AuthResponse> {
-        const response = await fetch(`${this.baseUrl}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(credentials),
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Login failed');
-        }
-
+        const response = await apiClient.post('/auth/login', credentials);
         const data = await response.json();
 
         // Save token
@@ -43,17 +29,7 @@ export class AuthService {
     }
 
     static async getMe(): Promise<any> {
-        const token = this.getToken();
-        if (!token) throw new Error('No token found');
-
-        const response = await fetch(`${this.baseUrl}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch user');
+        const response = await apiClient.get('/auth/me');
         return await response.json();
     }
 }

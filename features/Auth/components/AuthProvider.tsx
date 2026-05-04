@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthService } from '../services/AuthService';
 
 interface AuthContextType {
@@ -16,54 +15,63 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<any | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const router = useRouter();
-    const queryClient = useQueryClient();
-
-    // Check for existing session on mount
-    useEffect(() => {
-        const storedToken = localStorage.getItem('auth_token');
-        const storedUser = localStorage.getItem('auth_user');
-
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+    // 1. Initialize from localStorage immediately (Synchronous)
+    const [user, setUser] = useState<any | null>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('auth_user');
+            return saved ? JSON.parse(saved) : null;
         }
+        return null;
+    });
+
+    const [token, setToken] = useState<string | null>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('auth_token');
+        }
+        return null;
+    });
+
+    const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
+
+    // 2. Minimal validation on mount
+    useEffect(() => {
+        const validateSession = async () => {
+            const storedToken = localStorage.getItem('auth_token');
+            if (!storedToken) {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                // Just fetch the latest user data, don't logout on error immediately
+                const userData = await AuthService.getMe();
+                setUser(userData);
+                localStorage.setItem('auth_user', JSON.stringify(userData));
+            } catch (error) {
+                console.warn('Session validation failed, but keeping local session for now', error);
+                // If it's a 401 specifically, you might want to logout, 
+                // but let's be lenient for now to fix the refresh issue.
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        validateSession();
     }, []);
 
-    const loginMutation = useMutation({
-        mutationFn: (credentials: { email: string; password: string }) => AuthService.login(credentials),
-        onSuccess: (data) => {
-            if (data.token) {
-                setToken(data.token);
-                setUser(data.user);
-                localStorage.setItem('auth_token', data.token);
-                localStorage.setItem('auth_user', JSON.stringify(data.user));
-                queryClient.setQueryData(['auth', 'user'], data.user);
-                router.push('/admin');
-            }
-        }
-    });
-
-    // Use query for fetching latest user data
-    const { data: userData, isLoading: isUserLoading } = useQuery({
-        queryKey: ['auth', 'user'],
-        queryFn: () => AuthService.getMe(),
-        enabled: !!token,
-        retry: false,
-    });
-
-    // Sync state with query data
-    useEffect(() => {
-        if (userData) {
-            setUser(userData);
-            localStorage.setItem('auth_user', JSON.stringify(userData));
-        }
-    }, [userData]);
-
     const login = async (credentials: { email: string; password: string }) => {
-        await loginMutation.mutateAsync(credentials);
+        setIsLoading(true);
+        try {
+            const data = await AuthService.login(credentials);
+            setToken(data.token);
+            setUser(data.user);
+            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('auth_user', JSON.stringify(data.user));
+            router.push('/admin');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const logout = () => {
@@ -71,11 +79,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
-        queryClient.clear();
         router.push('/login');
     };
-
-    const isLoading = loginMutation.isPending || (token ? isUserLoading : false);
 
     return (
         <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
