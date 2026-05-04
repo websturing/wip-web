@@ -9,16 +9,24 @@ import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Select } from '@/app/components/ui/Select';
 import { useAcl } from '@/hooks/useAcl';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useAclManagement } from '../hooks/useAclManagement';
 import { RolePermissionMatrix } from '../components/RolePermissionMatrix';
 import { UserManagement } from '../components/UserManagement';
 
 export const AclPage = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { hasPermission, isLoading: isAclLoading } = useAcl();
     const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions'>('users');
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'roles' || tab === 'permissions' || tab === 'users') {
+            setActiveTab(tab as any);
+        }
+    }, [searchParams]);
 
 
     const breadcrumbItems: BreadcrumbItem[] = [
