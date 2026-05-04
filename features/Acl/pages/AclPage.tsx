@@ -12,11 +12,13 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAclManagement } from '../hooks/useAclManagement';
+import { RolePermissionMatrix } from '../components/RolePermissionMatrix';
+import { UserManagement } from '../components/UserManagement';
 
 export const AclPage = () => {
     const router = useRouter();
     const { hasPermission, isLoading: isAclLoading } = useAcl();
-    const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions'>('users');
 
 
     const breadcrumbItems: BreadcrumbItem[] = [
@@ -27,19 +29,29 @@ export const AclPage = () => {
     const {
         users,
         roles,
+        permissions,
         isLoading,
         isUserModalOpen,
         editingUser,
         userForm,
+        isRoleModalOpen,
+        editingRole,
+        roleForm,
         confirmDelete,
         handleSync,
         openUserModal,
         closeUserModal,
         handleSaveUser,
+        openRoleModal,
+        closeRoleModal,
+        handleSaveRole,
         openDeleteConfirmation,
         handleDelete,
         updateUserForm,
-        setConfirmDelete
+        updateRoleForm,
+        togglePermissionInRoleForm,
+        setConfirmDelete,
+        handleUpdateRolePermissions
     } = useAclManagement();
 
     if (isAclLoading) return null;
@@ -110,7 +122,16 @@ export const AclPage = () => {
                                 activeTab === 'roles' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
                             )}
                         >
-                            Roles & Permissions
+                            Roles
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('permissions')}
+                            className={cn(
+                                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === 'permissions' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
+                            )}
+                        >
+                            Permissions
                         </button>
                         <button
                             onClick={handleSync}
@@ -126,137 +147,77 @@ export const AclPage = () => {
             {/* Header */}
 
             {activeTab === 'users' ? (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
+                <UserManagement
+                    users={users}
+                    onAddUser={() => openUserModal()}
+                    onEditUser={(user) => openUserModal(user)}
+                    onDeleteUser={(id) => openDeleteConfirmation(id.toString(), 'user')}
+                />
+            ) : activeTab === 'roles' ? (
+                <RolePermissionMatrix
+                    roles={roles}
+                    permissionsByFeature={permissions}
+                    onSave={handleUpdateRolePermissions}
+                    onAddRole={() => openRoleModal()}
+                    isLoading={isLoading}
+                />
+            ) : (
+                <div className="bg-white rounded-[2rem] border border-zinc-200 overflow-hidden shadow-sm">
+                    <div className="p-8 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
                         <div className="flex items-center gap-3">
-                            <div className="w-1 h-6 bg-zinc-900 rounded-full"></div>
-                            <h3 className="text-lg font-black text-zinc-900 uppercase tracking-tight">Active Users</h3>
+                            <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-white shadow-lg shadow-zinc-200">
+                                <Icon icon="solar:key-minimalistic-square-bold-duotone" className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-zinc-900 uppercase tracking-widest">Permissions Catalog</h3>
+                                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Master definitions of all system access points</p>
+                            </div>
                         </div>
-                        <Button
-                            onClick={() => openUserModal()}
-                            className="bg-zinc-900 text-white rounded-2xl h-11 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-zinc-200"
-                        >
-                            <Icon icon="solar:user-plus-bold-duotone" className="w-4 h-4" />
-                            Add User
-                        </Button>
                     </div>
-
-                    <div className="bg-white border border-zinc-100 rounded-[2.5rem] overflow-hidden shadow-xl shadow-zinc-100/50">
-                        <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
                             <thead>
-                                <tr className="bg-zinc-50/50 border-b border-zinc-100">
-                                    <th className="px-8 py-5 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Name</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Email</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Role</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right">Actions</th>
+                                <tr className="bg-zinc-50/50">
+                                    <th className="px-8 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100">Feature Group</th>
+                                    <th className="px-8 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100">Permission Name</th>
+                                    <th className="px-8 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100">Action</th>
+                                    <th className="px-8 py-4 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100">Label / Description</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-50">
-                                {users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-zinc-50/30 transition-colors group">
-                                        <td className="px-8 py-4">
-                                            <span className="text-[13px] font-black text-zinc-900 uppercase tracking-tight">{user.name}</span>
-                                        </td>
-                                        <td className="px-8 py-4">
-                                            <span className="text-[13px] font-bold text-zinc-500">{user.email}</span>
-                                        </td>
-                                        <td className="px-8 py-4">
-                                            <span className={cn(
-                                                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
-                                                user.role?.name === 'Administrator' ? "bg-red-50 text-red-500" : "bg-blue-50 text-blue-500"
-                                            )}>
-                                                {user.role?.name || 'No Role'}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-4">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => openUserModal(user)}
-                                                    className="w-9 h-9 rounded-xl bg-zinc-50 text-zinc-400 hover:bg-zinc-900 hover:text-white flex items-center justify-center transition-all active:scale-90"
-                                                >
-                                                    <Icon icon="solar:pen-bold-duotone" className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => openDeleteConfirmation(user.id, 'user')}
-                                                    className="w-9 h-9 rounded-xl bg-zinc-50 text-zinc-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"
-                                                >
-                                                    <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                            <tbody>
+                                {permissions.map((group: any) => (
+                                    group.permissions.map((perm: any, idx: number) => (
+                                        <tr key={perm.id} className="group hover:bg-zinc-50/50 transition-colors">
+                                            {idx === 0 && (
+                                                <td rowSpan={group.permissions.length} className="px-8 py-6 align-top border-b border-zinc-100 border-r border-zinc-50 bg-zinc-50/20">
+                                                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-lg border border-zinc-200 text-[10px] font-black text-zinc-900 uppercase tracking-widest shadow-sm">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                                        {group.feature}
+                                                    </span>
+                                                </td>
+                                            )}
+                                            <td className="px-8 py-4 border-b border-zinc-100">
+                                                <code className="text-[11px] font-black text-blue-600 bg-blue-50/50 px-2 py-1 rounded-md border border-blue-100/50">{perm.name}</code>
+                                            </td>
+                                            <td className="px-8 py-4 border-b border-zinc-100">
+                                                <span className={cn(
+                                                    "px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border",
+                                                    perm.action === 'read' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                                                    perm.action === 'update' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                                    perm.action === 'delete' ? "bg-red-50 text-red-600 border-red-100" :
+                                                    "bg-indigo-50 text-indigo-600 border-indigo-100"
+                                                )}>
+                                                    {perm.action}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-4 border-b border-zinc-100">
+                                                <p className="text-[11px] font-bold text-zinc-600">{perm.label}</p>
+                                            </td>
+                                        </tr>
+                                    ))
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            ) : (
-                <div className="space-y-12">
-                    {/* Roles Management Section */}
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="w-1 h-6 bg-zinc-900 rounded-full"></div>
-                                <h3 className="text-lg font-black text-zinc-900 uppercase tracking-tight">System Roles</h3>
-                            </div>
-                            <Button
-                                onClick={() => router.push('/admin/acl/roles/create')}
-                                className="bg-zinc-900 text-white rounded-2xl h-11 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-zinc-200"
-                            >
-                                <Icon icon="solar:shield-plus-bold-duotone" className="w-4 h-4" />
-                                Create New Role
-                            </Button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {roles.map(role => (
-                                <div key={role.id} className="bg-white border border-zinc-100 p-6 rounded-[2rem] shadow-xl shadow-zinc-100/30 group hover:border-zinc-900/10 transition-all flex flex-col justify-between h-full">
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-start">
-                                            <div className="w-12 h-12 bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-100">
-                                                <Icon icon="solar:shield-keyhole-bold-duotone" className="w-6 h-6 text-zinc-400" />
-                                            </div>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => router.push(`/admin/acl/roles/${role.id}/edit`)}
-                                                    className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-400 hover:bg-zinc-900 hover:text-white transition-all"
-                                                >
-                                                    <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => openDeleteConfirmation(role.id, 'role')}
-                                                    className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-400 hover:bg-red-500 hover:text-white transition-all"
-                                                >
-                                                    <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <h4 className="text-[14px] font-black text-zinc-900 uppercase tracking-tight">{role.name}</h4>
-                                            <p className="text-[11px] text-zinc-500 leading-relaxed min-h-[32px]">{role.description || 'No description provided for this role.'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="mt-6 pt-6 border-t border-zinc-50 flex items-center justify-between">
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-900">{role.permissions?.length} Permissions</span>
-                                            <span className="text-[8px] font-bold uppercase tracking-tighter text-zinc-400">Assigned Grant</span>
-                                        </div>
-                                        <div className="flex -space-x-2">
-                                            {role.permissions?.slice(0, 3).map((p: any, i: number) => (
-                                                <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-zinc-900 flex items-center justify-center text-[8px] text-white font-black uppercase">
-                                                    {p.action[0]}
-                                                </div>
-                                            ))}
-                                            {role.permissions?.length > 3 && (
-                                                <div className="w-7 h-7 rounded-full border-2 border-white bg-zinc-100 flex items-center justify-center text-[8px] text-zinc-400 font-black">
-                                                    +{role.permissions.length - 3}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
                     </div>
                 </div>
             )}
@@ -306,12 +267,23 @@ export const AclPage = () => {
                                     />
                                 </div>
 
-                                <Select
-                                    label="Administrative Role"
-                                    options={roles.map(r => ({ id: r.id.toString(), label: r.name }))}
-                                    value={userForm.role_id}
-                                    onChange={val => updateUserForm({ role_id: val.toString() })}
-                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Select
+                                        label="Administrative Role"
+                                        options={roles.map((r: any) => ({ id: r.id.toString(), label: r.name }))}
+                                        value={userForm.role_id}
+                                        onChange={val => updateUserForm({ role_id: val.toString() })}
+                                    />
+                                    <Select
+                                        label="Account Status"
+                                        options={[
+                                            { id: 'active', label: 'Active' },
+                                            { id: 'inactive', label: 'Inactive' }
+                                        ]}
+                                        value={userForm.status}
+                                        onChange={val => updateUserForm({ status: val as 'active' | 'inactive' })}
+                                    />
+                                </div>
 
                                 <div className="flex gap-4 mt-8 pt-4">
                                     <Button
@@ -326,6 +298,105 @@ export const AclPage = () => {
                                         className="flex-1 h-14 bg-zinc-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
                                     >
                                         Save Changes
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </DialogContent>
+                </DialogPortal>
+            </Dialog>
+
+            {/* Role Modal */}
+            <Dialog open={isRoleModalOpen} onOpenChange={closeRoleModal}>
+                <DialogPortal>
+                    <DialogContent className="max-w-2xl">
+                        <div className="p-8">
+                            <h2 className="text-2xl font-black text-zinc-900 uppercase tracking-tight mb-8">
+                                {editingRole ? 'Modify Access Role' : 'Create Access Level'}
+                            </h2>
+
+                            <form onSubmit={handleSaveRole} className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Role Identifier</label>
+                                        <input
+                                            required
+                                            className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
+                                            placeholder="e.g. Content Manager..."
+                                            value={roleForm.name}
+                                            onChange={e => updateRoleForm({ name: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Scope Definition</label>
+                                        <input
+                                            className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
+                                            placeholder="Administrative scope description..."
+                                            value={roleForm.description}
+                                            onChange={e => updateRoleForm({ description: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Access Grants</label>
+                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{roleForm.permissions.length} Permissions Selected</span>
+                                    </div>
+                                    
+                                    <div className="bg-zinc-50 rounded-[2rem] border border-zinc-100 p-6 max-h-[300px] overflow-y-auto no-scrollbar space-y-6">
+                                        {permissions.map((group: any) => (
+                                            <div key={group.feature} className="space-y-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-3 bg-zinc-900 rounded-full"></div>
+                                                    <span className="text-[10px] font-black text-zinc-900 uppercase tracking-widest">{group.feature}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {group.permissions.map((perm: any) => (
+                                                        <div 
+                                                            key={perm.id}
+                                                            onClick={() => togglePermissionInRoleForm(perm.name)}
+                                                            className={cn(
+                                                                "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group",
+                                                                roleForm.permissions.includes(perm.name)
+                                                                    ? "bg-white border-zinc-900 shadow-sm"
+                                                                    : "bg-zinc-100/50 border-transparent hover:border-zinc-200"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
+                                                                roleForm.permissions.includes(perm.name)
+                                                                    ? "bg-zinc-900 border-zinc-900 text-white"
+                                                                    : "bg-white border-zinc-200 group-hover:border-zinc-400"
+                                                            )}>
+                                                                {roleForm.permissions.includes(perm.name) && <Icon icon="solar:check-read-bold" className="w-3 h-3" />}
+                                                            </div>
+                                                            <span className={cn(
+                                                                "text-[11px] font-bold uppercase tracking-tight",
+                                                                roleForm.permissions.includes(perm.name) ? "text-zinc-900" : "text-zinc-400"
+                                                            )}>{perm.label}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 mt-8 pt-4">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={closeRoleModal}
+                                        className="flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-500"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        className="flex-1 h-14 bg-zinc-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                                    >
+                                        Deploy Role
                                     </Button>
                                 </div>
                             </form>

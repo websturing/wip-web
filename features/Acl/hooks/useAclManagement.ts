@@ -16,7 +16,17 @@ export const useAclManagement = () => {
         name: '',
         email: '',
         password: '',
-        role_id: ''
+        role_id: '',
+        status: 'active' as 'active' | 'inactive'
+    });
+
+    // Role Form State
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+    const [editingRole, setEditingRole] = useState<any>(null);
+    const [roleForm, setRoleForm] = useState({
+        name: '',
+        description: '',
+        permissions: [] as string[]
     });
 
     // Delete confirmation state
@@ -35,6 +45,12 @@ export const useAclManagement = () => {
     const { data: usersData, isLoading: isUsersLoading } = useQuery({
         queryKey: ['acl', 'users'],
         queryFn: () => AclService.getUsers(),
+        enabled: hasPermission('acl.read'),
+    });
+
+    const { data: rolesData, isLoading: isRolesLoading } = useQuery({
+        queryKey: ['acl', 'roles'],
+        queryFn: () => AclService.getRoles(),
         enabled: hasPermission('acl.read'),
     });
 
@@ -68,6 +84,23 @@ export const useAclManagement = () => {
         }
     });
 
+    const saveRoleMutation = useMutation({
+        mutationFn: (payload: typeof roleForm) => {
+            if (editingRole) {
+                return AclService.updateRole(editingRole.id, payload);
+            }
+            return AclService.createRole(payload);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['acl', 'roles'] });
+            closeRoleModal();
+        },
+        onError: (error) => {
+            console.error('Failed to save role:', error);
+            alert('Error saving role');
+        }
+    });
+
     const deleteMutation = useMutation({
         mutationFn: ({ id, type }: { id: string; type: 'user' | 'role' }) => {
             if (type === 'user') {
@@ -96,6 +129,18 @@ export const useAclManagement = () => {
         }
     });
 
+    const updateRolePermissionsMutation = useMutation({
+        mutationFn: ({ roleId, permissions }: { roleId: number; permissions: string[] }) => 
+            AclService.updateRolePermissions(roleId, permissions),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['acl', 'roles'] });
+        },
+        onError: (error) => {
+            console.error('Failed to update role permissions:', error);
+            alert('Error updating permissions');
+        }
+    });
+
     // --- Handlers ---
 
     const openUserModal = useCallback((user: any = null) => {
@@ -105,11 +150,18 @@ export const useAclManagement = () => {
                 name: user.name,
                 email: user.email,
                 password: '',
-                role_id: user.role_id?.toString() || ''
+                role_id: user.role_id?.toString() || '',
+                status: user.status || 'active'
             });
         } else {
             setEditingUser(null);
-            setUserForm({ name: '', email: '', password: '', role_id: '' });
+            setUserForm({
+                name: '',
+                email: '',
+                password: '',
+                role_id: '',
+                status: 'active'
+            });
         }
         setIsUserModalOpen(true);
     }, []);
@@ -117,13 +169,53 @@ export const useAclManagement = () => {
     const closeUserModal = useCallback(() => {
         setIsUserModalOpen(false);
         setEditingUser(null);
-        setUserForm({ name: '', email: '', password: '', role_id: '' });
+        setUserForm({
+            name: '',
+            email: '',
+            password: '',
+            role_id: '',
+            status: 'active'
+        });
     }, []);
 
     const handleSaveUser = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         saveUserMutation.mutate(userForm);
     }, [saveUserMutation, userForm]);
+
+    const openRoleModal = useCallback((role: any = null) => {
+        if (role) {
+            setEditingRole(role);
+            setRoleForm({
+                name: role.name,
+                description: role.description || '',
+                permissions: role.permissions?.map((p: any) => p.name) || []
+            });
+        } else {
+            setEditingRole(null);
+            setRoleForm({
+                name: '',
+                description: '',
+                permissions: []
+            });
+        }
+        setIsRoleModalOpen(true);
+    }, []);
+
+    const closeRoleModal = useCallback(() => {
+        setIsRoleModalOpen(false);
+        setEditingRole(null);
+        setRoleForm({
+            name: '',
+            description: '',
+            permissions: []
+        });
+    }, []);
+
+    const handleSaveRole = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+        saveRoleMutation.mutate(roleForm);
+    }, [saveRoleMutation, roleForm]);
 
     const openDeleteConfirmation = useCallback((id: string, type: 'user' | 'role') => {
         setConfirmDelete({ open: true, id, type });
@@ -138,6 +230,20 @@ export const useAclManagement = () => {
         setUserForm(prev => ({ ...prev, ...updates }));
     }, []);
 
+    const updateRoleForm = useCallback((updates: Partial<typeof roleForm>) => {
+        setRoleForm(prev => ({ ...prev, ...updates }));
+    }, []);
+
+    const togglePermissionInRoleForm = useCallback((permissionName: string) => {
+        setRoleForm(prev => {
+            const current = prev.permissions;
+            const next = current.includes(permissionName)
+                ? current.filter(p => p !== permissionName)
+                : [...current, permissionName];
+            return { ...prev, permissions: next };
+        });
+    }, []);
+
     const handleSync = useCallback(async () => {
         syncMutation.mutate();
     }, [syncMutation]);
@@ -146,18 +252,29 @@ export const useAclManagement = () => {
         users,
         roles,
         permissions,
-        isLoading: isLoading || saveUserMutation.isPending || deleteMutation.isPending || syncMutation.isPending,
+        isLoading: isLoading || saveUserMutation.isPending || saveRoleMutation.isPending || deleteMutation.isPending || syncMutation.isPending,
         isUserModalOpen,
         editingUser,
         userForm,
+        isRoleModalOpen,
+        editingRole,
+        roleForm,
         confirmDelete,
         handleSync,
         openUserModal,
         closeUserModal,
         handleSaveUser,
+        openRoleModal,
+        closeRoleModal,
+        handleSaveRole,
         openDeleteConfirmation,
         handleDelete,
         updateUserForm,
-        setConfirmDelete
+        updateRoleForm,
+        togglePermissionInRoleForm,
+        setConfirmDelete,
+        handleUpdateRolePermissions: async (roleId: number, permissions: string[]) => {
+            await updateRolePermissionsMutation.mutateAsync({ roleId, permissions });
+        }
     };
 };
