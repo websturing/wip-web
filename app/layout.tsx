@@ -55,6 +55,9 @@ export default function RootLayout({
       className={`${plusJakartaSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@1,2,700,900&display=swap" rel="stylesheet" />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider
           attribute="class"
@@ -72,4 +75,3 @@ export default function RootLayout({
     </html>
   );
 }
-

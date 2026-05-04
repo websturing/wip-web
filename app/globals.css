@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-plus-jakarta-sans);
+  --font-sans: 'Satoshi', var(--font-plus-jakarta-sans), sans-serif;
 }
 
 /* Force Light variables even if .dark class is applied */

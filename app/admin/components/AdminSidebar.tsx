@@ -113,7 +113,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         icon={item.icon}
                         className={cn(
                             "w-5 h-5",
-                            isActive ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"
+                            isActive ? "text-white" : "text-zinc-300 group-hover:text-white"
                         )}
                     />
                     <span className={cn("text-[13px] font-medium tracking-tight", isActive ? "font-bold" : "")}>
@@ -144,7 +144,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         {content}
                         {isOpen && (
                             <div className="relative ml-6 mt-1 mb-2">
-                                <div className="absolute left-[9px] top-0 bottom-0 w-[1.5px] bg-zinc-800"></div>
+                                <div className="absolute left-[9px] top-0 bottom-0 w-[1.5px] bg-zinc-500"></div>
                                 <div className="space-y-1 pl-4">
                                     {item.children?.map(child => renderItem(child, true))}
                                 </div>
@@ -161,19 +161,11 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     };
 
     return (
-        <div className="w-[260px] h-full bg-[#111827] flex flex-col border-r border-white/5 transition-all duration-300">
-            {/* Header */}
-            <div className="px-6 pt-8 pb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center">
-                        <Icon icon="solar:stars-minimalistic-bold" className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xl font-bold tracking-tight text-white">Menu</span>
-                </div>
-            </div>
+        <div className="w-[260px] h-full bg-[#111827] flex flex-col rounded-lg border-r border-white/5 transition-all duration-300">
+
 
             {/* Navigation */}
-            <div className="flex-1 overflow-y-auto px-4 no-scrollbar">
+            <div className="flex-1 overflow-y-auto pt-5 px-2 no-scrollbar">
                 <nav className="space-y-1">
                     {sections.map(section => renderItem(section))}
                 </nav>
