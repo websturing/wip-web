@@ -2,6 +2,7 @@
 
 import { Icon } from '@/app/components/ui/Icon';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
+import { useAppName } from '@/hooks/useAppName';
 import { useEffect, useState } from 'react';
 
 interface AdminNavbarProps {
@@ -10,6 +11,7 @@ interface AdminNavbarProps {
 
 export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
     const { user } = useAuth();
+    const { prefix } = useAppName();
     const [dateTime, setDateTime] = useState('');
 
     useEffect(() => {
@@ -45,10 +47,10 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
                 </button>
                 <div className="flex items-center gap-2">
                     <div className="bg-zinc-900 h-8 w-8 rounded-lg flex items-center justify-center shadow-lg shadow-zinc-200">
-                        <span className="text-white font-black text-sm italic">W</span>
+                        <span className="text-white font-black text-sm italic capitalize">{prefix.charAt(0)}</span>
                     </div>
                     <span className="font-black text-xs uppercase tracking-[0.15em] text-zinc-900 hidden sm:block">
-                        WIP <span className="text-blue-600">Administrator</span>
+                        {prefix} <span className="text-blue-600">Administrator</span>
                     </span>
                 </div>
             </div>

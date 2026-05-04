@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import { useAppName } from '@/hooks/useAppName';
 import { useAuth } from './AuthProvider';
 
 export const LoginForm = () => {
@@ -19,14 +20,7 @@ export const LoginForm = () => {
         setMounted(true);
     }, []);
 
-    const getAppName = () => {
-        if (!mounted || typeof window === 'undefined') return { prefix: 'WIP', suffix: 'Apps' };
-        const hostname = window.location.hostname;
-        const prefix = hostname.split('.')[0];
-        return { prefix: prefix, suffix: 'WIP' };
-    };
-
-    const { prefix, suffix } = getAppName();
+    const { prefix, suffix } = useAppName();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

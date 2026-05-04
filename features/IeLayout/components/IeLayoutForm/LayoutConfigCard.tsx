@@ -26,7 +26,7 @@ export const LayoutConfigCard = ({ formData, lots, updateFormData }: LayoutConfi
                             type="text"
                             placeholder="e.g. basic_tshirt_v1"
                             className="w-full bg-zinc-50 border-none rounded-2xl px-6 py-4 text-sm font-black text-zinc-900 placeholder:text-zinc-200 placeholder:lowercase focus:ring-2 focus:ring-zinc-900/5 transition-all lowercase"
-                            value={formData.name}
+                            value={formData.name || ''}
                             onChange={(e) => updateFormData({ name: e.target.value })}
                         />
                     </div>

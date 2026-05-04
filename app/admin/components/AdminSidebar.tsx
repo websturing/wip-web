@@ -16,6 +16,7 @@ import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useAppName } from '@/hooks/useAppName';
 
 
 interface AdminSidebarProps {
@@ -26,6 +27,7 @@ interface AdminSidebarProps {
 export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     const pathname = usePathname();
     const { logout } = useAuth();
+    const { prefix } = useAppName();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
     const sections = [
@@ -97,8 +99,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         <div className="w-[240px] h-full bg-[#111827] rounded-[1rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300 border-r border-white/5">
             <div className="h-20 flex items-center justify-between px-5 border-b border-zinc-800/50">
                 <div className="flex items-center gap-2.5">
-                    <div className="bg-blue-600 p-1 rounded-md font-black text-[10px] text-white">GL</div>
-                    <span className="text-white font-black text-[10px] uppercase tracking-widest italic opacity-90">WIP Admin</span>
+                    <div className="bg-blue-600 p-1 rounded-md font-black text-[10px] text-white capitalize">{prefix.substring(0, 2)}</div>
+                    <span className="text-white font-black text-[10px] uppercase tracking-widest italic opacity-90">{prefix} Admin</span>
                 </div>
                 {isMobile && (
                     <button

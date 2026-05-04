@@ -8,11 +8,13 @@ export class AclService {
 
     static async createUser(payload: any) {
         const res = await apiClient.post('/acl/users', payload);
+        if (!res.ok) throw new Error('Failed to create user');
         return await res.json();
     }
 
     static async updateUser(id: string | number, payload: any) {
         const res = await apiClient.put(`/acl/users/${id}`, payload);
+        if (!res.ok) throw new Error('Failed to update user');
         return await res.json();
     }
 
@@ -28,11 +30,13 @@ export class AclService {
 
     static async createRole(payload: any) {
         const res = await apiClient.post('/acl/roles', payload);
+        if (!res.ok) throw new Error('Failed to create role');
         return await res.json();
     }
 
     static async updateRole(id: string | number, payload: any) {
         const res = await apiClient.put(`/acl/roles/${id}`, payload);
+        if (!res.ok) throw new Error('Failed to update role');
         return await res.json();
     }
 
