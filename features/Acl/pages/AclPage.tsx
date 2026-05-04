@@ -1,9 +1,11 @@
 'use client';
 
+import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { Button } from '@/app/components/ui/Button';
 import { ConfirmationDialog } from '@/app/components/ui/ConfirmationDialog';
 import { Dialog, DialogContent, DialogPortal } from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
+import { PageHeader } from '@/app/components/ui/PageHeader';
 import { Select } from '@/app/components/ui/Select';
 import { useAcl } from '@/hooks/useAcl';
 import { cn } from '@/lib/utils';
@@ -15,6 +17,12 @@ export const AclPage = () => {
     const router = useRouter();
     const { hasPermission, isLoading: isAclLoading } = useAcl();
     const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+
+
+    const breadcrumbItems: BreadcrumbItem[] = [
+        { label: 'Home', href: '/admin', icon: 'solar:home-2-bold-duotone' },
+        { label: 'Access Control' },
+    ];
 
     const {
         users,
@@ -60,7 +68,7 @@ export const AclPage = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 relative">
+        <div className="mx-auto space-y-8 animate-in fade-in duration-700 relative">
 
             {/* Loading Overlay */}
             {isLoading && (
@@ -79,42 +87,43 @@ export const AclPage = () => {
                     </div>
                 </div>
             )}
+            <PageHeader
+                items={breadcrumbItems}
+                title="Access"
+                subtitle="Control"
+                description="Configure granular access levels for enterprise modules and features."
+                action={<>
+                    <div className="flex bg-zinc-100 p-1 rounded-2xl border border-zinc-200 shadow-inner">
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={cn(
+                                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === 'users' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
+                            )}
+                        >
+                            Users
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('roles')}
+                            className={cn(
+                                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === 'roles' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
+                            )}
+                        >
+                            Roles & Permissions
+                        </button>
+                        <button
+                            onClick={handleSync}
+                            className="px-4 py-2.5 rounded-xl text-zinc-400 hover:text-zinc-900 transition-all ml-1"
+                            title="Synchronize Permissions"
+                        >
+                            <Icon icon="solar:refresh-bold-duotone" className={cn("w-4 h-4", isLoading && "animate-spin")} />
+                        </button>
+                    </div>
+                </>}
+            />
 
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-4xl font-black text-zinc-900 tracking-tight uppercase">Access Control</h1>
-                    <p className="text-zinc-500 font-bold text-xs uppercase tracking-[0.2em]">User Management & Role Permissions</p>
-                </div>
-
-                <div className="flex bg-zinc-100 p-1 rounded-2xl border border-zinc-200 shadow-inner">
-                    <button
-                        onClick={() => setActiveTab('users')}
-                        className={cn(
-                            "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                            activeTab === 'users' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
-                        )}
-                    >
-                        Users
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('roles')}
-                        className={cn(
-                            "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                            activeTab === 'roles' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
-                        )}
-                    >
-                        Roles & Permissions
-                    </button>
-                    <button
-                        onClick={handleSync}
-                        className="px-4 py-2.5 rounded-xl text-zinc-400 hover:text-zinc-900 transition-all ml-1"
-                        title="Synchronize Permissions"
-                    >
-                        <Icon icon="solar:refresh-bold-duotone" className={cn("w-4 h-4", isLoading && "animate-spin")} />
-                    </button>
-                </div>
-            </div>
 
             {activeTab === 'users' ? (
                 <div className="space-y-6">

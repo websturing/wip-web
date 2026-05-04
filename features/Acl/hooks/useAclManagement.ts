@@ -38,15 +38,16 @@ export const useAclManagement = () => {
         enabled: hasPermission('acl.read'),
     });
 
-    const { data: rolesData, isLoading: isRolesLoading } = useQuery({
-        queryKey: ['acl', 'roles'],
-        queryFn: () => AclService.getRoles(),
+    const { data: permissionsData, isLoading: isPermissionsLoading } = useQuery({
+        queryKey: ['acl', 'permissions'],
+        queryFn: () => AclService.getPermissions(),
         enabled: hasPermission('acl.read'),
     });
 
     const users = usersData?.data || [];
     const roles = rolesData?.data || [];
-    const isLoading = isUsersLoading || isRolesLoading;
+    const permissions = permissionsData?.data || [];
+    const isLoading = isUsersLoading || isRolesLoading || isPermissionsLoading;
 
     // --- Mutations ---
 
@@ -144,6 +145,7 @@ export const useAclManagement = () => {
     return {
         users,
         roles,
+        permissions,
         isLoading: isLoading || saveUserMutation.isPending || deleteMutation.isPending || syncMutation.isPending,
         isUserModalOpen,
         editingUser,

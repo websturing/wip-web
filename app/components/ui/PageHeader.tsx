@@ -37,7 +37,7 @@ export const PageHeader = ({
             {showTitle && title && (
                 <div className="mb-6 md:mb-10 group flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h1 className="text-xl md:text-lg lg:text-[1.5rem] font-bold text-zinc-900 tracking-tight transition-all duration-300">
+                        <h1 className="text-xl md:text-lg lg:text-[1.5rem] uppercase font-black text-zinc-900 transition-all duration-300">
                             {title} {subtitle && (
                                 <span className="text-blue-500 font-extrabold whitespace-nowrap ml-1 group-hover:translate-x-1 inline-block transition-transform">
                                     {subtitle}
@@ -45,7 +45,7 @@ export const PageHeader = ({
                             )}
                         </h1>
                         {description && (
-                            <p className="text-zinc-500 text-[10px] md:text-xs font-medium leading-relaxed opacity-80 tracking-[0.2em] max-w-3xl">
+                            <p className="text-zinc-500 text-[10px] md:text-sm font-medium leading-relaxed opacity-80 max-w-3xl">
                                 {description}
                             </p>
                         )}
