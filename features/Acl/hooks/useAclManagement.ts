@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { AclService } from '../services/AclService';
 import { useAcl } from '@/hooks/useAcl';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import { AclService } from '../services/AclService';
 
 export const useAclManagement = () => {
     const { hasPermission } = useAcl();
-    const [users, setUsers] = useState<any[]>([]);
-    const [roles, setRoles] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
     // User Form State
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -31,43 +30,72 @@ export const useAclManagement = () => {
         type: 'user'
     });
 
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const [usersRes, rolesRes] = await Promise.all([
-                AclService.getUsers(),
-                AclService.getRoles()
-            ]);
-            setUsers(usersRes?.data || []);
-            setRoles(rolesRes?.data || []);
-        } catch (error) {
-            console.error('Failed to fetch ACL data:', error);
-            setUsers([]);
-            setRoles([]);
-        } finally {
-            // Artificial delay for smooth transitions if needed, or just set to false
-            setTimeout(() => setIsLoading(false), 500);
-        }
-    }, []);
+    // --- Queries ---
+    
+    const { data: usersData, isLoading: isUsersLoading } = useQuery({
+        queryKey: ['acl', 'users'],
+        queryFn: () => AclService.getUsers(),
+        enabled: hasPermission('acl.read'),
+    });
 
-    useEffect(() => {
-        if (hasPermission('acl.read')) {
-            fetchData();
-        }
-    }, [hasPermission, fetchData]);
+    const { data: rolesData, isLoading: isRolesLoading } = useQuery({
+        queryKey: ['acl', 'roles'],
+        queryFn: () => AclService.getRoles(),
+        enabled: hasPermission('acl.read'),
+    });
 
-    const handleSync = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            await AclService.syncPermissions();
-            await fetchData();
-        } catch (error) {
+    const users = usersData?.data || [];
+    const roles = rolesData?.data || [];
+    const isLoading = isUsersLoading || isRolesLoading;
+
+    // --- Mutations ---
+
+    const saveUserMutation = useMutation({
+        mutationFn: (payload: typeof userForm) => {
+            if (editingUser) {
+                return AclService.updateUser(editingUser.id, payload);
+            }
+            return AclService.createUser(payload);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['acl', 'users'] });
+            closeUserModal();
+        },
+        onError: (error) => {
+            console.error('Failed to save user:', error);
+            alert('Error saving user');
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: ({ id, type }: { id: string; type: 'user' | 'role' }) => {
+            if (type === 'user') {
+                return AclService.deleteUser(id);
+            }
+            return AclService.deleteRole(id);
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['acl', variables.type === 'user' ? 'users' : 'roles'] });
+            setConfirmDelete({ open: false, id: null, type: 'user' });
+        },
+        onError: (error, variables) => {
+            console.error(`Failed to delete ${variables.type}:`, error);
+            alert(`Error deleting ${variables.type}`);
+        }
+    });
+
+    const syncMutation = useMutation({
+        mutationFn: () => AclService.syncPermissions(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['acl'] });
+        },
+        onError: (error) => {
             console.error('Failed to sync permissions:', error);
             alert('Error syncing permissions');
-        } finally {
-            setIsLoading(false);
         }
-    }, [fetchData]);
+    });
+
+    // --- Handlers ---
 
     const openUserModal = useCallback((user: any = null) => {
         if (user) {
@@ -93,63 +121,39 @@ export const useAclManagement = () => {
 
     const handleSaveUser = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            if (editingUser) {
-                await AclService.updateUser(editingUser.id, userForm);
-            } else {
-                await AclService.createUser(userForm);
-            }
-            closeUserModal();
-            fetchData();
-        } catch (error) {
-            console.error('Failed to save user:', error);
-            alert('Error saving user');
-        }
-    }, [editingUser, userForm, closeUserModal, fetchData]);
+        saveUserMutation.mutate(userForm);
+    }, [saveUserMutation, userForm]);
 
     const openDeleteConfirmation = useCallback((id: string, type: 'user' | 'role') => {
         setConfirmDelete({ open: true, id, type });
     }, []);
 
-    const closeDeleteConfirmation = useCallback(() => {
-        setConfirmDelete(prev => ({ ...prev, open: false }));
-    }, []);
-
     const handleDelete = useCallback(async () => {
         if (!confirmDelete.id) return;
-        try {
-            if (confirmDelete.type === 'user') {
-                await AclService.deleteUser(confirmDelete.id);
-            } else {
-                await AclService.deleteRole(confirmDelete.id);
-            }
-            setConfirmDelete({ open: false, id: null, type: 'user' });
-            fetchData();
-        } catch (error) {
-            console.error(`Failed to delete ${confirmDelete.type}:`, error);
-            alert(`Error deleting ${confirmDelete.type}`);
-        }
-    }, [confirmDelete, fetchData]);
+        deleteMutation.mutate({ id: confirmDelete.id, type: confirmDelete.type });
+    }, [deleteMutation, confirmDelete]);
 
     const updateUserForm = useCallback((updates: Partial<typeof userForm>) => {
         setUserForm(prev => ({ ...prev, ...updates }));
     }, []);
 
+    const handleSync = useCallback(async () => {
+        syncMutation.mutate();
+    }, [syncMutation]);
+
     return {
         users,
         roles,
-        isLoading,
+        isLoading: isLoading || saveUserMutation.isPending || deleteMutation.isPending || syncMutation.isPending,
         isUserModalOpen,
         editingUser,
         userForm,
         confirmDelete,
-        fetchData,
         handleSync,
         openUserModal,
         closeUserModal,
         handleSaveUser,
         openDeleteConfirmation,
-        closeDeleteConfirmation,
         handleDelete,
         updateUserForm,
         setConfirmDelete

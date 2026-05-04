@@ -42,6 +42,7 @@ export const viewport: Viewport = {
 
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { AuthProvider } from "@/features/Auth/components/AuthProvider";
+import QueryProvider from "@/app/components/providers/QueryProvider";
 
 export default function RootLayout({
   children,
@@ -61,9 +62,11 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

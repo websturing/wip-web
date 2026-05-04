@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AuthService } from '../services/AuthService';
 
 interface AuthContextType {
     user: any | null;
@@ -13,13 +15,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<any | null>(null);
     const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     // Check for existing session on mount
     useEffect(() => {
@@ -30,32 +30,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
         }
-        setIsLoading(false);
     }, []);
 
+    const loginMutation = useMutation({
+        mutationFn: (credentials: { email: string; password: string }) => AuthService.login(credentials),
+        onSuccess: (data) => {
+            if (data.token) {
+                setToken(data.token);
+                setUser(data.user);
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('auth_user', JSON.stringify(data.user));
+                queryClient.setQueryData(['auth', 'user'], data.user);
+                router.push('/admin');
+            }
+        }
+    });
+
+    // Use query for fetching latest user data
+    const { data: userData, isLoading: isUserLoading } = useQuery({
+        queryKey: ['auth', 'user'],
+        queryFn: () => AuthService.getMe(),
+        enabled: !!token,
+        retry: false,
+    });
+
+    // Sync state with query data
+    useEffect(() => {
+        if (userData) {
+            setUser(userData);
+            localStorage.setItem('auth_user', JSON.stringify(userData));
+        }
+    }, [userData]);
+
     const login = async (credentials: { email: string; password: string }) => {
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify(credentials),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.message || 'Invalid credentials');
-        }
-
-        if (data.token) {
-            setToken(data.token);
-            setUser(data.user);
-            localStorage.setItem('auth_token', data.token);
-            localStorage.setItem('auth_user', JSON.stringify(data.user));
-            router.push('/admin');
-        }
+        await loginMutation.mutateAsync(credentials);
     };
 
     const logout = () => {
@@ -63,8 +71,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
+        queryClient.clear();
         router.push('/login');
     };
+
+    const isLoading = loginMutation.isPending || (token ? isUserLoading : false);
 
     return (
         <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
@@ -78,4 +89,3 @@ export const useAuth = () => {
     if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 };
-
