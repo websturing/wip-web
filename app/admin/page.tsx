@@ -39,7 +39,8 @@ export default function AdminDashboard() {
         fetchDashboardStats(activeRange);
     }, [activeRange]);
 
-    const roles = ['admin', 'Matching Girl'];
+    // Get real roles from user object
+    const userRoles = user?.role?.name ? [user.role.name] : [];
     const assignedLines = ['A1', 'A2', 'A3', 'A4', 'A5'];
 
     return (
@@ -105,10 +106,10 @@ export default function AdminDashboard() {
                         <div className="flex flex-wrap items-center gap-2 md:gap-3">
                             <span className="text-[10px] md:text-xs font-bold text-zinc-400">You have</span>
                             <div className="flex flex-wrap gap-2">
-                                {roles.map((role, i) => (
+                                {userRoles.map((role, i) => (
                                     <span
                                         key={i}
-                                        className={`px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${i === 0
+                                        className={`px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${role.toLowerCase().includes('admin')
                                             ? 'bg-green-100/50 text-green-700 border border-green-200'
                                             : 'bg-teal-100/50 text-teal-700 border border-teal-200'
                                             }`}

@@ -10,21 +10,14 @@ import {
     DialogTitle
 } from '@/app/components/ui/Dialog';
 import { Icon } from '@/app/components/ui/Icon';
+import { MenuItem, MenuService } from '@/features/Acl/services/MenuService';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
-import { useAppName } from '@/hooks/useAppName';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import { LogOut, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
-interface SidebarItem {
-    name: string;
-    path: string;
-    icon: string;
-    badge?: string | number | null;
-    children?: SidebarItem[];
-}
+import { useEffect, useMemo, useState } from 'react';
 
 interface AdminSidebarProps {
     isMobile?: boolean;
@@ -34,56 +27,62 @@ interface AdminSidebarProps {
 export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     const pathname = usePathname();
     const { logout, user } = useAuth();
-    const { prefix } = useAppName();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     const [openMenus, setOpenMenus] = useState<string[]>([]);
 
-    const sections: SidebarItem[] = [
-        { name: 'Home', path: '/admin', icon: 'solar:home-2-linear' },
-        { name: 'Messages', path: '/admin/messages', icon: 'solar:letter-linear', badge: 2 },
+    // --- API-Driven Menu Fetching ---
+    const { data: apiMenuItems = [], isLoading } = useQuery({
+        queryKey: ['sidebar-menus'],
+        queryFn: () => MenuService.getSidebarMenus(),
+        staleTime: 1000 * 60 * 5,
+        retry: 1,
+    });
+
+    // --- Fallback Menu for Administrator (If API fails or is empty) ---
+    const fallbackMenus: MenuItem[] = useMemo(() => [
+        { id: 'f1', name: 'Dashboard', path: '/admin', icon: 'solar:home-2-linear' },
         {
-            name: 'Master Data',
-            path: '/admin/master',
-            icon: 'solar:database-linear',
+            id: 'f2', name: 'Master Data', path: '/admin/master', icon: 'solar:database-linear',
             children: [
-                { name: 'Garment Reference', path: '/admin/reference', icon: 'solar:reorder-linear' },
-                { name: 'Media Library', path: '/admin/media', icon: 'solar:gallery-linear' },
+                { id: 'f2-1', name: 'Garment Reference', path: '/admin/reference', icon: 'solar:reorder-linear' },
+                { id: 'f2-2', name: 'Media Library', path: '/admin/media', icon: 'solar:gallery-linear' },
             ]
         },
         {
-            name: 'Sewing Production',
-            path: '/admin/production-group',
-            icon: 'solar:settings-linear',
+            id: 'f3', name: 'Production', path: '/admin/production-group', icon: 'solar:settings-linear',
             children: [
-                { name: 'Production Output', path: '/admin/production', icon: 'solar:chart-2-linear' },
-                { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-linear' },
-                { name: 'Productivity', path: '/admin/productivity', icon: 'solar:graph-up-linear' },
+                { id: 'f3-1', name: 'Output', path: '/admin/production', icon: 'solar:chart-2-linear' },
+                { id: 'f3-2', name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-linear' },
             ]
         },
-        {
-            name: 'Logistics',
-            path: '/admin/logistics',
-            icon: 'solar:box-linear',
-            children: [
-                { name: 'Packing Feed', path: '/admin/packing', icon: 'solar:box-linear' },
-                { name: 'WIP Dashboard', path: '/admin/wip', icon: 'solar:pie-chart-linear' },
-            ]
-        },
-        { name: 'Industrial Engineering', path: '/admin/ielayout', icon: 'solar:layers-linear' },
-        { name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-linear' },
-        { name: 'Contacts', path: '/admin/contacts', icon: 'solar:user-id-linear' },
-        { name: 'Explore', path: '/admin/explore', icon: 'solar:globus-linear' },
-    ];
+        { id: 'f4', name: 'Industrial Eng.', path: '/admin/ielayout', icon: 'solar:layers-linear' },
+        { id: 'f5', name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-linear' },
+    ], []);
+
+    // Combine API data with fallback if needed
+    const menuItems = useMemo(() => {
+        if (apiMenuItems.length > 0) return apiMenuItems;
+
+        // Flexible Admin Check (Case-insensitive)
+        const isAdmin = user?.role?.name?.toLowerCase().includes('admin');
+
+        if (!isLoading && isAdmin) return fallbackMenus;
+        return [];
+    }, [apiMenuItems, isLoading, user, fallbackMenus]);
 
     useEffect(() => {
-        sections.forEach(item => {
-            if (item.children?.some(child => pathname.startsWith(child.path))) {
-                if (!openMenus.includes(item.name)) {
-                    setOpenMenus(prev => [...prev, item.name]);
+        const findAndOpenParent = (items: MenuItem[]) => {
+            items.forEach(item => {
+                if (item.children?.some(child => pathname.startsWith(child.path))) {
+                    if (!openMenus.includes(item.name)) {
+                        setOpenMenus(prev => [...prev, item.name]);
+                    }
                 }
-            }
-        });
-    }, [pathname]);
+                if (item.children) findAndOpenParent(item.children);
+            });
+        };
+        findAndOpenParent(menuItems);
+    }, [pathname, menuItems]);
 
     const toggleMenu = (name: string) => {
         setOpenMenus(prev =>
@@ -91,7 +90,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         );
     };
 
-    const renderItem = (item: SidebarItem, isChild = false) => {
+    const renderItem = (item: MenuItem, isChild = false) => {
         const hasChildren = item.children && item.children.length > 0;
         const isOpen = openMenus.includes(item.name);
         const isActive = item.path === '/admin'
@@ -138,7 +137,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         );
 
         return (
-            <div key={item.name} className="w-full">
+            <div key={item.id || item.name} className="w-full">
                 {hasChildren ? (
                     <div>
                         {content}
@@ -162,18 +161,33 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
 
     return (
         <div className="w-[260px] h-full bg-[#111827] flex flex-col rounded-lg border-r border-white/5 transition-all duration-300">
-
-
-            {/* Navigation */}
             <div className="flex-1 overflow-y-auto pt-5 px-2 no-scrollbar">
-                <nav className="space-y-1">
-                    {sections.map(section => renderItem(section))}
-                </nav>
+                {isLoading ? (
+                    <div className="space-y-4 px-4">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="h-10 bg-white/5 rounded-xl animate-pulse"></div>
+                        ))}
+                    </div>
+                ) : (
+                    <nav className="space-y-1">
+                        {menuItems.length > 0 ? (
+                            menuItems.map(item => renderItem(item))
+                        ) : (
+                            <div className="px-4 py-8 text-center space-y-2">
+                                <Icon icon="solar:shield-warning-linear" className="w-8 h-8 text-zinc-600 mx-auto" />
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-tight">
+                                    Access not granted<br />
+                                    <span className="text-[8px] font-medium lowercase tracking-normal">Please configure menus in backend</span>
+                                </p>
+                            </div>
+                        )}
+                    </nav>
+                )}
             </div>
 
             {/* User Profile / Logout */}
             <div className="p-4 border-t border-white/5">
-                <div className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 shadow-sm">
+                <div className="cursor-pointer hover:bg-red-500/60 transition-all flex items-center justify-between bg-red-700 p-3 rounded-2xl border border-white/5 shadow-sm" onClick={() => setIsLogoutDialogOpen(true)}>
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden border border-white/10">
                             <img
@@ -184,14 +198,14 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-[11px] font-bold text-white truncate max-w-[100px]">
-                                {user?.email?.split('@')[0] || 'Admin'}
+                                {user?.email || 'Admin'}
                             </span>
-                            <span className="text-[9px] text-zinc-500 font-medium uppercase tracking-wider">Administrator</span>
+                            <span className="text-[9px] text-zinc-300 font-medium uppercase tracking-wider">{user?.role?.name || 'Administrator'}</span>
                         </div>
                     </div>
                     <button
-                        onClick={() => setIsLogoutDialogOpen(true)}
-                        className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+
+                        className="p-2 text-zinc-300 hover:text-white hover:bg-red-900/30 rounded-xl transition-all cursor-pointer"
                     >
                         <LogOut className="w-4 h-4" />
                     </button>
