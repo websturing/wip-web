@@ -46,7 +46,6 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         {
             title: 'Sewing - Production',
             items: [
-<<<<<<< Updated upstream
                 { name: 'Production Output', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
                 { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-bold-duotone', badge: null },
                 { name: 'Productivity', path: '/admin/productivity', icon: 'solar:graph-up-bold-duotone', badge: null }
@@ -75,21 +74,13 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             items: [
                 { name: 'Operation Breakdown', path: '/admin/ielayout', icon: 'solar:layers-broken', badge: null },
                 { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
-=======
-                { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-broken', badge: null },
-                { name: 'Lines', path: '/admin/glnumber', icon: 'solar:tablet-broken', badge: null }
->>>>>>> Stashed changes
             ],
-            badgeSection: '404'
+            badgeSection: 'IE'
         },
         {
             title: 'System Management',
             items: [
-<<<<<<< Updated upstream
                 { name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-bold-duotone', badge: null },
-=======
-                { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
->>>>>>> Stashed changes
             ],
             badgeSection: 'ADMIN'
         },
@@ -101,8 +92,6 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             badgeSection: 'SELF'
         }
     ];
-
-
 
     return (
         <div className="w-[240px] h-full bg-[#111827] rounded-[1rem] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300 border-r border-white/5">
@@ -127,7 +116,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         <div key={sIdx} className="mb-4">
                             {section.title && (
                                 <div className="px-4 py-1 flex items-center justify-between group cursor-default">
-                                    <span className="text-[11px] font-black text-zinc-500 uppercase  leading-none transition-colors group-hover:text-zinc-500">
+                                    <span className="text-[11px] font-black text-zinc-500 uppercase leading-none transition-colors group-hover:text-zinc-500">
                                         {section.title}
                                     </span>
                                     {section.badgeSection && (
@@ -154,7 +143,6 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                                     : 'text-zinc-400 hover:bg-zinc-800/30 hover:text-zinc-100'
                                             )}
                                         >
-<<<<<<< Updated upstream
                                             <div className="flex items-center gap-2.5">
                                                 <Icon
                                                     icon={item.icon}
@@ -164,17 +152,6 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                                     )}
                                                 />
                                                 <span className="text-[11px] tracking-tight font-medium uppercase">{item.name}</span>
-=======
-                                            <div className="flex items-center gap-2.5 md:gap-3">
-                                                <Icon
-                                                    icon={item.icon}
-                                                    className={cn(
-                                                        "w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110",
-                                                        isActive ? 'text-orange-400' : 'text-zinc-400'
-                                                    )}
-                                                />
-                                                <span className="text-[11px] md:text-[12px] tracking-tight">{item.name}</span>
->>>>>>> Stashed changes
                                             </div>
 
                                             {item.badge && (

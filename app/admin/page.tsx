@@ -59,7 +59,6 @@ export default function AdminDashboard() {
                     </div>
                 </Toast>
 
-<<<<<<< Updated upstream
                 {/* Professional Loading Overlay */}
                 {isLoading && (
                     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/60 backdrop-blur-[4px] animate-in fade-in duration-300">
@@ -94,47 +93,48 @@ export default function AdminDashboard() {
                                 <span className="text-indigo-600">Home</span>
                             </div>
                         </div>
-=======
-                {/* Main Welcome Message */}
-                <div className="mb-10 md:mb-12">
-                    <h1 className="text-2xl md:text-3xl lg:text-[2.2rem] font-bold text-zinc-900 tracking-tight mb-2">
-                        Welcome Back, <span className="text-zinc-800">{user?.email || 'admin@admin.com'}</span>
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                        <span className="text-[10px] md:text-xs font-bold text-zinc-400">You have</span>
-                        <div className="flex flex-wrap gap-2">
-                            {roles.map((role, i) => (
-                                <span
-                                    key={i}
-                                    className={`px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${i === 0
-                                        ? 'bg-green-100/50 text-green-700 border border-green-200'
-                                        : 'bg-teal-100/50 text-teal-700 border border-teal-200'
-                                        }`}
-                                >
-                                    {role}
-                                </span>
-                            ))}
-                        </div>
-                        <span className="text-[10px] md:text-xs font-bold text-zinc-400">roles</span>
-                    </div>
-                </div>
-
-                {/* Assigned Lines to match Image 1 */}
-                <div className="mb-12 md:mb-14">
-                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-4">Assigned Lines:</label>
-                    <div className="flex flex-wrap gap-2 items-center">
-                        {assignedLines.slice(0, 3).map((line, i) => (
-                            <div key={i} className="px-3 md:px-4 py-1.5 md:py-2 bg-white rounded-xl border border-zinc-100 shadow-sm flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
-                                <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-blue-500"></span>
-                                <span className="text-[11px] md:text-xs font-bold text-zinc-900">{line}</span>
-                            </div>
-                        ))}
-                        <span className="text-[11px] md:text-xs font-bold text-blue-600 pl-2 md:pl-4">+17 more</span>
->>>>>>> Stashed changes
                     </div>
                 </div>
 
                 <div className="px-8 max-w-[1600px] mx-auto">
+                    {/* Main Welcome Message */}
+                    <div className="mb-10 md:mb-12">
+                        <h1 className="text-2xl md:text-3xl lg:text-[2.2rem] font-bold text-zinc-900 tracking-tight mb-2">
+                            Welcome Back, <span className="text-zinc-800">{user?.email || 'admin@admin.com'}</span>
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                            <span className="text-[10px] md:text-xs font-bold text-zinc-400">You have</span>
+                            <div className="flex flex-wrap gap-2">
+                                {roles.map((role, i) => (
+                                    <span
+                                        key={i}
+                                        className={`px-2.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${i === 0
+                                            ? 'bg-green-100/50 text-green-700 border border-green-200'
+                                            : 'bg-teal-100/50 text-teal-700 border border-teal-200'
+                                            }`}
+                                    >
+                                        {role}
+                                    </span>
+                                ))}
+                            </div>
+                            <span className="text-[10px] md:text-xs font-bold text-zinc-400">roles</span>
+                        </div>
+                    </div>
+
+                    {/* Assigned Lines */}
+                    <div className="mb-12 md:mb-14">
+                        <label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-4">Assigned Lines:</label>
+                        <div className="flex flex-wrap gap-2 items-center">
+                            {assignedLines.slice(0, 3).map((line, i) => (
+                                <div key={i} className="px-3 md:px-4 py-1.5 md:py-2 bg-white rounded-xl border border-zinc-100 shadow-sm flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                                    <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-blue-500"></span>
+                                    <span className="text-[11px] md:text-xs font-bold text-zinc-900">{line}</span>
+                                </div>
+                            ))}
+                            <span className="text-[11px] md:text-xs font-bold text-blue-600 pl-2 md:pl-4">+17 more</span>
+                        </div>
+                    </div>
+
                     {/* Top 6 Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div className="bg-white p-6 rounded-lg border border-zinc-200 flex items-center justify-between shadow-sm">
@@ -199,9 +199,6 @@ export default function AdminDashboard() {
                                                     {(stats?.output_chart?.reduce((a: any, b: any) => a + Number(b.total_output), 0) || 0).toLocaleString()}
                                                 </h3>
                                             </div>
-                                            <div className="flex items-center gap-1.5 mt-2">
-
-                                            </div>
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-1.5 mt-2">
@@ -215,7 +212,6 @@ export default function AdminDashboard() {
                                                     {(stats?.output_chart?.reduce((a: any, b: any) => a + Number(b.total_input), 0) || 0).toLocaleString()}
                                                 </h3>
                                             </div>
-
                                         </div>
                                     </div>
 
@@ -377,7 +373,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Recent Activity Ledger - Full Width bottom tidy up */}
+                        {/* Recent Activity Ledger */}
                         <div className="lg:col-span-12 mt-4">
                             <div className="grid grid-cols-12 gap-4">
                                 <div className="lg:col-span-3 space-y-6">

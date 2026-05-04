@@ -36,7 +36,6 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
     }, []);
 
     return (
-<<<<<<< Updated upstream
         <header className="h-14 flex items-center justify-between px-4 z-40 bg-white border-b border-zinc-100 transition-all w-full select-none sticky top-0">
             {/* Left: Brand + Toggle */}
             <div className="flex items-center gap-3">
@@ -60,19 +59,6 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
             <div className="hidden md:flex items-center bg-blue-50/50 border border-blue-100/50 px-4 py-1.5 rounded-full">
                 <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse mr-2.5"></div>
                 <span className="text-[12px] font-black font-mono text-blue-900 tracking-tighter">
-=======
-        <header className="h-[52px] flex items-center justify-between pt-2 px-3 z-40 transition-all w-full">
-
-            <div className="flex items-center gap-2 md:gap-3">
-                <div className="bg-blue-600 p-1 md:p-1.5 rounded font-black text-[9px] md:text-[10px] text-white">W</div>
-                <span className="font-black text-[10px] md:text-xs uppercase tracking-widest leading-none">WIP Administrator</span>
-            </div>
-
-
-            <div className="flex items-center gap-4 lg:gap-12 bg-gray-200 p-2 rounded-lg">
-                {/* Clock matching Image 1 position */}
-                <span className="text-[10px] md:text-[11px] lg:text-[12px] font-bold font-mono tracking-tighter whitespace-nowrap hidden md:inline-block">
->>>>>>> Stashed changes
                     {dateTime}
                 </span>
             </div>
@@ -85,7 +71,6 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
                     <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></div>
                 </div>
 
-<<<<<<< Updated upstream
                 <div className="h-8 w-px bg-zinc-100 hidden sm:block mx-1"></div>
 
                 {/* User Profile */}
@@ -96,12 +81,6 @@ export const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
                         </span>
                         <span className="text-[9px] font-black text-orange-500 bg-orange-50 px-1 rounded uppercase tracking-widest leading-none py-0.5">
                             Admin
-=======
-                <div className="flex items-center gap-3 lg:gap-4 cursor-pointer group">
-                    <div className="flex flex-col items-end">
-                        <span className="text-[10px] md:text-[11px] lg:text-[12px] font-bold md:font-black text-zinc-900 group-hover:text-blue-600 transition-colors tracking-tight truncate max-w-[100px] sm:max-w-none">
-                            {user?.email || 'admin@admin.com'}
->>>>>>> Stashed changes
                         </span>
                     </div>
                     <div className="relative h-9 w-9 rounded-full ring-2 ring-transparent group-hover:ring-blue-100 transition-all p-0.5 overflow-hidden shadow-sm">
