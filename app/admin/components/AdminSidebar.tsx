@@ -46,6 +46,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         {
             title: 'Sewing - Production',
             items: [
+<<<<<<< Updated upstream
                 { name: 'Production Output', path: '/admin/production', icon: 'solar:chart-2-bold-duotone', badge: null },
                 { name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-bold-duotone', badge: null },
                 { name: 'Productivity', path: '/admin/productivity', icon: 'solar:graph-up-bold-duotone', badge: null }
@@ -74,13 +75,21 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             items: [
                 { name: 'Operation Breakdown', path: '/admin/ielayout', icon: 'solar:layers-broken', badge: null },
                 { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
+=======
+                { name: 'Production', path: '/admin/production', icon: 'solar:chart-2-broken', badge: null },
+                { name: 'Lines', path: '/admin/glnumber', icon: 'solar:tablet-broken', badge: null }
+>>>>>>> Stashed changes
             ],
             badgeSection: '404'
         },
         {
             title: 'System Management',
             items: [
+<<<<<<< Updated upstream
                 { name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-bold-duotone', badge: null },
+=======
+                { name: 'Leaders', path: '/admin/leaders', icon: 'solar:user-rounded-bold-duotone', badge: null },
+>>>>>>> Stashed changes
             ],
             badgeSection: 'ADMIN'
         },
@@ -145,6 +154,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                                     : 'text-zinc-400 hover:bg-zinc-800/30 hover:text-zinc-100'
                                             )}
                                         >
+<<<<<<< Updated upstream
                                             <div className="flex items-center gap-2.5">
                                                 <Icon
                                                     icon={item.icon}
@@ -154,6 +164,17 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                                     )}
                                                 />
                                                 <span className="text-[11px] tracking-tight font-medium uppercase">{item.name}</span>
+=======
+                                            <div className="flex items-center gap-2.5 md:gap-3">
+                                                <Icon
+                                                    icon={item.icon}
+                                                    className={cn(
+                                                        "w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110",
+                                                        isActive ? 'text-orange-400' : 'text-zinc-400'
+                                                    )}
+                                                />
+                                                <span className="text-[11px] md:text-[12px] tracking-tight">{item.name}</span>
+>>>>>>> Stashed changes
                                             </div>
 
                                             {item.badge && (

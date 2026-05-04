@@ -8,39 +8,31 @@ import { Select } from '@/app/components/ui/Select';
 import { useAcl } from '@/hooks/useAcl';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { AclService } from '../services/AclService';
+import { useState } from 'react';
+import { useAclManagement } from '../hooks/useAclManagement';
 
 export const AclPage = () => {
     const router = useRouter();
     const { hasPermission, isLoading: isAclLoading } = useAcl();
     const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
-    const [users, setUsers] = useState<any[]>([]);
-    const [roles, setRoles] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    // User Form State
-    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<any>(null);
-    const [userForm, setUserForm] = useState({
-        name: '',
-        email: '',
-        password: '',
-        role_id: ''
-    });
-
-    // Delete confirmation
-    const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string | null; type: 'user' | 'role' }>({
-        open: false,
-        id: null,
-        type: 'user'
-    });
-
-    useEffect(() => {
-        if (hasPermission('acl.read')) {
-            fetchData();
-        }
-    }, [hasPermission]);
+    const {
+        users,
+        roles,
+        isLoading,
+        isUserModalOpen,
+        editingUser,
+        userForm,
+        confirmDelete,
+        handleSync,
+        openUserModal,
+        closeUserModal,
+        handleSaveUser,
+        openDeleteConfirmation,
+        handleDelete,
+        updateUserForm,
+        setConfirmDelete
+    } = useAclManagement();
 
     if (isAclLoading) return null;
 
@@ -67,73 +59,8 @@ export const AclPage = () => {
         );
     }
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [usersRes, rolesRes] = await Promise.all([
-                AclService.getUsers(),
-                AclService.getRoles()
-            ]);
-            setUsers(usersRes?.data || []);
-            setRoles(rolesRes?.data || []);
-        } catch (error) {
-            console.error('Failed to fetch ACL data:', error);
-            setUsers([]);
-            setRoles([]);
-        } finally {
-            setTimeout(() => setIsLoading(false), 800);
-        }
-    };
-
-    const handleSaveUser = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            if (editingUser) {
-                await AclService.updateUser(editingUser.id, userForm);
-            } else {
-                await AclService.createUser(userForm);
-            }
-            setIsUserModalOpen(false);
-            setEditingUser(null);
-            setUserForm({ name: '', email: '', password: '', role_id: '' });
-            fetchData();
-        } catch (error) {
-            console.error('Failed to save user:', error);
-            alert('Error saving user');
-        }
-    };
-
-    const handleSync = async () => {
-        setIsLoading(true);
-        try {
-            await AclService.syncPermissions();
-            await fetchData();
-        } catch (error) {
-            console.error('Failed to sync permissions:', error);
-            alert('Error syncing permissions');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        if (!confirmDelete.id) return;
-        try {
-            if (confirmDelete.type === 'user') {
-                await AclService.deleteUser(confirmDelete.id);
-            } else {
-                await AclService.deleteRole(confirmDelete.id);
-            }
-            setConfirmDelete({ open: false, id: null, type: 'user' });
-            fetchData();
-        } catch (error) {
-            console.error(`Failed to delete ${confirmDelete.type}:`, error);
-            alert(`Error deleting ${confirmDelete.type}`);
-        }
-    };
-
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 relative">
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 relative">
 
             {/* Loading Overlay */}
             {isLoading && (
@@ -197,11 +124,7 @@ export const AclPage = () => {
                             <h3 className="text-lg font-black text-zinc-900 uppercase tracking-tight">Active Users</h3>
                         </div>
                         <Button
-                            onClick={() => {
-                                setEditingUser(null);
-                                setUserForm({ name: '', email: '', password: '', role_id: '' });
-                                setIsUserModalOpen(true);
-                            }}
+                            onClick={() => openUserModal()}
                             className="bg-zinc-900 text-white rounded-2xl h-11 px-6 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-zinc-200"
                         >
                             <Icon icon="solar:user-plus-bold-duotone" className="w-4 h-4" />
@@ -239,22 +162,13 @@ export const AclPage = () => {
                                         <td className="px-8 py-4">
                                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
-                                                    onClick={() => {
-                                                        setEditingUser(user);
-                                                        setUserForm({
-                                                            name: user.name,
-                                                            email: user.email,
-                                                            password: '',
-                                                            role_id: user.role_id?.toString() || ''
-                                                        });
-                                                        setIsUserModalOpen(true);
-                                                    }}
+                                                    onClick={() => openUserModal(user)}
                                                     className="w-9 h-9 rounded-xl bg-zinc-50 text-zinc-400 hover:bg-zinc-900 hover:text-white flex items-center justify-center transition-all active:scale-90"
                                                 >
                                                     <Icon icon="solar:pen-bold-duotone" className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setConfirmDelete({ open: true, id: user.id, type: 'user' })}
+                                                    onClick={() => openDeleteConfirmation(user.id, 'user')}
                                                     className="w-9 h-9 rounded-xl bg-zinc-50 text-zinc-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all active:scale-90"
                                                 >
                                                     <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-4 h-4" />
@@ -301,7 +215,7 @@ export const AclPage = () => {
                                                     <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setConfirmDelete({ open: true, id: role.id, type: 'role' })}
+                                                    onClick={() => openDeleteConfirmation(role.id, 'role')}
                                                     className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-400 hover:bg-red-500 hover:text-white transition-all"
                                                 >
                                                     <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
@@ -339,7 +253,7 @@ export const AclPage = () => {
             )}
 
             {/* User Modal */}
-            <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
+            <Dialog open={isUserModalOpen} onOpenChange={closeUserModal}>
                 <DialogPortal>
                     <DialogContent className="max-w-md">
                         <div className="p-8">
@@ -355,7 +269,7 @@ export const AclPage = () => {
                                         className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
                                         placeholder="Enter name..."
                                         value={userForm.name}
-                                        onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+                                        onChange={e => updateUserForm({ name: e.target.value })}
                                     />
                                 </div>
 
@@ -367,7 +281,7 @@ export const AclPage = () => {
                                         className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
                                         placeholder="user@example.com"
                                         value={userForm.email}
-                                        onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+                                        onChange={e => updateUserForm({ email: e.target.value })}
                                     />
                                 </div>
 
@@ -379,7 +293,7 @@ export const AclPage = () => {
                                         className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
                                         placeholder={editingUser ? "•••••••• (Leave blank to keep)" : "Enter password..."}
                                         value={userForm.password}
-                                        onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                                        onChange={e => updateUserForm({ password: e.target.value })}
                                     />
                                 </div>
 
@@ -387,13 +301,13 @@ export const AclPage = () => {
                                     label="Administrative Role"
                                     options={roles.map(r => ({ id: r.id.toString(), label: r.name }))}
                                     value={userForm.role_id}
-                                    onChange={val => setUserForm({ ...userForm, role_id: val.toString() })}
+                                    onChange={val => updateUserForm({ role_id: val.toString() })}
                                 />
 
                                 <div className="flex gap-4 mt-8 pt-4">
                                     <Button
                                         variant="ghost"
-                                        onClick={() => setIsUserModalOpen(false)}
+                                        onClick={closeUserModal}
                                         className="flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-500"
                                     >
                                         Cancel
@@ -413,7 +327,7 @@ export const AclPage = () => {
 
             <ConfirmationDialog
                 open={confirmDelete.open}
-                onOpenChange={(open) => setConfirmDelete({ ...confirmDelete, open })}
+                onOpenChange={(open) => setConfirmDelete((prev: any) => ({ ...prev, open }))}
                 title={`Delete ${confirmDelete.type === 'user' ? 'User Record' : 'Role'}?`}
                 description={
                     confirmDelete.type === 'role'
