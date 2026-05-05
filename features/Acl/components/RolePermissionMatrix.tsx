@@ -25,10 +25,11 @@ interface RolePermissionMatrixProps {
     permissionsByFeature: { feature: string; permissions: Permission[] }[];
     onSave: (roleId: number, permissions: string[]) => Promise<void>;
     onAddRole?: () => void;
+    onDeleteRole?: (id: string) => void;
     isLoading?: boolean;
 }
 
-export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAddRole, isLoading }: RolePermissionMatrixProps) => {
+export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAddRole, onDeleteRole, isLoading }: RolePermissionMatrixProps) => {
     const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
     const [draftPermissions, setDraftPermissions] = useState<Record<number, string[]>>({});
     const [isSaving, setIsSaving] = useState(false);
@@ -133,14 +134,27 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
                         key={role.id}
                         onClick={() => setSelectedRoleId(role.id)}
                         className={cn(
-                            "relative p-6 rounded-[2rem] border transition-all duration-300 cursor-pointer group",
+                            "relative p-6 rounded-[2rem] border transition-all duration-300 cursor-pointer group/card",
                             selectedRoleId === role.id
                                 ? "bg-white border-blue-600 shadow-xl shadow-blue-900/5 ring-4 ring-blue-50"
                                 : "bg-white border-zinc-100 hover:border-zinc-300 shadow-sm"
                         )}
                     >
+                        {/* Delete Action */}
+                        {role.name !== 'Administrator' && role.name !== 'Guest' && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteRole?.(role.id.toString());
+                                }}
+                                className="absolute top-6 right-6 w-9 h-9 rounded-xl bg-red-50 text-red-500 transition-all hover:bg-red-500 hover:text-white flex items-center justify-center z-10 shadow-sm border border-red-100"
+                            >
+                                <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-5 h-5" />
+                            </button>
+                        )}
+
                         <div className="flex justify-between items-start mb-4">
-                            <div className={cn(
+                            <div onClick={() => setSelectedRoleId(role.id)} className={cn(
                                 "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
                                 selectedRoleId === role.id ? "bg-blue-600 text-white" : "bg-zinc-50 text-zinc-400 group-hover:bg-zinc-100"
                             )}>

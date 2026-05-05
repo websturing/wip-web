@@ -28,7 +28,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     const pathname = usePathname();
     const { logout, user } = useAuth();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
-    const [openMenus, setOpenMenus] = useState<string[]>([]);
+    const [openMenus, setOpenMenus] = useState<string[]>(['Production']);
 
     // --- API-Driven Menu Fetching ---
     const { data: apiMenuItems = [], isLoading } = useQuery({
@@ -53,6 +53,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             children: [
                 { id: 'f3-1', name: 'Output', path: '/admin/production', icon: 'solar:chart-2-linear' },
                 { id: 'f3-2', name: 'Lines', path: '/admin/lines', icon: 'solar:tablet-linear' },
+                { id: 'f3-3', name: 'Productivity', path: '/admin/productivity', icon: 'solar:graph-up-linear' },
             ]
         },
         { id: 'f4', name: 'Industrial Eng.', path: '/admin/ielayout', icon: 'solar:layers-linear' },
