@@ -176,59 +176,73 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
                         <thead>
                             <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                 <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest w-1/2">Module & Feature</th>
-                                <th className="px-8 py-6 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Access Grant</th>
+                                <th className="px-8 py-6 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">CREATE</th>
+                                <th className="px-8 py-6 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">READ</th>
+                                <th className="px-8 py-6 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">UPDATE</th>
+                                <th className="px-8 py-6 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">DELETE</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-50">
-                            {permissionsByFeature.map((group) => (
-                                <div key={group.feature} className="contents">
-                                    <tr className="bg-zinc-50/30">
-                                        <td className="px-8 py-6 align-top">
-                                            <div className="flex flex-col gap-2">
-                                                <div className="text-[9px] leading-none opacity-0 select-none">SPACER</div>
+                            {permissionsByFeature.map((group) => {
+                                const getPerm = (actionType: string) =>
+                                    group.permissions.find(p => {
+                                        const act = p.action.toLowerCase();
+                                        if (actionType === 'read') return act.includes('read') || act.includes('view') || act.includes('show');
+                                        if (actionType === 'update') return act.includes('update') || act.includes('edit');
+                                        if (actionType === 'delete') return act.includes('delete') || act.includes('destroy');
+                                        return act.includes(actionType);
+                                    });
+
+                                return (
+                                    <div key={group.feature} className="contents">
+                                        <tr className="bg-zinc-50/30">
+                                            <td className="px-8 py-6 align-middle border-b border-zinc-100/50">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
                                                     <span className="text-[11px] font-black text-zinc-900 uppercase tracking-[0.15em]">{group.feature} Management</span>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6 align-top">
-                                            <div className="flex justify-start items-center gap-12">
-                                                {group.permissions.map((perm) => (
-                                                    <div key={perm.name} className="flex flex-col items-center gap-2 min-w-[64px]">
-                                                        <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-tighter opacity-60 leading-none">
-                                                            {perm.name}
-                                                        </p>
-                                                        <div className="">
-                                                            {selectedRoleId && roles.find(r => r.id === selectedRoleId)?.name === 'Administrator' ? (
-                                                                <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-300 border border-zinc-100">
-                                                                    <Icon icon="solar:lock-bold-duotone" className="w-5 h-5" />
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => selectedRoleId && handleTogglePermission(selectedRoleId, perm.name)}
-                                                                    className={cn(
-                                                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border",
-                                                                        selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name)
-                                                                            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200"
-                                                                            : "bg-white text-zinc-200 border-zinc-100 hover:border-zinc-300"
-                                                                    )}
-                                                                >
-                                                                    {selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name) ? (
-                                                                        <Icon icon="solar:check-read-bold" className="w-5 h-5 animate-in zoom-in duration-300" />
-                                                                    ) : (
-                                                                        <div className="w-2 h-2 rounded-full bg-zinc-100 group-hover:bg-zinc-200 transition-colors"></div>
-                                                                    )}
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </div>
-                            ))}
+                                            </td>
+
+                                            {['create', 'read', 'update', 'delete'].map((action) => {
+                                                const perm = getPerm(action);
+                                                return (
+                                                    <td key={action} className="px-8 py-6 align-middle border-b border-zinc-100/50">
+                                                        {perm ? (
+                                                            <div className="flex justify-start">
+                                                                {selectedRoleId && roles.find(r => r.id === selectedRoleId)?.name === 'Administrator' ? (
+                                                                    <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-300 border border-zinc-100">
+                                                                        <Icon icon="solar:lock-bold-duotone" className="w-5 h-5" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => selectedRoleId && handleTogglePermission(selectedRoleId, perm.name)}
+                                                                        className={cn(
+                                                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border",
+                                                                            selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name)
+                                                                                ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200"
+                                                                                : "bg-white text-zinc-200 border-zinc-100 hover:border-zinc-300"
+                                                                        )}
+                                                                    >
+                                                                        {selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name) ? (
+                                                                            <Icon icon="solar:check-read-bold" className="w-5 h-5 animate-in zoom-in duration-300" />
+                                                                        ) : (
+                                                                            <div className="w-2 h-2 rounded-full bg-zinc-100 group-hover:bg-zinc-200 transition-colors"></div>
+                                                                        )}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-xl bg-zinc-50/30 flex items-center justify-center border border-dashed border-zinc-100">
+                                                                <div className="w-1 h-1 rounded-full bg-zinc-100"></div>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    </div>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
