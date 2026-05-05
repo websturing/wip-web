@@ -11,9 +11,9 @@ import { useAcl } from '@/hooks/useAcl';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useAclManagement } from '../hooks/useAclManagement';
 import { RolePermissionMatrix } from '../components/RolePermissionMatrix';
 import { UserManagement } from '../components/UserManagement';
+import { useAclManagement } from '../hooks/useAclManagement';
 
 export const AclPage = () => {
     const router = useRouter();
@@ -211,9 +211,9 @@ export const AclPage = () => {
                                                 <span className={cn(
                                                     "px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border",
                                                     perm.action === 'read' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                                                    perm.action === 'update' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                                                    perm.action === 'delete' ? "bg-red-50 text-red-600 border-red-100" :
-                                                    "bg-indigo-50 text-indigo-600 border-indigo-100"
+                                                        perm.action === 'update' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                                            perm.action === 'delete' ? "bg-red-50 text-red-600 border-red-100" :
+                                                                "bg-indigo-50 text-indigo-600 border-indigo-100"
                                                 )}>
                                                     {perm.action}
                                                 </span>
@@ -317,7 +317,7 @@ export const AclPage = () => {
             {/* Role Modal */}
             <Dialog open={isRoleModalOpen} onOpenChange={closeRoleModal}>
                 <DialogPortal>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-4xl bg-white">
                         <div className="p-8">
                             <h2 className="text-2xl font-black text-zinc-900 uppercase tracking-tight mb-8">
                                 {editingRole ? 'Modify Access Role' : 'Create Access Level'}
@@ -352,7 +352,7 @@ export const AclPage = () => {
                                         <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Access Grants</label>
                                         <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{roleForm.permissions.length} Permissions Selected</span>
                                     </div>
-                                    
+
                                     <div className="bg-zinc-50 rounded-[2rem] border border-zinc-100 p-6 max-h-[300px] overflow-y-auto no-scrollbar space-y-6">
                                         {permissions.map((group: any) => (
                                             <div key={group.feature} className="space-y-3">
@@ -362,7 +362,7 @@ export const AclPage = () => {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     {group.permissions.map((perm: any) => (
-                                                        <div 
+                                                        <div
                                                             key={perm.id}
                                                             onClick={() => togglePermissionInRoleForm(perm.name)}
                                                             className={cn(
