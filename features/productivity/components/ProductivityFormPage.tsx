@@ -91,8 +91,9 @@ export const ProductivityFormPage = () => {
             ProductivityService.getById(id).then(res => {
                 if (res.status === 'success' && res.data) {
                     const item = res.data;
-                    const configs = item.lots ? item.lots.map((l: any) => ({
-                        lot_id: l.id,
+                    // Re-combine lots that have identical pivot values (indicating they were a combined unit)
+                    const rawConfigs = item.lots ? item.lots.map((l: any) => ({
+                        lot_id: String(l.id),
                         label: `${l.gl_group?.gl_number || ''} / ${(l.lot_code || '').replace(/^0+/, '')}`,
                         smv: parseFloat(l.pivot?.smv || 0),
                         last_step: parseFloat(l.pivot?.last_step || 0),
@@ -107,12 +108,25 @@ export const ProductivityFormPage = () => {
                         media_url: l.pivot?.media_url || l.pivot?.media?.url
                     })) : [];
 
+                    // Group by pivot values hash
+                    const grouped: Record<string, any> = {};
+                    rawConfigs.forEach((c: any) => {
+                        const hash = `${c.smv}-${c.last_step}-${c.target_plan}-${c.manpower}-${c.plan_manpower}-${c.sewer}-${c.working_hour}-${c.section}-${c.media_id}`;
+                        if (!grouped[hash]) {
+                            grouped[hash] = { ...c };
+                        } else {
+                            grouped[hash].lot_id += `,${c.lot_id}`;
+                            grouped[hash].label += ` + ${c.label}`;
+                        }
+                    });
+                    const configs = Object.values(grouped);
+
                     setFormData({
                         id: item.id,
                         line_id: item.line_id,
                         date: item.date ? (typeof item.date === 'string' ? item.date.split('T')[0] : new Date(item.date).toISOString().split('T')[0]) : '',
                         sewer: parseFloat(item.sewer || 0),
-                        lot_configs: configs
+                        lot_configs: configs as LotConfig[]
                     });
                     setLastSynced({
                         line_id: item.line_id,
@@ -135,12 +149,13 @@ export const ProductivityFormPage = () => {
                 if (res.status === 'success') {
                     const lineOutput = res.data.filter((p: any) => String(p.line_id) === String(formData.line_id));
 
-                    const lotSectionPairs = lineOutput.flatMap((p: any) =>
-                        p.items?.map((i: any) => ({
-                            lot_id: String(i.lot_id),
-                            section: i.section || 'all'
-                        }))
-                    ).filter(Boolean);
+                    const lotSectionPairs = lineOutput.flatMap((p: any) => {
+                        const items = p.items || [];
+                        return items.flatMap((i: any) => [
+                            { lot_id: String(i.lot_id), section: i.section || 'all' },
+                            { lot_id: String(i.lot_id), section: 'offline' }
+                        ]);
+                    }).filter(Boolean);
 
                     const uniquePairs = Array.from(
                         new Set(lotSectionPairs.map((p: any) => JSON.stringify(p)))
@@ -156,7 +171,8 @@ export const ProductivityFormPage = () => {
                         p.items?.forEach((i: any) => {
                             const key = `${i.lot_id}|${i.section || 'all'}`;
                             const qty = (i.details || []).reduce((s: number, d: any) => s + (Number(d.qty_output) || 0), 0);
-                            outputSummary[key] = (outputSummary[key] || 0) + qty;
+                            // Use max instead of sum for productivity sync if needed
+                            outputSummary[key] = Math.max(outputSummary[key] || 0, qty);
                         });
                     });
 
@@ -264,7 +280,7 @@ export const ProductivityFormPage = () => {
                 plan_sewer: 0,
                 working_hour: toMerge[0].working_hour,
                 section: toMerge[0].section || 'all',
-                actual_output: toMerge.reduce((sum, c) => sum + (Number(c.actual_output) || 0), 0),
+                actual_output: Math.max(...toMerge.map(c => Number(c.actual_output) || 0)),
                 media_id: toMerge[0].media_id,
                 media_url: toMerge[0].media_url
             };
@@ -553,7 +569,21 @@ export const ProductivityFormPage = () => {
                                     </div>
                                 )}
 
-                                <div className="absolute top-0 right-0 p-6 z-10">
+                                <div className="absolute top-0 right-0 p-6 z-10 flex gap-2">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newConfig = { ...config };
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                lot_configs: [...prev.lot_configs, newConfig]
+                                            }));
+                                        }}
+                                        title="Duplicate Unit (for different workstation)"
+                                        className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm border border-blue-100"
+                                    >
+                                        <Icon icon="solar:copy-bold" className="w-5 h-5" />
+                                    </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();

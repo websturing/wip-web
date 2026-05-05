@@ -292,27 +292,24 @@ export const Productivity = () => {
                                                         ).filter(Boolean)
                                                     )).join(' / ');
 
-                                                    const lotOutput = lotGroup.reduce((sum, l) => {
-                                                        const targetSection = (firstLot.pivot?.section || 'ALL').toUpperCase();
-                                                        return sum + productionData
+                                                    const lotOutputs = lotGroup.map(l => {
+                                                        return productionData
                                                             .filter(p => String(p.line_id) === String(item.line_id))
                                                             .flatMap(p => p.items || [])
-                                                            .filter(pi => {
-                                                                const isSameLot = String(pi.lot_id) === String(l.id);
-                                                                const piSection = (pi.section || 'ALL').toUpperCase();
-
-                                                                if (!isSameLot) return false;
-
-                                                                // If productivity is set to OFFLINE, the user said "gausah dihitung"
-                                                                if (targetSection === 'OFFLINE') return false;
-
-                                                                // If productivity is set to ALL or INLINE, count only ALL or INLINE production items
-                                                                // (exclude OFFLINE and OUTLINE if they are different)
-                                                                // Actually the request specifically mentions: "hitung yang inline dan ALL aja"
-                                                                return piSection === 'INLINE' || piSection === 'ALL';
-                                                            })
+                                                            .filter(pi => String(pi.lot_id) === String(l.id))
                                                             .reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
-                                                    }, 0);
+                                                    });
+
+                                                    const lotOfflineOutputs = lotGroup.map(l => {
+                                                        return productionData
+                                                            .filter(p => String(p.line_id) === String(item.line_id))
+                                                            .flatMap(p => p.items || [])
+                                                            .filter(pi => String(pi.lot_id) === String(l.id) && (pi.section || '').toUpperCase() === 'OFFLINE')
+                                                            .reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
+                                                    });
+
+                                                    const lotOutput = Math.max(0, ...lotOutputs);
+                                                    const lotOfflineOutput = Math.max(0, ...lotOfflineOutputs);
 
                                                     const smv = Number(firstLot.pivot?.smv || item.smv || 0);
                                                     const mp = Number(item.manpower || 0);
@@ -362,7 +359,16 @@ export const Productivity = () => {
                                                                     <td className="px-3 py-2 text-center text-zinc-400">{wh}H</td>
                                                                     <td className="px-3 py-2 text-center text-zinc-400">{smv}</td>
                                                                     <td className="px-3 py-2 text-center font-bold">{tgtAct}</td>
-                                                                    <td className="px-3 py-2 text-center font-black text-blue-700">{lotOutput}</td>
+                                                                    <td className="px-3 py-2 text-center">
+                                                                        <div className="flex flex-col items-center">
+                                                                            <span className="font-black text-blue-700 leading-none">{lotOutput}</span>
+                                                                            {lotOfflineOutput > 0 && (
+                                                                                <span className="text-[7px] font-black text-orange-500 mt-1 uppercase tracking-tighter">
+                                                                                    (Off: {lotOfflineOutput})
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
                                                                     <td className="px-3 py-2 text-center">
                                                                         <span className={cn("px-1.5 py-0.5 rounded-[4px] text-[7px] font-black", (tgtAct > 0 ? (lotOutput / tgtAct) * 100 : 0) >= 100 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
                                                                             {tgtAct > 0 ? Math.round((lotOutput / tgtAct) * 100) : 0}%
@@ -425,7 +431,16 @@ export const Productivity = () => {
                                                                 <td className="px-2 py-2 text-center font-black text-emerald-600 bg-zinc-50/50">{tgtPln}</td>
                                                                 <td className="px-2 py-2 text-center font-black text-blue-600">{mp + sew}</td>
                                                                 <td className="px-2 py-2 text-center font-black bg-zinc-50/50">{tgtAct}</td>
-                                                                <td className="px-2 py-2 text-center font-black text-blue-700">{lotOutput}</td>
+                                                                <td className="px-2 py-2 text-center">
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span className="font-black text-blue-700 leading-none">{lotOutput}</span>
+                                                                        {lotOfflineOutput > 0 && (
+                                                                            <span className="text-[7px] font-black text-orange-500 mt-1 uppercase tracking-tighter">
+                                                                                (Off: {lotOfflineOutput})
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
                                                                 <td className="px-2 py-2 text-center font-black text-orange-500">{lastStep}</td>
                                                                 <td className={cn("px-2 py-2 text-center font-black", (lastStep - lotOutput) < 0 ? "text-emerald-500" : "text-amber-500")}>{lastStep - lotOutput}</td>
                                                                 <td className={cn("px-2 py-2 text-center font-black border-l", (lotOutput - tgtAct) < 0 ? "text-red-500" : "text-emerald-600")}>{lotOutput - tgtAct > 0 ? `+${lotOutput - tgtAct}` : (lotOutput - tgtAct)}</td>
