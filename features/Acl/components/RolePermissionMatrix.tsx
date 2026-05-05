@@ -197,10 +197,18 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
                                     <div key={group.feature} className="contents">
                                         <tr className="bg-zinc-50/30">
                                             <td className="px-8 py-6 align-middle border-b border-zinc-100/50">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 mb-3">
                                                     <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
                                                     <span className="text-[11px] font-black text-zinc-900 uppercase tracking-[0.15em]">{group.feature} Management</span>
                                                 </div>
+                                                <div className="flex flex-wrap gap-1.5 max-w-[400px]">
+                                                    {group.permissions.map((perm) => (
+                                                        <span key={perm.id} className="px-2 py-0.5 bg-zinc-50 border border-zinc-100 rounded-md text-[8px] font-bold text-zinc-400 uppercase tracking-tight">
+                                                            {perm.label}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
                                             </td>
 
                                             {['create', 'read', 'update', 'delete'].map((action) => {
@@ -248,47 +256,6 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
                 </div>
             </div>
 
-            {/* Footer Widget Style Image */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-zinc-100 p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[12px] font-black text-zinc-900 uppercase tracking-widest">Authorization Flow</h3>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded-full">Live Logs</span>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex gap-4 p-4 rounded-2xl bg-zinc-50/50 border border-zinc-50">
-                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-600">
-                                <Icon icon="solar:user-check-bold-duotone" className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <p className="text-[11px] font-bold text-zinc-900"><span className="text-blue-600">Super Admin</span> modified the <span className="font-black">Editor</span> role configuration.</p>
-                                <p className="text-[9px] text-zinc-400 mt-0.5">2 minutes ago</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4 p-4 rounded-2xl bg-zinc-50/50 border border-zinc-50">
-                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-zinc-400">
-                                <Icon icon="solar:history-bold-duotone" className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <p className="text-[11px] font-bold text-zinc-900"><span className="text-zinc-500 font-black">System</span> auto-locked <span className="font-black">Admin</span> role permissions.</p>
-                                <p className="text-[9px] text-zinc-400 mt-0.5">1 hour ago</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-200 flex flex-col justify-between">
-                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 mb-6">
-                        <Icon icon="solar:shield-warning-bold-duotone" className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black uppercase tracking-tight mb-2">Role Lockdown Active</h3>
-                        <p className="text-[11px] text-blue-100 leading-relaxed mb-6 opacity-80 font-medium">Critical roles like 'Admin' are currently in managed state. Direct modifications require MFA verification.</p>
-                        <button className="w-full h-12 bg-white text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                            Request Access
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
