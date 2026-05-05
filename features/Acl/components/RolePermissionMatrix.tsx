@@ -1,9 +1,9 @@
 'use client';
 
+import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
 import { cn } from '@/lib/utils';
-import { useState, useMemo, useEffect } from 'react';
-import { Button } from '@/app/components/ui/Button';
+import { useEffect, useMemo, useState } from 'react';
 
 interface Permission {
     id: number;
@@ -40,7 +40,7 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
             initialDraft[role.id] = role.permissions.map(p => p.name);
         });
         setDraftPermissions(initialDraft);
-        
+
         if (roles.length > 0 && !selectedRoleId) {
             setSelectedRoleId(roles[0].id);
         }
@@ -81,7 +81,7 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
         if (!selectedRoleId) return false;
         const role = roles.find(r => r.id === selectedRoleId);
         if (!role) return false;
-        
+
         const original = role.permissions.map(p => p.name).sort().join(',');
         const current = (draftPermissions[selectedRoleId] || []).sort().join(',');
         return original !== current;
@@ -90,14 +90,17 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-zinc-100 shadow-sm">
+            <div className={cn(
+                "flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-zinc-100 shadow-sm transition-all duration-500",
+                hasChanges ? "sticky top-[-20px] z-50 shadow-2xl shadow-blue-900/10 border-blue-100 ring-4 ring-blue-50/30" : "relative"
+            )}>
                 <div>
                     <h2 className="text-xl font-black text-zinc-900 uppercase tracking-tight">Role & Permission Matrix</h2>
                     <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">Configure granular access levels for enterprise modules.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button 
-                        variant="ghost" 
+                    <Button
+                        variant="ghost"
                         onClick={handleReset}
                         disabled={!hasChanges || isSaving}
                         className="h-12 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest text-zinc-400 hover:text-zinc-900"
@@ -105,7 +108,7 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
                         <Icon icon="solar:restart-bold-duotone" className="w-4 h-4 mr-2" />
                         Reset
                     </Button>
-                    <Button 
+                    <Button
                         onClick={handleSave}
                         disabled={!hasChanges || isSaving}
                         className={cn(
@@ -126,13 +129,13 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
             {/* Role Selection Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {roles.map(role => (
-                    <div 
+                    <div
                         key={role.id}
                         onClick={() => setSelectedRoleId(role.id)}
                         className={cn(
                             "relative p-6 rounded-[2rem] border transition-all duration-300 cursor-pointer group",
-                            selectedRoleId === role.id 
-                                ? "bg-white border-blue-600 shadow-xl shadow-blue-900/5 ring-4 ring-blue-50" 
+                            selectedRoleId === role.id
+                                ? "bg-white border-blue-600 shadow-xl shadow-blue-900/5 ring-4 ring-blue-50"
                                 : "bg-white border-zinc-100 hover:border-zinc-300 shadow-sm"
                         )}
                     >
@@ -153,8 +156,8 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
                         <p className="text-[10px] text-zinc-500 font-medium leading-relaxed line-clamp-2">{role.description || 'Access level definition.'}</p>
                     </div>
                 ))}
-                
-                <div 
+
+                <div
                     onClick={onAddRole}
                     className="p-6 rounded-[2rem] border-2 border-dashed border-zinc-200 flex flex-col items-center justify-center gap-3 group hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer"
                 >
@@ -166,66 +169,64 @@ export const RolePermissionMatrix = ({ roles, permissionsByFeature, onSave, onAd
             </div>
 
             {/* Matrix Table */}
+
             <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-xl shadow-zinc-100/50 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-zinc-50/50 border-b border-zinc-100">
                                 <th className="px-8 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-widest w-1/2">Module & Feature</th>
-                                <th className="px-8 py-6 text-center text-[10px] font-black text-zinc-400 uppercase tracking-widest">Access Grant</th>
+                                <th className="px-8 py-6 text-left text-[10px] font-black text-zinc-400 uppercase tracking-widest">Access Grant</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-50">
                             {permissionsByFeature.map((group) => (
                                 <div key={group.feature} className="contents">
                                     <tr className="bg-zinc-50/30">
-                                        <td colSpan={2} className="px-8 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
-                                                <span className="text-[11px] font-black text-zinc-900 uppercase tracking-[0.15em]">{group.feature} Management</span>
+                                        <td className="px-8 py-6 align-top">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="text-[9px] leading-none opacity-0 select-none">SPACER</div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
+                                                    <span className="text-[11px] font-black text-zinc-900 uppercase tracking-[0.15em]">{group.feature} Management</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 align-top">
+                                            <div className="flex justify-start items-center gap-12">
+                                                {group.permissions.map((perm) => (
+                                                    <div key={perm.name} className="flex flex-col items-center gap-2 min-w-[64px]">
+                                                        <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-tighter opacity-60 leading-none">
+                                                            {perm.name}
+                                                        </p>
+                                                        <div className="">
+                                                            {selectedRoleId && roles.find(r => r.id === selectedRoleId)?.name === 'Administrator' ? (
+                                                                <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-300 border border-zinc-100">
+                                                                    <Icon icon="solar:lock-bold-duotone" className="w-5 h-5" />
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => selectedRoleId && handleTogglePermission(selectedRoleId, perm.name)}
+                                                                    className={cn(
+                                                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border",
+                                                                        selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name)
+                                                                            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200"
+                                                                            : "bg-white text-zinc-200 border-zinc-100 hover:border-zinc-300"
+                                                                    )}
+                                                                >
+                                                                    {selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name) ? (
+                                                                        <Icon icon="solar:check-read-bold" className="w-5 h-5 animate-in zoom-in duration-300" />
+                                                                    ) : (
+                                                                        <div className="w-2 h-2 rounded-full bg-zinc-100 group-hover:bg-zinc-200 transition-colors"></div>
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </td>
                                     </tr>
-                                    {group.permissions.map((perm) => (
-                                        <tr key={perm.id} className="group hover:bg-zinc-50/50 transition-colors">
-                                            <td className="px-8 py-5">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[13px] font-black text-zinc-800 uppercase tracking-tight">{perm.label}</span>
-                                                        {perm.action === 'delete' && (
-                                                            <span className="px-1.5 py-0.5 bg-red-50 text-red-500 text-[8px] font-black uppercase rounded border border-red-100">High Risk</span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-[10px] text-zinc-400 font-medium">Internal Permission Key: <code className="text-blue-500 font-bold">{perm.name}</code></p>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5 text-center">
-                                                <div className="flex justify-center">
-                                                    {selectedRoleId && roles.find(r => r.id === selectedRoleId)?.name === 'Administrator' ? (
-                                                        <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-300 border border-zinc-100">
-                                                            <Icon icon="solar:lock-bold-duotone" className="w-5 h-5" />
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => selectedRoleId && handleTogglePermission(selectedRoleId, perm.name)}
-                                                            className={cn(
-                                                                "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border",
-                                                                selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name)
-                                                                    ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200"
-                                                                    : "bg-white text-zinc-200 border-zinc-100 hover:border-zinc-300"
-                                                            )}
-                                                        >
-                                                            {selectedRoleId && draftPermissions[selectedRoleId]?.includes(perm.name) ? (
-                                                                <Icon icon="solar:check-read-bold" className="w-5 h-5 animate-in zoom-in duration-300" />
-                                                            ) : (
-                                                                <div className="w-2 h-2 rounded-full bg-zinc-100 group-hover:bg-zinc-200 transition-colors"></div>
-                                                            )}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
                                 </div>
                             ))}
                         </tbody>
