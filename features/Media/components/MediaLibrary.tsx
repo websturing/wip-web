@@ -7,7 +7,10 @@ import { MediaService } from '../services/MediaService';
 
 export const MediaLibrary = () => {
     const [media, setMedia] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
     const [selectedCollection, setSelectedCollection] = useState('default');
@@ -16,24 +19,61 @@ export const MediaLibrary = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const folderInputRef = useRef<HTMLInputElement>(null);
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastMediaElementRef = useRef<HTMLDivElement>(null);
 
-    const fetchMedia = async () => {
-        setIsLoading(true);
+    const fetchMedia = async (pageNum: number, isNew = false) => {
+        if (isNew) {
+            setIsLoading(true);
+        } else {
+            setIsLoadingMore(true);
+        }
+        
         try {
-            const res = await MediaService.getAll(selectedCollection);
+            const res = await MediaService.getAll(selectedCollection, pageNum);
             if (res.status === 'success') {
-                setMedia(res.data.data);
+                const newData = res.data.data;
+                setMedia(prev => isNew ? newData : [...prev, ...newData]);
+                setHasMore(res.data.next_page_url !== null);
             }
         } catch (error) {
             console.error('Failed to fetch media:', error);
         } finally {
             setIsLoading(false);
+            setIsLoadingMore(false);
         }
     };
 
     useEffect(() => {
-        fetchMedia();
+        setPage(1);
+        setHasMore(true);
+        fetchMedia(1, true);
     }, [selectedCollection]);
+
+    // Intersection Observer for infinite scroll
+    useEffect(() => {
+        if (isLoading || isLoadingMore || !hasMore) return;
+
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prev => {
+                    const nextPage = prev + 1;
+                    fetchMedia(nextPage);
+                    return nextPage;
+                });
+            }
+        }, { threshold: 0.1 });
+
+        if (lastMediaElementRef.current) {
+            observer.current.observe(lastMediaElementRef.current);
+        }
+
+        return () => {
+            if (observer.current) observer.current.disconnect();
+        };
+    }, [isLoading, isLoadingMore, hasMore, media]);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -52,7 +92,9 @@ export const MediaLibrary = () => {
         }
 
         setIsUploading(false);
-        fetchMedia();
+        setPage(1);
+        setHasMore(true);
+        fetchMedia(1, true);
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (folderInputRef.current) folderInputRef.current.value = '';
     };
@@ -62,7 +104,9 @@ export const MediaLibrary = () => {
         try {
             const res = await MediaService.delete(showDeleteConfirm);
             if (res.status === 'success') {
-                fetchMedia();
+                setPage(1);
+                setHasMore(true);
+                fetchMedia(1, true);
             }
         } catch (error) {
             console.error('Delete error:', error);
@@ -76,7 +120,9 @@ export const MediaLibrary = () => {
         try {
             const res = await MediaService.update(renameTarget.id, renameTarget.name);
             if (res.status === 'success') {
-                fetchMedia();
+                setPage(1);
+                setHasMore(true);
+                fetchMedia(1, true);
             }
         } catch (error) {
             console.error('Rename error:', error);
@@ -154,47 +200,66 @@ export const MediaLibrary = () => {
                         <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Loading Assets...</span>
                     </div>
                 ) : media.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-                        {media.map((item) => (
-                            <div key={item.id} className="group relative aspect-square rounded-[2rem] overflow-hidden bg-zinc-50 border border-zinc-100 transition-all hover:shadow-2xl hover:scale-[1.02]">
-                                <img
-                                    src={item.url}
-                                    alt={item.original_name}
-                                    className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-500"
-                                />
-                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
-                                    <p className="text-white text-[10px] font-bold truncate w-full mb-4 px-2 uppercase tracking-tighter">
-                                        {item.original_name}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => window.open(item.url, '_blank')}
-                                            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-zinc-900 transition-all"
-                                            title="View Fullsize"
-                                        >
-                                            <Icon icon="solar:eye-bold" className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setRenameTarget({ id: item.id, name: item.original_name })}
-                                            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all"
-                                            title="Rename Asset"
-                                        >
-                                            <Icon icon="solar:pen-bold" className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setShowDeleteConfirm(item.id)}
-                                            className="w-9 h-9 rounded-full bg-red-500/20 backdrop-blur-md text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-                                            title="Delete Asset"
-                                        >
-                                            <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
-                                        </button>
+                    <div className="space-y-12">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                            {media.map((item, index) => (
+                                <div 
+                                    key={item.id} 
+                                    ref={index === media.length - 1 ? lastMediaElementRef : null}
+                                    className="group relative aspect-square rounded-[2rem] overflow-hidden bg-zinc-50 border border-zinc-100 transition-all hover:shadow-2xl hover:scale-[1.02]"
+                                >
+                                    <img
+                                        src={item.url}
+                                        alt={item.original_name}
+                                        className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
+                                        <p className="text-white text-[10px] font-bold truncate w-full mb-4 px-2 uppercase tracking-tighter">
+                                            {item.original_name}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => window.open(item.url, '_blank')}
+                                                className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-zinc-900 transition-all"
+                                                title="View Fullsize"
+                                            >
+                                                <Icon icon="solar:eye-bold" className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setRenameTarget({ id: item.id, name: item.original_name })}
+                                                className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all"
+                                                title="Rename Asset"
+                                            >
+                                                <Icon icon="solar:pen-bold" className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setShowDeleteConfirm(item.id)}
+                                                className="w-9 h-9 rounded-full bg-red-500/20 backdrop-blur-md text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                                                title="Delete Asset"
+                                            >
+                                                <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-4 left-4 right-4 h-7 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center px-3 opacity-100 group-hover:opacity-0 transition-opacity border border-zinc-100">
+                                        <span className="text-[9px] font-black text-zinc-900 truncate uppercase tracking-tighter">{item.original_name}</span>
                                     </div>
                                 </div>
-                                <div className="absolute bottom-4 left-4 right-4 h-7 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center px-3 opacity-100 group-hover:opacity-0 transition-opacity border border-zinc-100">
-                                    <span className="text-[9px] font-black text-zinc-900 truncate uppercase tracking-tighter">{item.original_name}</span>
-                                </div>
+                            ))}
+                        </div>
+                        
+                        {isLoadingMore && (
+                            <div className="py-12 flex flex-col items-center justify-center gap-4 border-t border-zinc-50">
+                                <div className="w-8 h-8 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin"></div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Fetching More Assets...</span>
                             </div>
-                        ))}
+                        )}
+
+                        {!hasMore && media.length > 24 && (
+                            <div className="py-12 flex flex-col items-center justify-center text-zinc-300 border-t border-zinc-50">
+                                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-30">End of Intelligence Repository</span>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="h-[400px] flex flex-col items-center justify-center text-zinc-300">

@@ -14,27 +14,69 @@ interface MediaPickerProps {
 export const MediaPicker = ({ open, onOpenChange, onSelect }: MediaPickerProps) => {
     const [mediaList, setMediaList] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastMediaElementRef = useRef<HTMLButtonElement>(null);
 
-    const fetchMedia = async () => {
-        setIsLoading(true);
+    const fetchMedia = async (pageNum: number, isNew = false) => {
+        if (isNew) {
+            setIsLoading(true);
+        } else {
+            setIsLoadingMore(true);
+        }
+
         try {
-            const res = await MediaService.getAll();
+            const res = await MediaService.getAll('default', pageNum);
             if (res.status === 'success') {
-                setMediaList(res.data.data);
+                const newData = res.data.data;
+                setMediaList(prev => isNew ? newData : [...prev, ...newData]);
+                setHasMore(res.data.next_page_url !== null);
             }
         } catch (error) {
             console.error('Failed to fetch media:', error);
         } finally {
             setIsLoading(false);
+            setIsLoadingMore(false);
         }
     };
 
     useEffect(() => {
-        if (open) fetchMedia();
+        if (open) {
+            setPage(1);
+            setHasMore(true);
+            fetchMedia(1, true);
+        }
     }, [open]);
+
+    // Intersection Observer for infinite scroll
+    useEffect(() => {
+        if (isLoading || isLoadingMore || !hasMore) return;
+
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prev => {
+                    const nextPage = prev + 1;
+                    fetchMedia(nextPage);
+                    return nextPage;
+                });
+            }
+        }, { threshold: 0.1 });
+
+        if (lastMediaElementRef.current) {
+            observer.current.observe(lastMediaElementRef.current);
+        }
+
+        return () => {
+            if (observer.current) observer.current.disconnect();
+        };
+    }, [isLoading, isLoadingMore, hasMore, mediaList]);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -103,24 +145,40 @@ export const MediaPicker = ({ open, onOpenChange, onSelect }: MediaPickerProps) 
                             <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 font-bold">Scanning Repository...</span>
                         </div>
                     ) : filteredMedia.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {filteredMedia.map((m) => (
-                                <button
-                                    key={m.id}
-                                    onClick={() => onSelect({ id: m.id, url: m.url })}
-                                    className="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-50 border border-zinc-100 hover:border-blue-500 transition-all hover:shadow-xl"
-                                >
-                                    <img src={m.url} alt="" className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-500" />
-                                    <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <div className="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform">
-                                            <Icon icon="solar:check-read-bold" className="w-6 h-6" />
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {filteredMedia.map((m, index) => (
+                                    <button
+                                        key={m.id}
+                                        ref={index === filteredMedia.length - 1 ? lastMediaElementRef : null}
+                                        onClick={() => onSelect({ id: m.id, url: m.url })}
+                                        className="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-50 border border-zinc-100 hover:border-blue-500 transition-all hover:shadow-xl"
+                                    >
+                                        <img src={m.url} alt="" className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-500" />
+                                        <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform">
+                                                <Icon icon="solar:check-read-bold" className="w-6 h-6" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
-                                        <p className="text-white text-[8px] font-black uppercase truncate tracking-tighter">{m.original_name}</p>
-                                    </div>
-                                </button>
-                            ))}
+                                        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+                                            <p className="text-white text-[8px] font-black uppercase truncate tracking-tighter">{m.original_name}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {isLoadingMore && (
+                                <div className="py-8 flex flex-col items-center justify-center gap-3">
+                                    <div className="w-6 h-6 border-2 border-zinc-100 border-t-zinc-900 rounded-full animate-spin"></div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Loading More...</span>
+                                </div>
+                            )}
+
+                            {!hasMore && filteredMedia.length > 24 && (
+                                <div className="py-8 flex flex-col items-center justify-center text-zinc-300">
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-30">End of Repository</span>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="py-20 flex flex-col items-center justify-center text-zinc-300">
