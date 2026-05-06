@@ -1,12 +1,20 @@
 import { ProductivityFormPage } from '@/features/productivity';
+import { Suspense } from 'react';
 
 export const metadata = {
     title: 'Edit Performance Log - Admin',
     description: 'Refine production efficiency data.',
 };
 
-
 export default function EditProductivityPage() {
-    return <ProductivityFormPage />;
+    return (
+        <Suspense fallback={
+            <div className="flex h-[80vh] items-center justify-center">
+                <div className="w-12 h-12 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin"></div>
+            </div>
+        }>
+            <ProductivityFormPage />
+        </Suspense>
+    );
 }
 
