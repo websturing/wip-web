@@ -116,7 +116,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                             isActive ? "text-white" : "text-zinc-300 group-hover:text-white"
                         )}
                     />
-                    <span className={cn("text-[13px] font-medium tracking-tight", isActive ? "font-bold" : "")}>
+                    <span className={cn("text-[13px] capitalize", isActive ? "font-bold" : "font-semibold")}>
                         {item.name}
                     </span>
                 </div>
