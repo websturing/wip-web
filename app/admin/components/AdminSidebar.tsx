@@ -144,8 +144,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         {content}
                         {isOpen && (
                             <div className="relative ml-6 mt-1 mb-2">
-                                <div className="absolute left-[9px] top-0 bottom-0 w-[1.5px] bg-zinc-500"></div>
-                                <div className="space-y-1 pl-4">
+                                <div className="absolute left-[2px] top-0 bottom-0 w-[1px] bg-zinc-600"></div>
+                                <div className="space-y-1   ">
                                     {item.children?.map(child => renderItem(child, true))}
                                 </div>
                             </div>
