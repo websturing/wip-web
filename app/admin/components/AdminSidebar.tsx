@@ -103,7 +103,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 className={cn(
                     "flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer group mb-1",
                     isActive && !isChild ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" :
-                        isActive && isChild ? "bg-white/10 text-white shadow-sm" :
+                        isActive && isChild ? "p-2 mx-2 bg-white/10 text-white shadow-sm" :
                             "text-zinc-400 hover:bg-white/5 hover:text-white"
                 )}
                 onClick={() => hasChildren ? toggleMenu(item.name) : (isMobile && onClose?.())}

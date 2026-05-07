@@ -151,10 +151,10 @@ export const ProductivityFormPage = () => {
 
                     const lotSectionPairs = lineOutput.flatMap((p: any) => {
                         const items = p.items || [];
-                        return items.flatMap((i: any) => [
-                            { lot_id: String(i.lot_id), section: i.section || 'all' },
-                            { lot_id: String(i.lot_id), section: 'offline' }
-                        ]);
+                        return items.map((i: any) => ({
+                            lot_id: String(i.lot_id),
+                            section: i.section || 'all'
+                        }));
                     }).filter(Boolean);
 
                     const uniquePairs = Array.from(

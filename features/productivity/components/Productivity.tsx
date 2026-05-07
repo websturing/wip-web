@@ -296,7 +296,7 @@ export const Productivity = () => {
                                                         return productionData
                                                             .filter(p => String(p.line_id) === String(item.line_id))
                                                             .flatMap(p => p.items || [])
-                                                            .filter(pi => String(pi.lot_id) === String(l.id))
+                                                            .filter(pi => String(pi.lot_id) === String(l.id) && (pi.section || 'ALL').toUpperCase() === section)
                                                             .reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
                                                     });
 
@@ -362,7 +362,7 @@ export const Productivity = () => {
                                                                     <td className="px-3 py-2 text-center">
                                                                         <div className="flex flex-col items-center">
                                                                             <span className="font-black text-blue-700 leading-none">{lotOutput}</span>
-                                                                            {lotOfflineOutput > 0 && (
+                                                                            {section !== 'OFFLINE' && lotOfflineOutput > 0 && (
                                                                                 <span className="text-[7px] font-black text-orange-500 mt-1 uppercase tracking-tighter">
                                                                                     (Off: {lotOfflineOutput})
                                                                                 </span>
@@ -385,7 +385,7 @@ export const Productivity = () => {
                                                                     </td>
                                                                 </tr>
                                                                 {isExpanded && lotGroup.map((subL: any) => {
-                                                                    const sOutput = productionData.filter(p => String(p.line_id) === String(item.line_id)).flatMap(p => p.items || []).filter(pi => String(pi.lot_id) === String(subL.id)).reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
+                                                                    const sOutput = productionData.filter(p => String(p.line_id) === String(item.line_id)).flatMap(p => p.items || []).filter(pi => String(pi.lot_id) === String(subL.id) && (pi.section || 'ALL').toUpperCase() === section).reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
                                                                     return (
                                                                         <tr key={`sub-${subL.id}`} className="bg-zinc-50/50 border-l-2 border-emerald-400">
                                                                             <td colSpan={3}></td>
@@ -434,7 +434,7 @@ export const Productivity = () => {
                                                                 <td className="px-2 py-2 text-center">
                                                                     <div className="flex flex-col items-center">
                                                                         <span className="font-black text-blue-700 leading-none">{lotOutput}</span>
-                                                                        {lotOfflineOutput > 0 && (
+                                                                        {section !== 'OFFLINE' && lotOfflineOutput > 0 && (
                                                                             <span className="text-[7px] font-black text-orange-500 mt-1 uppercase tracking-tighter">
                                                                                 (Off: {lotOfflineOutput})
                                                                             </span>
