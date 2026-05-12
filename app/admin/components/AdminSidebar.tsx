@@ -60,7 +60,14 @@ export const AdminSidebar = ({ isMobile, onClose, isCollapsed, onExpand }: Admin
                 { id: 'f3-3', name: 'Productivity', path: '/admin/productivity', icon: 'solar:graph-up-linear' },
             ]
         },
-        { id: 'f4', name: 'Industrial Eng.', path: '/admin/ielayout', icon: 'solar:layers-linear' },
+        {
+            id: 'f4', name: 'Industrial Eng.', path: '/admin/ielayout', icon: 'solar:layers-linear',
+            children: [
+                { id: 'f4-1', name: 'IE Layout', path: '/admin/ielayout', icon: 'solar:map-point-linear' },
+                { id: 'f4-2', name: 'Operation List', path: '/admin/operations', icon: 'solar:list-linear' },
+                { id: 'f4-3', name: 'Time Study', path: '/admin/time-study', icon: 'solar:stopwatch-linear' },
+            ]
+        },
         { id: 'f5', name: 'Access Control', path: '/admin/acl', icon: 'solar:shield-check-linear' },
     ], []);
 
