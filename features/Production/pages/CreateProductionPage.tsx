@@ -85,24 +85,29 @@ function CreateProductionForm({ id }: { id?: string }) {
     });
 
     const [lotDetails, setLotDetails] = useState<Record<number, any[]>>({});
-    const [historyInfo, setHistoryInfo] = useState<{ open: boolean; lotId: string; color: string; sizeName: string; data: any[] }>({
+    const [historyInfo, setHistoryInfo] = useState<{ open: boolean; lotId: string; color: string; sizeName: string; data: any[]; loading: boolean }>({
         open: false,
         lotId: '',
         color: '',
         sizeName: '',
-        data: []
+        data: [],
+        loading: false
     });
 
     const viewHistory = async (lotId: string, color: string, sizeName: string) => {
         if (!lotId || !color || !sizeName) return;
-        setHistoryInfo(prev => ({ ...prev, open: true, lotId, color, sizeName, data: [] }));
+        setHistoryInfo(prev => ({ ...prev, open: true, lotId, color, sizeName, data: [], loading: true }));
         try {
             const res = await ProductionService.getHistory(lotId, color, sizeName);
             if (res.status === 'success') {
-                setHistoryInfo(prev => ({ ...prev, data: res.data }));
+                setHistoryInfo(prev => ({ ...prev, data: res.data, loading: false }));
+            } else {
+                setHistoryInfo(prev => ({ ...prev, loading: false }));
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to fetch history:', err);
+            showToast('Error', err.message || 'Failed to fetch history', 'destructive');
+            setHistoryInfo(prev => ({ ...prev, loading: false }));
         }
     };
 
@@ -959,10 +964,15 @@ function CreateProductionForm({ id }: { id?: string }) {
                         </div>
                     </DialogHeader>
                     <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar">
-                        {historyInfo.data.length === 0 ? (
+                        {historyInfo.loading ? (
                             <div className="py-20 text-center space-y-3">
                                 <div className="w-16 h-16 border-4 border-zinc-50 border-t-zinc-900 rounded-full animate-spin mx-auto"></div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">Searching Chronological logs...</p>
+                            </div>
+                        ) : historyInfo.data.length === 0 ? (
+                            <div className="py-20 text-center space-y-3">
+                                <Icon icon="solar:folder-with-files-bold-duotone" className="w-16 h-16 text-zinc-200 mx-auto" />
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">No logs found</p>
                             </div>
                         ) : (
                             <table className="w-full border-collapse">
@@ -972,6 +982,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                                         <th className="py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-400">Line</th>
                                         <th className="py-4 text-center text-[10px] font-black uppercase tracking-widest text-zinc-400">Input</th>
                                         <th className="py-4 text-center text-[10px] font-black uppercase tracking-widest text-zinc-400">Output</th>
+                                        <th className="py-4 text-left text-[10px] font-black uppercase tracking-widest text-zinc-400">Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-50">
@@ -988,6 +999,11 @@ function CreateProductionForm({ id }: { id?: string }) {
                                             </td>
                                             <td className="py-4 text-center text-[14px] font-black text-green-600">
                                                 {row.qty_output}
+                                            </td>
+                                            <td className="py-4 text-[11px] font-medium text-zinc-500 max-w-[200px] truncate" title={`${row.production_remarks || ''} ${row.item_remarks ? `| Item: ${row.item_remarks}` : ''}`}>
+                                                {row.production_remarks && <div><strong>Log:</strong> {row.production_remarks}</div>}
+                                                {row.item_remarks && <div><strong>Item:</strong> {row.item_remarks}</div>}
+                                                {!row.production_remarks && !row.item_remarks && '-'}
                                             </td>
                                         </tr>
                                     ))}
