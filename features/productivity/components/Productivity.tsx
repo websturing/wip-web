@@ -5,8 +5,7 @@ import { Icon } from '@/app/components/ui/Icon';
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ProductionService } from "../../Production/services/ProductionService";
-import { ProductivityService } from '../services/ProductivityService';
+import { useProductivity } from '../hooks/useProductivity';
 
 export const Productivity = () => {
     const router = useRouter();
@@ -23,9 +22,13 @@ export const Productivity = () => {
         return date.toISOString().split('T')[0];
     }, [searchParams]);
 
-    const [data, setData] = useState<any[]>([]);
-    const [productionData, setProductionData] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const {
+        data,
+        productionData,
+        isLoading,
+        deleteLog,
+        exportDaily
+    } = useProductivity({ date: currentDate });
     const [activeTab, setActiveTab] = useState<'daily' | 'summary'>('daily');
 
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -107,23 +110,14 @@ export const Productivity = () => {
         setExpandedRows(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
     };
 
-    useEffect(() => {
-        setIsLoading(true);
-        Promise.all([
-            ProductivityService.getAll(currentDate),
-            ProductionService.getAll(currentDate)
-        ]).then(([prodRes, outputRes]) => {
-            if (prodRes.status === 'success') setData(prodRes.data);
-            if (outputRes.status === 'success') setProductionData(outputRes.data);
-        }).finally(() => setIsLoading(false));
-    }, [currentDate]);
+
 
     // Helper to group lots in a productivity record by shared operational config
     const getGroupedLots = (item: any) => {
         const groups: { [key: string]: any[] } = {};
         const lots = (item.lots && item.lots.length > 0) ? item.lots : (item.lot ? [item.lot] : []);
         lots.forEach((l: any) => {
-            const configKey = `${l.pivot?.smv}-${l.pivot?.manpower}-${l.pivot?.sewer}-${l.pivot?.working_hour}-${l.pivot?.section}`;
+            const configKey = l.pivot?.merge_id || `${l.pivot?.smv}-${l.pivot?.manpower}-${l.pivot?.sewer}-${l.pivot?.working_hour}-${l.pivot?.section}`;
             if (!groups[configKey]) groups[configKey] = [];
             groups[configKey].push(l);
         });
@@ -308,8 +302,8 @@ export const Productivity = () => {
                                                             .reduce((s, pi) => s + (pi.details || []).reduce((ss: number, d: any) => ss + (Number(d.qty_output) || 0), 0), 0);
                                                     });
 
-                                                    const lotOutput = Math.max(0, ...lotOutputs);
-                                                    const lotOfflineOutput = Math.max(0, ...lotOfflineOutputs);
+                                                    const lotOutput = lotOutputs.reduce((a, b) => a + b, 0);
+                                                    const lotOfflineOutput = lotOfflineOutputs.reduce((a, b) => a + b, 0);
 
                                                     const smv = Number(firstLot.pivot?.smv || item.smv || 0);
                                                     const mp = Number(item.manpower || 0);
@@ -379,7 +373,7 @@ export const Productivity = () => {
                                                                         {gIdx === 0 && (
                                                                             <div className="flex items-center justify-end gap-1">
                                                                                 <button onClick={() => router.push(`/admin/productivity/edit/${item.id}`)} className="p-1.5 rounded-lg bg-zinc-50 text-zinc-400 hover:text-blue-600 transition-all"><Icon icon="solar:pen-bold" className="w-3 h-3" /></button>
-                                                                                <button onClick={async () => { if (confirm('Delete?')) { await ProductivityService.delete(item.id); setData(prev => prev.filter(i => i.id !== item.id)); } }} className="p-1.5 rounded-lg bg-zinc-50 text-zinc-400 hover:text-red-600 transition-all"><Icon icon="solar:trash-bin-trash-bold" className="w-3 h-3" /></button>
+                                                                                <button onClick={async () => { if (confirm('Delete?')) { await deleteLog(item.id); } }} className="p-1.5 rounded-lg bg-zinc-50 text-zinc-400 hover:text-red-600 transition-all"><Icon icon="solar:trash-bin-trash-bold" className="w-3 h-3" /></button>
                                                                             </div>
                                                                         )}
                                                                     </td>
@@ -546,7 +540,7 @@ export const Productivity = () => {
                         <button onClick={() => setIsExportDialogOpen(false)} className="px-6 py-2 text-[10px] font-black uppercase text-zinc-400">Cancel</button>
                         <button
                             onClick={async () => {
-                                await ProductivityService.exportDailyReport(currentDate, selectedLineIds, exportType);
+                                await exportDaily(currentDate, selectedLineIds, exportType);
                                 setIsExportDialogOpen(false);
                             }}
                             className="bg-zinc-900 text-white px-8 py-2 rounded-xl font-black uppercase text-[10px] shadow-xl shadow-zinc-200 active:scale-95 transition-all"

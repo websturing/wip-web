@@ -19,6 +19,7 @@ interface SelectProps {
     className?: string;
     error?: boolean;
     disabled?: boolean;
+    size?: 'sm' | 'md' | 'lg';
 }
 
 export const Select = ({
@@ -29,7 +30,8 @@ export const Select = ({
     label,
     className,
     error,
-    disabled
+    disabled,
+    size = 'md'
 }: SelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +58,8 @@ export const Select = ({
                         type="button"
                         disabled={disabled}
                         className={cn(
-                            "w-full bg-zinc-50 border border-zinc-100 h-12 rounded-xl px-4 flex items-center justify-between transition-all outline-none",
+                            "w-full bg-zinc-50 border border-zinc-100 flex items-center justify-between transition-all outline-none",
+                            size === 'sm' ? "h-8 rounded-lg px-2" : "h-12 rounded-xl px-4",
                             "hover:border-zinc-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200",
                             error && "border-red-500 bg-red-50/10 focus:ring-red-500/20 focus:border-red-500",
                             open && !error && "border-blue-200 ring-2 ring-blue-500/20 bg-white",
@@ -64,14 +67,15 @@ export const Select = ({
                         )}
                     >
                         <span className={cn(
-                            "font-bold text-[13px] truncate",
+                            "font-bold truncate",
+                            size === 'sm' ? "text-xs" : "text-[13px]",
                             selectedOption ? "text-zinc-900" : "text-zinc-400"
                         )}>
                             {selectedOption ? selectedOption.label : placeholder}
                         </span>
                         <Icon
                             icon="solar:alt-arrow-down-bold"
-                            className={cn("w-3.5 h-3.5 text-zinc-400 transition-transform", open && "rotate-180")}
+                            className={cn("text-zinc-400 transition-transform flex-shrink-0", size === 'sm' ? "w-3 h-3" : "w-3.5 h-3.5", open && "rotate-180")}
                         />
                     </button>
                 </Popover.Trigger>
