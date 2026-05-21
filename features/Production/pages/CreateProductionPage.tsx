@@ -184,9 +184,10 @@ function CreateProductionForm({ id }: { id?: string }) {
 
                     p.items.forEach(async (item: any, idx: number) => {
                         let color = item.color || '';
-                        if (color.endsWith(' (TOP)')) color = color.replace(' (TOP)', '');
-                        else if (color.endsWith(' (PANT)')) color = color.replace(' (PANT)', '');
-                        fetchLotDetailsWithLots(item.lot_id, idx, currentLots, color);
+                        let part = '';
+                        if (color.endsWith(' (TOP)')) { color = color.replace(' (TOP)', ''); part = 'TOP'; }
+                        else if (color.endsWith(' (PANT)')) { color = color.replace(' (PANT)', ''); part = 'PANT'; }
+                        fetchLotDetailsWithLots(item.lot_id, idx, currentLots, color, part);
                     });
                 }
             }
@@ -196,7 +197,7 @@ function CreateProductionForm({ id }: { id?: string }) {
         init();
     }, [id]);
 
-    const fetchLotDetailsWithLots = async (lotId: string, itemIdx: number, availableLots: any[], itemColor?: string) => {
+    const fetchLotDetailsWithLots = async (lotId: string, itemIdx: number, availableLots: any[], itemColor?: string, itemPart?: string) => {
         const lot = availableLots.find(l => String(l.id) === String(lotId));
         if (!lot) return;
 
@@ -217,12 +218,39 @@ function CreateProductionForm({ id }: { id?: string }) {
                     '';
                 setPartTypes(prev => ({ ...prev, [itemIdx]: cuttingPartType }));
 
-                // If in Edit mode, hydrate order_mi and cut_qty using the passed color
-                // (avoids stale closure on formData.items)
+                // If in Edit mode, hydrate order_mi, cut_qty AND recorded summary
                 if (id) {
                     const resolvedColor = itemColor || '';
                     const colorData = bodyColors.find((c: any) => c.color === resolvedColor);
                     if (colorData) {
+                        // Fetch recorded summary to get correct balance.
+                        // Query BOTH with and without part suffix to handle records saved
+                        // in different formats (historical data may lack the "(TOP)"/"(PANT)" suffix).
+                        let recordedSummary: Record<string, any> = {};
+                        try {
+                            const finalColor = itemPart ? `${resolvedColor} (${itemPart})` : resolvedColor;
+                            const queries = [ProductionService.getSummary(String(lotId), finalColor, id)];
+                            // If there's a part, also query plain color to catch records saved without suffix
+                            if (itemPart) {
+                                queries.push(ProductionService.getSummary(String(lotId), resolvedColor, id));
+                            }
+                            const results = await Promise.all(queries);
+                            // Merge all results by summing total_input / total_output per size
+                            results.forEach(res => {
+                                if (res?.status === 'success' && res.data) {
+                                    Object.entries(res.data).forEach(([sizeName, val]: [string, any]) => {
+                                        if (!recordedSummary[sizeName]) {
+                                            recordedSummary[sizeName] = { total_input: 0, total_output: 0 };
+                                        }
+                                        recordedSummary[sizeName].total_input += Number(val.total_input || 0);
+                                        recordedSummary[sizeName].total_output += Number(val.total_output || 0);
+                                    });
+                                }
+                            });
+                        } catch (err) {
+                            console.error('Failed to fetch recorded summary in edit mode:', err);
+                        }
+
                         setFormData(prev => {
                             const newItems = [...prev.items];
                             newItems[itemIdx].sizes = newItems[itemIdx].sizes.map(s => {
@@ -230,7 +258,9 @@ function CreateProductionForm({ id }: { id?: string }) {
                                 return {
                                     ...s,
                                     order_mi: bd ? parseInt(bd.total_order || bd.order_qty) || 0 : s.order_mi,
-                                    cut_qty: bd ? parseInt(bd.cut_qty) || 0 : s.cut_qty
+                                    cut_qty: bd ? parseInt(bd.cut_qty) || 0 : s.cut_qty,
+                                    recorded_input: Number(recordedSummary[s.size_name]?.total_input || 0),
+                                    recorded_output: Number(recordedSummary[s.size_name]?.total_output || 0),
                                 };
                             });
                             return { ...prev, items: newItems };
@@ -284,19 +314,32 @@ function CreateProductionForm({ id }: { id?: string }) {
         }
     };
 
-    const updateItemColor = async (itemIdx: number, color: string, sizeBreakdown?: any[]) => {
+    const updateItemColor = async (itemIdx: number, color: string, sizeBreakdown?: any[], overridePart?: string) => {
         const item = formData.items[itemIdx];
         const lotId = item.lot_id;
 
         let recordedSummary: Record<string, any> = {};
         if (lotId && color) {
             try {
-                const part = item.part;
+                // Use overridePart if provided (e.g. when called from Part selector onChange
+                // before React has re-rendered with the new part value — stale closure fix)
+                const part = overridePart !== undefined ? overridePart : item.part;
                 const finalColor = part ? `${color} (${part})` : color;
-                const res = await ProductionService.getSummary(lotId, finalColor, id);
-                if (res && res.status === 'success') {
-                    recordedSummary = res.data;
-                }
+                // Query BOTH with and without part suffix to handle records saved in different formats
+                const queries = [ProductionService.getSummary(lotId, finalColor, id)];
+                if (part) queries.push(ProductionService.getSummary(lotId, color, id));
+                const results = await Promise.all(queries);
+                results.forEach(res => {
+                    if (res?.status === 'success' && res.data) {
+                        Object.entries(res.data).forEach(([sizeName, val]: [string, any]) => {
+                            if (!recordedSummary[sizeName]) {
+                                recordedSummary[sizeName] = { total_input: 0, total_output: 0 };
+                            }
+                            recordedSummary[sizeName].total_input += Number(val.total_input || 0);
+                            recordedSummary[sizeName].total_output += Number(val.total_output || 0);
+                        });
+                    }
+                });
             } catch (err) {
                 console.error('Failed to fetch summary:', err);
             }
@@ -601,10 +644,12 @@ function CreateProductionForm({ id }: { id?: string }) {
                                                             const newItems = [...formData.items];
                                                             newItems[iIdx].part = String(val);
                                                             setFormData({ ...formData, items: newItems });
-                                                            // Trigger summary refresh if color is already selected
+                                                            // Trigger summary refresh if color is already selected.
+                                                            // Pass val directly as overridePart to avoid stale closure
+                                                            // (formData.items[iIdx].part not yet updated when this runs)
                                                             if (item.color) {
                                                                 const colorData = lotDetails[iIdx].find(c => c.color === item.color);
-                                                                updateItemColor(iIdx, item.color, colorData?.size_breakdown);
+                                                                updateItemColor(iIdx, item.color, colorData?.size_breakdown, String(val));
                                                             }
                                                         }}
                                                     />
@@ -696,7 +741,7 @@ function CreateProductionForm({ id }: { id?: string }) {
                                                                 <div className="flex flex-col items-center gap-1">
                                                                     <span>{s.size_name}</span>
                                                                     <button
-                                                                        onClick={() => viewHistory(item.lot_id, item.color, s.size_name)}
+                                                                        onClick={() => viewHistory(item.lot_id, item.part ? `${item.color} (${item.part})` : item.color, s.size_name)}
                                                                         className="p-1 bg-white/10 rounded text-blue-400 hover:bg-white/20 transition-all"
                                                                         title={`View history for ${s.size_name}`}
                                                                     >
