@@ -260,7 +260,7 @@ export const Productivity = () => {
                                         <Fragment key={group.name}>
                                             <tr className="bg-zinc-100/30">
                                                 <td colSpan={13} className="px-4 py-2 text-[10px] font-black text-zinc-900 uppercase tracking-widest border-l-4 border-zinc-900">
-                                                    Group {group.name}
+                                                    Factory {group.name}
                                                 </td>
                                             </tr>
                                             {group.items.map((item: any) => {
@@ -448,7 +448,7 @@ export const Productivity = () => {
                                             })}
                                             {/* Group Total Row */}
                                             <tr className="bg-zinc-100/80 text-zinc-900 font-black uppercase tracking-widest text-[9px] border-y border-zinc-200/50">
-                                                <td className="px-4 py-3" colSpan={4}>Total Group {group.name}</td>
+                                                <td className="px-4 py-3" colSpan={4}>Total Factory {group.name}</td>
                                                 {activeTab === 'daily' ? (
                                                     <>
                                                         <td className="px-3 py-3 text-center text-blue-400">{groupMP} / {groupMPPln}</td>

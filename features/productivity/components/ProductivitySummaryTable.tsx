@@ -24,7 +24,7 @@ export default function ProductivitySummaryTable({ date, data }: ProductivitySum
             <div className="flex font-bold text-base mb-2 border-b pb-2">
                 <div className="flex-1">{format(new Date(date), 'd-MMM-yy')}</div>
                 <div className="flex-1 text-center">TOTAL ACCUMULATION (All Lines)</div>
-                <div className="flex-1 text-right">Group {data.prefix}</div>
+                <div className="flex-1 text-right">Factory {data.prefix}</div>
             </div>
 
             <div className="border border-black">
@@ -137,20 +137,7 @@ export default function ProductivitySummaryTable({ date, data }: ProductivitySum
                     <div className="flex-1 border border-black p-1 ml-1">MS. QING FEN YE</div>
                 </div>
 
-                <div className="flex mt-2 items-stretch">
-                    <div className="w-[30%] flex justify-end items-center pr-2 font-bold italic border border-black">
-                        WAITING CHECK
-                    </div>
-                    <div className="w-[22%] border-y border-r border-black flex items-center justify-center font-bold text-lg">
-                        {data.allTotals.lines_count * 5}
-                    </div>
-                    <div className="w-[23%] border-y border-black font-bold italic flex items-center justify-center text-center p-1 leading-tight ml-1">
-                        OFFLINE<br/>SEWER :
-                    </div>
-                    <div className="flex-1 border border-black flex items-center justify-center font-bold text-lg">
-                        10
-                    </div>
-                </div>
+
 
                 <div className="flex mt-1 border border-black bg-yellow-300">
                     <div className="w-[30%]"></div>
