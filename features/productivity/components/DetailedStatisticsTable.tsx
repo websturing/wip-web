@@ -34,11 +34,11 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
         const lastUpdate = new Date(lastUpdateStr);
         const today = new Date();
         const diffTime = today.getTime() - lastUpdate.getTime();
-        const diffDays = diffTime / (1000 * 60 * 60 * 24); 
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
         return diffDays <= 7;
     };
 
-    const filteredData = data.filter(item => 
+    const filteredData = data.filter(item =>
         (item.gl_number || '').toLowerCase().includes(search.toLowerCase()) ||
         (item.color || '').toLowerCase().includes(search.toLowerCase())
     );
@@ -59,11 +59,11 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
         const maxVisible = 5;
         let start = Math.max(1, currentPage - 2);
         let end = Math.min(totalPages, start + maxVisible - 1);
-        
+
         if (end - start < maxVisible - 1) {
             start = Math.max(1, end - maxVisible + 1);
         }
-        
+
         for (let i = start; i <= end; i++) {
             pages.push(i);
         }
@@ -78,14 +78,14 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
     return (
         <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
-                <h2 className="text-sm font-black text-zinc-900 tracking-tight">Detailed Statistics</h2>
+                <h2 className="text-sm font-black text-zinc-900 tracking-tight">Summary Statistic</h2>
             </div>
-            
+
             <div className="p-4 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-zinc-500">Show</span>
-                    <select 
-                        value={entries} 
+                    <select
+                        value={entries}
                         onChange={(e) => { setEntries(Number(e.target.value)); setCurrentPage(1); }}
                         className="bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-bold outline-none"
                     >
@@ -97,9 +97,9 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                     <span className="text-xs font-bold text-zinc-500">entries</span>
                 </div>
                 <div>
-                    <input 
-                        type="text" 
-                        placeholder="Search records..." 
+                    <input
+                        type="text"
+                        placeholder="Search records..."
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                         className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-xs outline-none w-64 focus:border-zinc-500"
@@ -113,7 +113,7 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                         <tr className="bg-zinc-100 border-y border-zinc-200 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                             <th className="w-10 px-2"></th>
                             <th className="px-4 py-3 cursor-pointer hover:bg-zinc-200/50" onClick={() => handleSort('gl_number')}>GL NUMBER {getSortIcon('gl_number')}</th>
-                            
+
                             <th className="px-4 py-3 text-right cursor-pointer hover:bg-zinc-200/50" onClick={() => handleSort('order_qty')}>ORDER QTY {getSortIcon('order_qty')}</th>
                             <th className="px-4 py-3 text-right cursor-pointer hover:bg-zinc-200/50" onClick={() => handleSort('output_qty')}>OUTPUT QTY {getSortIcon('output_qty')}</th>
                             <th className="px-4 py-3 text-center cursor-pointer hover:bg-zinc-200/50" onClick={() => handleSort('balance')}>BALANCE {getSortIcon('balance')}</th>
@@ -136,79 +136,78 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                 const running = isCurrentlyRunning(item.last_update);
                                 const isExpanded = expandedRows.has(item.gl_number);
                                 return (
-                                <React.Fragment key={idx}>
-                                    <tr className={`hover:bg-zinc-50/50 transition-colors cursor-pointer ${isExpanded ? 'bg-zinc-50/50' : ''}`} onClick={() => toggleRow(item.gl_number)}>
-                                        <td className="px-4 py-3 text-center">
-                                            {item.colors && item.colors.length > 0 && (
-                                                <button className="text-zinc-400 hover:text-zinc-900 transition-colors">
-                                                    <Icon icon={isExpanded ? "solar:alt-arrow-down-bold" : "solar:alt-arrow-right-bold"} className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 font-bold text-zinc-900">
-                                            <div className="flex items-center gap-2">
-                                                {item.gl_number}
-                                                {running && (
-                                                    <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold tracking-widest uppercase" title="Output logged within last 7 days">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                        ACTIVE
-                                                    </span>
+                                    <React.Fragment key={idx}>
+                                        <tr className={`hover:bg-zinc-50/50 transition-colors cursor-pointer ${isExpanded ? 'bg-zinc-50/50' : ''}`} onClick={() => toggleRow(item.gl_number)}>
+                                            <td className="px-4 py-3 text-center">
+                                                {item.colors && item.colors.length > 0 && (
+                                                    <button className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                                                        <Icon icon={isExpanded ? "solar:alt-arrow-down-bold" : "solar:alt-arrow-right-bold"} className="w-4 h-4" />
+                                                    </button>
                                                 )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-right">{new Intl.NumberFormat('en-US').format(item.order_qty)}</td>
-                                        <td className="px-4 py-3 font-bold text-right">{new Intl.NumberFormat('en-US').format(item.output_qty)}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className={`font-bold ${item.balance > 0 ? 'text-emerald-500' : item.balance < 0 ? 'text-red-500' : 'text-zinc-400'}`}>
-                                                {item.balance > 0 ? `+${new Intl.NumberFormat('en-US').format(item.balance)}` : new Intl.NumberFormat('en-US').format(item.balance)}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center font-bold text-zinc-600">{item.days_running}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className={`px-2 py-0.5 rounded border text-[10px] font-black ${
-                                                item.achievement >= 80 
-                                                    ? 'border-emerald-200 text-emerald-600 bg-emerald-50' 
-                                                    : item.achievement >= 50 
-                                                        ? 'border-amber-200 text-amber-600 bg-amber-50' 
-                                                        : 'border-red-200 text-red-600 bg-red-50'
-                                            }`}>
-                                                {item.achievement.toFixed(2)}%
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center font-medium text-zinc-500">{item.last_update}</td>
-                                    </tr>
-                                    {isExpanded && item.colors && item.colors.length > 0 && (
-                                        <tr>
-                                            <td colSpan={8} className="bg-zinc-50/50 p-4 border-b border-zinc-100">
-                                                <div className="pl-12 pr-4">
-                                                    <table className="w-full text-left text-[11px] border border-zinc-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                                                        <thead className="bg-zinc-100/80 text-zinc-500 font-bold uppercase tracking-widest text-[9px]">
-                                                            <tr>
-                                                                <th className="px-4 py-2">COLOR / TYPE</th>
-                                                                <th className="px-4 py-2 text-right">OUTPUT</th>
-                                                                <th className="px-4 py-2 text-center">ACHIEVEMENT</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-zinc-100">
-                                                            {item.colors.map((c: any, cIdx: number) => (
-                                                                <tr key={cIdx} className="hover:bg-zinc-50/50">
-                                                                    <td className="px-4 py-2 font-medium text-zinc-700">{c.color || '-'}</td>
-                                                                    <td className="px-4 py-2 text-right font-bold text-zinc-900">{new Intl.NumberFormat('en-US').format(c.output_qty)}</td>
-                                                                    <td className="px-4 py-2 text-center">
-                                                                        <span className={`font-bold ${
-                                                                            c.achievement >= 80 ? 'text-emerald-600' : c.achievement >= 50 ? 'text-amber-500' : 'text-red-500'
-                                                                        }`}>{c.achievement.toFixed(2)}%</span>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
+                                            </td>
+                                            <td className="px-4 py-3 font-bold text-zinc-900">
+                                                <div className="flex items-center gap-2">
+                                                    {item.gl_number}
+                                                    {running && (
+                                                        <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold tracking-widest uppercase" title="Output logged within last 7 days">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                            ACTIVE
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
+                                            <td className="px-4 py-3 text-right">{new Intl.NumberFormat('en-US').format(item.order_qty)}</td>
+                                            <td className="px-4 py-3 font-bold text-right">{new Intl.NumberFormat('en-US').format(item.output_qty)}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`font-bold ${item.balance > 0 ? 'text-emerald-500' : item.balance < 0 ? 'text-red-500' : 'text-zinc-400'}`}>
+                                                    {item.balance > 0 ? `+${new Intl.NumberFormat('en-US').format(item.balance)}` : new Intl.NumberFormat('en-US').format(item.balance)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center font-bold text-zinc-600">{item.days_running}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`px-2 py-0.5 rounded border text-[10px] font-black ${item.achievement >= 80
+                                                        ? 'border-emerald-200 text-emerald-600 bg-emerald-50'
+                                                        : item.achievement >= 50
+                                                            ? 'border-amber-200 text-amber-600 bg-amber-50'
+                                                            : 'border-red-200 text-red-600 bg-red-50'
+                                                    }`}>
+                                                    {item.achievement.toFixed(2)}%
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center font-medium text-zinc-500">{item.last_update}</td>
                                         </tr>
-                                    )}
-                                </React.Fragment>
-                            )})
+                                        {isExpanded && item.colors && item.colors.length > 0 && (
+                                            <tr>
+                                                <td colSpan={8} className="bg-zinc-50/50 p-4 border-b border-zinc-100">
+                                                    <div className="pl-12 pr-4">
+                                                        <table className="w-full text-left text-[11px] border border-zinc-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                                                            <thead className="bg-zinc-100/80 text-zinc-500 font-bold uppercase tracking-widest text-[9px]">
+                                                                <tr>
+                                                                    <th className="px-4 py-2">COLOR / TYPE</th>
+                                                                    <th className="px-4 py-2 text-right">OUTPUT</th>
+                                                                    <th className="px-4 py-2 text-center">ACHIEVEMENT</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-zinc-100">
+                                                                {item.colors.map((c: any, cIdx: number) => (
+                                                                    <tr key={cIdx} className="hover:bg-zinc-50/50">
+                                                                        <td className="px-4 py-2 font-medium text-zinc-700">{c.color || '-'}</td>
+                                                                        <td className="px-4 py-2 text-right font-bold text-zinc-900">{new Intl.NumberFormat('en-US').format(c.output_qty)}</td>
+                                                                        <td className="px-4 py-2 text-center">
+                                                                            <span className={`font-bold ${c.achievement >= 80 ? 'text-emerald-600' : c.achievement >= 50 ? 'text-amber-500' : 'text-red-500'
+                                                                                }`}>{c.achievement.toFixed(2)}%</span>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                )
+                            })
                         )}
                     </tbody>
                 </table>
@@ -219,29 +218,28 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                     Showing {(currentPage - 1) * entries + 1} to {Math.min(currentPage * entries, filteredData.length)} of {filteredData.length} entries
                 </div>
                 <div className="flex gap-1">
-                    <button 
+                    <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         className="px-3 py-1.5 border border-zinc-200 rounded text-xs font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"
                     >
                         Previous
                     </button>
-                    
+
                     {getPageNumbers().map(page => (
                         <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
-                            className={`px-3 py-1.5 border rounded text-xs font-bold transition-all ${
-                                currentPage === page
+                            className={`px-3 py-1.5 border rounded text-xs font-bold transition-all ${currentPage === page
                                     ? 'bg-blue-500 text-white border-blue-500'
                                     : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
-                            }`}
+                                }`}
                         >
                             {page}
                         </button>
                     ))}
 
-                    <button 
+                    <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages || totalPages === 0}
                         className="px-3 py-1.5 border border-zinc-200 rounded text-xs font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50"

@@ -10,10 +10,10 @@ type TabType = 'active' | 'prolonged';
 export default function DetailedStatisticsPage() {
     const [allData, setAllData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Tab and Filter State
     const [activeTab, setActiveTab] = useState<TabType>('active');
-    
+
     // Default Date Range: Last 7 days to today
     const [startDate, setStartDate] = useState(() => {
         const d = new Date();
@@ -47,10 +47,10 @@ export default function DetailedStatisticsPage() {
         const start = new Date(startDate);
         const end = new Date(endDate);
         // Reset times for accurate day comparison
-        d.setHours(0,0,0,0);
-        start.setHours(0,0,0,0);
-        end.setHours(23,59,59,999);
-        
+        d.setHours(0, 0, 0, 0);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
         return d >= start && d <= end;
     };
 
@@ -71,10 +71,10 @@ export default function DetailedStatisticsPage() {
     const activeGLs = allData.filter(item => isWithinDateRange(item.last_update));
     const activeGLsCount = activeGLs.length;
     const pendingGLsCount = allData.filter(item => item.balance < 0 && !isWithinDateRange(item.last_update)).length;
-    
+
     // Avg achievement tied to the date range (only active GLs)
-    const avgAchievement = activeGLsCount > 0 
-        ? activeGLs.reduce((sum, item) => sum + item.achievement, 0) / activeGLsCount 
+    const avgAchievement = activeGLsCount > 0
+        ? activeGLs.reduce((sum, item) => sum + item.achievement, 0) / activeGLsCount
         : 0;
 
     // Achievement Breakdown
@@ -90,7 +90,7 @@ export default function DetailedStatisticsPage() {
                         <Icon icon="solar:chart-square-bold-duotone" className="w-8 h-8" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-zinc-900 tracking-tight uppercase leading-none">Detailed Statistics</h1>
+                        <h1 className="text-2xl font-black text-zinc-900 tracking-tight uppercase leading-none">Summary Statistic</h1>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                             <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-none">Sewing Output Analysis</p>
@@ -100,15 +100,15 @@ export default function DetailedStatisticsPage() {
 
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 bg-white border border-zinc-200 p-1.5 rounded-xl shadow-sm">
-                        <input 
-                            type="date" 
+                        <input
+                            type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
                             className="text-xs font-bold bg-transparent outline-none px-2 text-zinc-600"
                         />
                         <span className="text-zinc-300">-</span>
-                        <input 
-                            type="date" 
+                        <input
+                            type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                             className="text-xs font-bold bg-transparent outline-none px-2 text-zinc-600"
@@ -178,23 +178,21 @@ export default function DetailedStatisticsPage() {
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-zinc-200 pb-px mt-4">
-                <button 
+                <button
                     onClick={() => setActiveTab('active')}
-                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${
-                        activeTab === 'active' 
-                        ? 'border-zinc-900 text-zinc-900' 
-                        : 'border-transparent text-zinc-400 hover:text-zinc-600'
-                    }`}
+                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'active'
+                            ? 'border-zinc-900 text-zinc-900'
+                            : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                        }`}
                 >
                     Active GLs
                 </button>
-                <button 
+                <button
                     onClick={() => setActiveTab('prolonged')}
-                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${
-                        activeTab === 'prolonged' 
-                        ? 'border-zinc-900 text-zinc-900' 
-                        : 'border-transparent text-zinc-400 hover:text-zinc-600'
-                    }`}
+                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'prolonged'
+                            ? 'border-zinc-900 text-zinc-900'
+                            : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                        }`}
                 >
                     Pending / Inactive GLs
                 </button>
