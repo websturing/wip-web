@@ -5,7 +5,7 @@ import DetailedStatisticsTable from '@/features/productivity/components/Detailed
 import { Icon } from '@/app/components/ui/Icon';
 import { apiClient } from '@/lib/api';
 
-type TabType = 'active' | 'prolonged';
+type TabType = 'active' | 'prolonged' | 'cutting';
 
 export default function DetailedStatisticsPage() {
     const [allData, setAllData] = useState<any[]>([]);
@@ -196,9 +196,28 @@ export default function DetailedStatisticsPage() {
                 >
                     Pending / Inactive GLs
                 </button>
+                <button
+                    onClick={() => setActiveTab('cutting')}
+                    className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'cutting'
+                        ? 'border-zinc-900 text-zinc-900'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                        }`}
+                >
+                    Finished Cut (Cutting)
+                </button>
             </div>
 
-            <DetailedStatisticsTable data={filteredData} isLoading={isLoading} />
+            {activeTab === 'cutting' ? (
+                <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-12 flex flex-col items-center justify-center text-center mt-4">
+                    <Icon icon="solar:programming-bold-duotone" className="w-16 h-16 text-zinc-300 mb-4" />
+                    <h3 className="text-lg font-black text-zinc-900 tracking-tight">Work in Progress</h3>
+                    <p className="text-sm font-medium text-zinc-500 mt-1 max-w-md">This feature is currently under development. The Cutting (Finished Cut) statistics will be available soon.</p>
+                </div>
+            ) : (
+                <div className="mt-4">
+                    <DetailedStatisticsTable data={filteredData} isLoading={isLoading} />
+                </div>
+            )}
         </div>
     );
 }
