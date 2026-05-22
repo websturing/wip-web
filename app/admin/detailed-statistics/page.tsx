@@ -127,13 +127,13 @@ export default function DetailedStatisticsPage() {
                     <div className="text-3xl font-black text-zinc-900">
                         {isLoading ? '-' : activeGLsCount}
                     </div>
-                    <p className="text-[10px] font-bold text-zinc-400">Dalam rentang tanggal terpilih</p>
+                    <p className="text-[10px] font-bold text-zinc-400">On Selected Date Range</p>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-center">
                     <div className="flex items-center gap-2 text-zinc-500 mb-2">
                         <Icon icon="solar:pie-chart-3-bold-duotone" className="w-5 h-5 text-emerald-500" />
-                        <span className="text-xs font-black tracking-widest uppercase">Health Breakdown</span>
+                        <span className="text-xs font-black tracking-widest uppercase">On Track</span>
                     </div>
                     <div className="flex items-end justify-between mt-1">
                         <div className="text-center">
@@ -161,7 +161,7 @@ export default function DetailedStatisticsPage() {
                     <div className="text-3xl font-black text-zinc-900">
                         {isLoading ? '-' : `${avgAchievement.toFixed(1)}%`}
                     </div>
-                    <p className="text-[10px] font-bold text-zinc-400">Rata-rata dari GL yang sedang aktif</p>
+                    <p className="text-[10px] font-bold text-zinc-400">Avg On Selected Date Range</p>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
@@ -172,7 +172,7 @@ export default function DetailedStatisticsPage() {
                     <div className="text-3xl font-black text-zinc-900">
                         {isLoading ? '-' : pendingGLsCount}
                     </div>
-                    <p className="text-[10px] font-bold text-zinc-400">Belum tuntas tapi tidak ada produksi</p>
+                    <p className="text-[10px] font-bold text-zinc-400">Pending / Inactive GLs</p>
                 </div>
             </div>
 
@@ -181,8 +181,8 @@ export default function DetailedStatisticsPage() {
                 <button
                     onClick={() => setActiveTab('active')}
                     className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'active'
-                            ? 'border-zinc-900 text-zinc-900'
-                            : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                        ? 'border-zinc-900 text-zinc-900'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-600'
                         }`}
                 >
                     Active GLs
@@ -190,8 +190,8 @@ export default function DetailedStatisticsPage() {
                 <button
                     onClick={() => setActiveTab('prolonged')}
                     className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'prolonged'
-                            ? 'border-zinc-900 text-zinc-900'
-                            : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                        ? 'border-zinc-900 text-zinc-900'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-600'
                         }`}
                 >
                     Pending / Inactive GLs
