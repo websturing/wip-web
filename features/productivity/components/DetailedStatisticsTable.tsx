@@ -148,6 +148,11 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                             <td className="px-4 py-3 font-bold text-zinc-900">
                                                 <div className="flex items-center gap-2">
                                                     {item.gl_number}
+                                                    {item.is_set_item && (
+                                                        <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-bold tracking-widest uppercase" title="Output dihitung berdasarkan set terkecil (Minimum antara Top dan Pants)">
+                                                            SET ITEM
+                                                        </span>
+                                                    )}
                                                     {running && (
                                                         <span className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold tracking-widest uppercase" title="Output logged within last 7 days">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -157,7 +162,7 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-right">{new Intl.NumberFormat('en-US').format(item.order_qty)}</td>
-                                            <td className="px-4 py-3 font-bold text-right">{new Intl.NumberFormat('en-US').format(item.output_qty)}</td>
+                                            <td className="px-4 py-3 font-bold text-right" title={item.is_set_item ? "Calculated based on completed sets (Min of Top & Pants)" : undefined}>{new Intl.NumberFormat('en-US').format(item.output_qty)}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`font-bold ${item.balance > 0 ? 'text-emerald-500' : item.balance < 0 ? 'text-red-500' : 'text-zinc-400'}`}>
                                                     {item.balance > 0 ? `+${new Intl.NumberFormat('en-US').format(item.balance)}` : new Intl.NumberFormat('en-US').format(item.balance)}
