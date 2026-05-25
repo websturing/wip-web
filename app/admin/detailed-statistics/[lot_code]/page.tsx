@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useMemo } from 'react';
 import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { WipReportService } from '@/features/Wip/services/WipReportService';
@@ -57,6 +57,45 @@ export default function LotDetailedBreakdownPage({ params }: { params: Promise<{
         loadData();
     }, [lotCode]);
 
+    const setBreakdowns = useMemo(() => {
+        if (!data?.reports) return null;
+        
+        const parts: any = {};
+        let isSetItem = false;
+
+        data.reports.forEach((report: any) => {
+            let baseName = report.color;
+            let type = 'other';
+            
+            const match = report.color.match(/(.*?)\s*\((TOP|PANT|PANTS)\)$/i);
+            if (match) {
+                baseName = match[1].trim();
+                type = match[2].toUpperCase() === 'TOP' ? 'top' : 'pant';
+                isSetItem = true;
+            }
+
+            if (!parts[baseName]) {
+                parts[baseName] = { top_input: 0, pant_input: 0, top_output: 0, pant_output: 0, has_set: false };
+            }
+
+            const inputTotal = report.input.reduce((sum: number, r: any) => sum + r.total, 0);
+            const outputTotal = report.output.reduce((sum: number, r: any) => sum + r.total, 0);
+
+            if (type === 'top') {
+                parts[baseName].top_input += inputTotal;
+                parts[baseName].top_output += outputTotal;
+                parts[baseName].has_set = true;
+            } else if (type === 'pant') {
+                parts[baseName].pant_input += inputTotal;
+                parts[baseName].pant_output += outputTotal;
+                parts[baseName].has_set = true;
+            }
+        });
+
+        if (!isSetItem) return null;
+        return parts;
+    }, [data]);
+
     return (
         <div className="animate-in fade-in duration-700">
             <div className="flex items-center justify-between mb-6">
@@ -92,6 +131,41 @@ export default function LotDetailedBreakdownPage({ params }: { params: Promise<{
                             <p className="text-lg font-black text-zinc-900">{data.header.buyer}</p>
                         </div>
                     </div>
+
+                    {setBreakdowns && Object.keys(setBreakdowns).length > 0 && (
+                        <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 shadow-sm">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Icon icon="solar:info-circle-bold-duotone" className="w-5 h-5 text-blue-500" />
+                                <h5 className="text-[12px] font-black uppercase tracking-widest text-blue-800">Set Item Breakdown</h5>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {Object.entries(setBreakdowns).map(([baseName, parts]: [string, any], idx) => {
+                                    if (!parts.has_set) return null;
+                                    const combinedInput = Math.min(parts.top_input, parts.pant_input);
+                                    const combinedOutput = Math.min(parts.top_output, parts.pant_output);
+                                    return (
+                                        <div key={idx} className="bg-white border border-blue-100/50 rounded-xl p-4 shadow-sm text-xs">
+                                            <div className="font-bold text-blue-900 mb-3">{baseName}</div>
+                                            <div className="flex flex-col gap-2 text-zinc-600">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-[10px] uppercase tracking-widest">TOP</span>
+                                                    <span><span className="font-black text-zinc-900">{parts.top_output}</span> / <span className="font-medium text-zinc-500">{parts.top_input}</span></span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-[10px] uppercase tracking-widest">PANTS</span>
+                                                    <span><span className="font-black text-zinc-900">{parts.pant_output}</span> / <span className="font-medium text-zinc-500">{parts.pant_input}</span></span>
+                                                </div>
+                                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-50">
+                                                    <span className="font-bold text-[10px] uppercase tracking-widest text-blue-600">COMBINED</span>
+                                                    <span className="font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{combinedOutput}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {data.reports.map((report: any, rIdx: number) => (
                         <div key={rIdx} className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">

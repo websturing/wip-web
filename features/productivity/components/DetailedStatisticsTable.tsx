@@ -195,6 +195,32 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                                                 View Detailed Size Breakdown
                                                             </a>
                                                         </div>
+
+                                                        {item.is_set_item && item.color_parts && Object.keys(item.color_parts).length > 0 && (
+                                                            <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 my-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <Icon icon="solar:info-circle-bold-duotone" className="w-4 h-4 text-blue-500" />
+                                                                    <h5 className="text-[11px] font-black uppercase tracking-widest text-blue-800">Set Item Breakdown</h5>
+                                                                </div>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                    {Object.entries(item.color_parts).map(([baseName, parts]: [string, any], idx) => {
+                                                                        if (!parts.has_set) return null;
+                                                                        const combinedInput = Math.min(parts.top_input, parts.pant_input);
+                                                                        const combinedOutput = Math.min(parts.top_output, parts.pant_output);
+                                                                        return (
+                                                                            <div key={idx} className="bg-white border border-blue-100/50 rounded-md p-2 shadow-sm text-[10px]">
+                                                                                <div className="font-bold text-blue-900 mb-1">{baseName}</div>
+                                                                                <div className="flex justify-between items-center text-zinc-600">
+                                                                                    <span>TOP: <span className="font-bold text-zinc-900">{parts.top_output}</span> / <span className="font-medium text-zinc-500">{parts.top_input}</span></span>
+                                                                                    <span>PANTS: <span className="font-bold text-zinc-900">{parts.pant_output}</span> / <span className="font-medium text-zinc-500">{parts.pant_input}</span></span>
+                                                                                    <span className="font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">COMBINED: {combinedOutput}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         <table className="w-full text-left text-[11px] border border-zinc-200 rounded-lg overflow-hidden bg-white shadow-sm">
                                                             <thead className="bg-zinc-100/80 text-zinc-500 font-bold uppercase tracking-widest text-[9px]">
                                                                 <tr>
