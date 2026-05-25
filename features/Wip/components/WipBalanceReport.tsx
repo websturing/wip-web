@@ -138,12 +138,9 @@ export default function WipBalanceReport() {
                     ${data.sizes.map((s: string) => `<td style="text-align:center;">${inCut.sizes[s] || ''}</td>`).join('')}
                     <td style="text-align:center; background-color:#8EB4E3;">${inCut.total}</td>
                     <td style="background-color:#FFFF00; border:none;"></td>
-                    <td colspan="4">TOTAL INPUT SEWING (REF)</td>
-                    ${data.sizes.map((s: string) => {
-                const inSum = report.input.reduce((sum: number, r: any) => sum + (r.sizes[s] || 0), 0);
-                return `<td style="text-align:center;">${inSum || ''}</td>`;
-            }).join('')}
-                    <td style="text-align:center; background-color:#8EB4E3;">${report.input.reduce((sum: number, r: any) => sum + r.total, 0)}</td>
+                    <td colspan="4">ACTUAL CUT (CUTTING DEPT)</td>
+                    ${data.sizes.map((s: string) => `<td style="text-align:center;">${inCut.sizes[s] || ''}</td>`).join('')}
+                    <td style="text-align:center; background-color:#8EB4E3;">${inCut.total}</td>
                 </tr>
             `;
 
@@ -196,14 +193,19 @@ export default function WipBalanceReport() {
             }).join('')}
                     <td style="text-align:center; color:#FF0000; border:2px solid black;">${report.cutting_qty.total - report.input.reduce((sum: number, r: any) => sum + r.total, 0)}</td>
                     <td style="background-color:#FFFF00; border:none;"></td>
-                    <td colspan="4" style="text-align:right;">DIFF (INPUT vs OUTPUT)</td>
+                    <td colspan="4" style="text-align:right;">DIFF (CUT vs OUTPUT)</td>
                     ${data.sizes.map((s: string) => {
-                const inSum = report.input.reduce((sum: number, r: any) => sum + (r.sizes[s] || 0), 0);
+                const cutVal = inCut.sizes[s] || 0;
                 const outSum = report.output.reduce((sum: number, r: any) => sum + (r.sizes[s] || 0), 0);
-                const diff = inSum - outSum;
-                return `<td style="text-align:center; color:#FF0000; border:2px solid black;">${diff || 0}</td>`;
+                const diff = cutVal - outSum;
+                const displayDiff = diff === 0 ? '-' : (diff < 0 ? `+${Math.abs(diff)}` : diff);
+                return `<td style="text-align:center; color:#FF0000; border:2px solid black;">${displayDiff}</td>`;
             }).join('')}
-                    <td style="text-align:center; color:#FF0000; border:2px solid black;">${report.input.reduce((sum: number, r: any) => sum + r.total, 0) - report.output.reduce((sum: number, r: any) => sum + r.total, 0)}</td>
+                    ${(() => {
+                const totalDiff = inCut.total - report.output.reduce((sum: number, r: any) => sum + r.total, 0);
+                const displayTotalDiff = totalDiff === 0 ? '-' : (totalDiff < 0 ? `+${Math.abs(totalDiff)}` : totalDiff);
+                return `<td style="text-align:center; color:#FF0000; border:2px solid black;">${displayTotalDiff}</td>`;
+            })()}
                 </tr>
                 <tr><td colspan="${tableWidth * 2 + 2}" style="border:none; height:40px;"></td></tr>
             `;
@@ -420,16 +422,16 @@ export default function WipBalanceReport() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="font-bold text-zinc-700">
-                                                    {/* TOTAL INPUT AS REFERENCE ROW */}
-                                                    <tr className="bg-zinc-100 text-zinc-900 border-b-2 border-zinc-200">
-                                                        <td colSpan={4} className="border border-zinc-200 p-1.5 uppercase tracking-widest text-[8px] font-black italic">Total Input Sewing (Available)</td>
+                                                    {/* ACTUAL CUT FROM API ROW AS REFERENCE */}
+                                                    <tr className="bg-blue-50/30 text-blue-900 border-b-2 border-zinc-200">
+                                                        <td colSpan={4} className="border border-zinc-200 p-1.5 uppercase tracking-widest text-[8px] font-black italic">Actual Cut Qty (Cutting Dept)</td>
                                                         {data.sizes.map((s: string) => (
-                                                            <td key={s} className="border border-zinc-200 p-1.5 text-center tabular-nums">
-                                                                {formatNum(report.input.reduce((sum: number, r: any) => sum + (r.sizes[s] || 0), 0))}
+                                                            <td key={s} className="border border-zinc-200 p-1.5 text-center tabular-nums bg-blue-50/50">
+                                                                {formatNum(report.cutting_qty.sizes[s])}
                                                             </td>
                                                         ))}
-                                                        <td className="border border-zinc-200 p-1.5 text-center tabular-nums bg-zinc-800 text-white font-black">
-                                                            {formatNum(report.input.reduce((sum: number, r: any) => sum + (r.total || 0), 0))}
+                                                        <td className="border border-zinc-200 p-1.5 text-center tabular-nums bg-blue-900 text-white font-black">
+                                                            {formatNum(report.cutting_qty.total)}
                                                         </td>
                                                     </tr>
 
@@ -459,22 +461,26 @@ export default function WipBalanceReport() {
                                                         </td>
                                                     </tr>
                                                     <tr className="bg-white text-red-500 text-[9px]">
-                                                        <td colSpan={4} className="border border-zinc-200 p-1.5 uppercase tracking-widest font-black italic">Diff (Input - Output)</td>
+                                                        <td colSpan={4} className="border border-zinc-200 p-1.5 uppercase tracking-widest font-black italic">Diff (Cut - Output)</td>
                                                         {data.sizes.map((s: string) => {
-                                                            const inSum = report.input.reduce((sum: number, r: any) => sum + (r.sizes[s] || 0), 0);
+                                                            const cutQty = report.cutting_qty.sizes[s] || 0;
                                                             const outSum = report.output.reduce((sum: number, r: any) => sum + (r.sizes[s] || 0), 0);
-                                                            const diff = inSum - outSum;
+                                                            const diff = cutQty - outSum;
+                                                            const displayDiff = diff === 0 ? '-' : (diff < 0 ? `+${Math.abs(diff)}` : diff);
                                                             return (
                                                                 <td key={s} className={cn(
                                                                     "border border-zinc-200 p-1.5 text-center font-black text-[10px]",
                                                                     diff > 0 ? "text-amber-600" : diff < 0 ? "text-red-600" : "text-emerald-600"
                                                                 )}>
-                                                                    {diff === 0 ? '-' : diff}
+                                                                    {displayDiff}
                                                                 </td>
                                                             );
                                                         })}
                                                         <td className="border border-zinc-200 p-1.5 text-center font-black text-[10px] bg-red-50">
-                                                            {report.input.reduce((sum: number, r: any) => sum + (r.total || 0), 0) - report.output.reduce((sum: number, r: any) => sum + (r.total || 0), 0)}
+                                                            {(() => {
+                                                                const totalDiff = report.cutting_qty.total - report.output.reduce((sum: number, r: any) => sum + (r.total || 0), 0);
+                                                                return totalDiff === 0 ? '-' : (totalDiff < 0 ? `+${Math.abs(totalDiff)}` : totalDiff);
+                                                            })()}
                                                         </td>
                                                     </tr>
                                                 </tfoot>

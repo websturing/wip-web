@@ -189,7 +189,9 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                                             <thead className="bg-zinc-100/80 text-zinc-500 font-bold uppercase tracking-widest text-[9px]">
                                                                 <tr>
                                                                     <th className="px-4 py-2">COLOR / TYPE</th>
+                                                                    <th className="px-4 py-2 text-right">INPUT</th>
                                                                     <th className="px-4 py-2 text-right">OUTPUT</th>
+                                                                    <th className="px-4 py-2 text-center">BALANCE</th>
                                                                     <th className="px-4 py-2 text-center">ACHIEVEMENT</th>
                                                                 </tr>
                                                             </thead>
@@ -197,14 +199,36 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                                                 {item.colors.map((c: any, cIdx: number) => (
                                                                     <tr key={cIdx} className="hover:bg-zinc-50/50">
                                                                         <td className="px-4 py-2 font-medium text-zinc-700">{c.color || '-'}</td>
+                                                                        <td className="px-4 py-2 text-right">{new Intl.NumberFormat('en-US').format(c.order_qty)}</td>
                                                                         <td className="px-4 py-2 text-right font-bold text-zinc-900">{new Intl.NumberFormat('en-US').format(c.output_qty)}</td>
                                                                         <td className="px-4 py-2 text-center">
-                                                                            <span className={`font-bold ${c.achievement >= 80 ? 'text-emerald-600' : c.achievement >= 50 ? 'text-amber-500' : 'text-red-500'
-                                                                                }`}>{c.achievement.toFixed(2)}%</span>
+                                                                            <span className={`font-bold ${c.balance > 0 ? 'text-emerald-500' : c.balance < 0 ? 'text-red-500' : 'text-zinc-400'}`}>
+                                                                                {c.balance > 0 ? `+${new Intl.NumberFormat('en-US').format(c.balance)}` : new Intl.NumberFormat('en-US').format(c.balance)}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="px-4 py-2 text-center">
+                                                                            <span className={`font-bold ${c.achievement >= 80 ? 'text-emerald-600' : c.achievement >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                                                                                {c.achievement.toFixed(2)}%
+                                                                            </span>
                                                                         </td>
                                                                     </tr>
                                                                 ))}
                                                             </tbody>
+                                                            <tfoot className="bg-zinc-100/50">
+                                                                <tr>
+                                                                    <td className="px-4 py-2 font-bold text-zinc-900 text-right">TOTAL</td>
+                                                                    <td className="px-4 py-2 text-right font-bold text-zinc-900">{new Intl.NumberFormat('en-US').format(item.order_qty)}</td>
+                                                                    <td className="px-4 py-2 text-right font-bold text-zinc-900">{new Intl.NumberFormat('en-US').format(item.output_qty)}</td>
+                                                                    <td className="px-4 py-2 text-center">
+                                                                        <span className={`font-bold ${item.balance > 0 ? 'text-emerald-500' : item.balance < 0 ? 'text-red-500' : 'text-zinc-400'}`}>
+                                                                            {item.balance > 0 ? `+${new Intl.NumberFormat('en-US').format(item.balance)}` : new Intl.NumberFormat('en-US').format(item.balance)}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-4 py-2 text-center font-bold text-zinc-900">
+                                                                        {item.achievement.toFixed(2)}%
+                                                                    </td>
+                                                                </tr>
+                                                            </tfoot>
                                                         </table>
                                                     </div>
                                                 </td>

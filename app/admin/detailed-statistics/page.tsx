@@ -28,7 +28,8 @@ export default function DetailedStatisticsPage() {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
-                const res = await apiClient.get('/productivity/detailed-statistics');
+                const query = new URLSearchParams({ start_date: startDate, end_date: endDate }).toString();
+                const res = await apiClient.get(`/productivity/detailed-statistics?${query}`);
                 const json = await res.json();
                 setAllData(json?.data || []);
             } catch (error) {
@@ -38,7 +39,7 @@ export default function DetailedStatisticsPage() {
             }
         };
         fetchData();
-    }, []);
+    }, [startDate, endDate]);
 
     // Helper to check if a date is within range
     const isWithinDateRange = (dateStr: string) => {
@@ -70,6 +71,34 @@ export default function DetailedStatisticsPage() {
     // Calculate Summary Cards Data
     const activeGLs = allData.filter(item => isWithinDateRange(item.last_update));
     const activeGLsCount = activeGLs.length;
+
+    const setDatePreset = (preset: 'today' | 'week' | 'month') => {
+        const d = new Date();
+        const end = d.toISOString().split('T')[0];
+        if (preset === 'today') {
+            setStartDate(end);
+            setEndDate(end);
+        } else if (preset === 'week') {
+            const start = new Date(d);
+            const day = start.getDay();
+            const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+            start.setDate(diff);
+            setStartDate(start.toISOString().split('T')[0]);
+            setEndDate(end);
+        } else if (preset === 'month') {
+            const start = new Date(d.getFullYear(), d.getMonth(), 2); // 2 to offset timezone if needed, better use UTC or local
+            const localStart = new Date(d.getFullYear(), d.getMonth(), 1);
+            // simple format
+            const yyyy = localStart.getFullYear();
+            const mm = String(localStart.getMonth() + 1).padStart(2, '0');
+            const dd = String(localStart.getDate()).padStart(2, '0');
+            setStartDate(`${yyyy}-${mm}-${dd}`);
+            setEndDate(end);
+        }
+    };
+    const totalInputDisplay = filteredData.reduce((sum, item) => sum + (item.order_qty || 0), 0);
+    const totalOutputDisplay = filteredData.reduce((sum, item) => sum + (item.output_qty || 0), 0);
+
     const pendingGLsCount = allData.filter(item => item.balance < 0 && !isWithinDateRange(item.last_update)).length;
 
     // Avg achievement tied to the date range (only active GLs)
@@ -113,6 +142,12 @@ export default function DetailedStatisticsPage() {
                             onChange={(e) => setEndDate(e.target.value)}
                             className="text-xs font-bold bg-transparent outline-none px-2 text-zinc-600"
                         />
+                    </div>
+
+                    <div className="flex gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200 shadow-sm">
+                        <button onClick={() => setDatePreset('today')} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-white hover:text-zinc-900 hover:shadow-sm transition-all text-zinc-500">Today</button>
+                        <button onClick={() => setDatePreset('week')} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-white hover:text-zinc-900 hover:shadow-sm transition-all text-zinc-500">This Week</button>
+                        <button onClick={() => setDatePreset('month')} className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-white hover:text-zinc-900 hover:shadow-sm transition-all text-zinc-500">This Month</button>
                     </div>
                 </div>
             </div>
@@ -173,6 +208,28 @@ export default function DetailedStatisticsPage() {
                         {isLoading ? '-' : pendingGLsCount}
                     </div>
                     <p className="text-[10px] font-bold text-zinc-400">Pending / Inactive GLs</p>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-zinc-500">
+                        <Icon icon="solar:box-minimalistic-bold-duotone" className="w-5 h-5 text-blue-500" />
+                        <span className="text-xs font-black tracking-widest uppercase">Total Input</span>
+                    </div>
+                    <div className="text-3xl font-black text-zinc-900">
+                        {isLoading ? '-' : new Intl.NumberFormat('en-US').format(totalInputDisplay)}
+                    </div>
+                    <p className="text-[10px] font-bold text-zinc-400">Total Order on Selected Tab</p>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-zinc-500">
+                        <Icon icon="solar:box-bold-duotone" className="w-5 h-5 text-emerald-500" />
+                        <span className="text-xs font-black tracking-widest uppercase">Total Output</span>
+                    </div>
+                    <div className="text-3xl font-black text-zinc-900">
+                        {isLoading ? '-' : new Intl.NumberFormat('en-US').format(totalOutputDisplay)}
+                    </div>
+                    <p className="text-[10px] font-bold text-zinc-400">Total Output on Selected Tab</p>
                 </div>
             </div>
 
