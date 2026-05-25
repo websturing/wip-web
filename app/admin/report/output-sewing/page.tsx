@@ -8,6 +8,8 @@ export default function OutputSewingReportPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [data, setData] = useState<any[]>([]);
+    const [summaryData, setSummaryData] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'detailed' | 'summary'>('detailed');
     const [startDate, setStartDate] = useState(() => {
         const d = new Date();
         d.setDate(d.getDate() - 7);
@@ -51,6 +53,7 @@ export default function OutputSewingReportPage() {
             const res = await apiClient.get(`/productivity/output-sewing-report?${query}`);
             const json = await res.json();
             setData(json?.data || []);
+            setSummaryData(json?.summary || []);
         } catch (error) {
             console.error("Failed to fetch report data", error);
         } finally {
@@ -150,56 +153,122 @@ export default function OutputSewingReportPage() {
                 </button>
             </div>
 
-            {/* Data Table */}
+            {/* Data Table Area */}
             <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+                {/* Tabs */}
+                <div className="flex border-b border-zinc-200">
+                    <button
+                        onClick={() => setActiveTab('detailed')}
+                        className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-all ${
+                            activeTab === 'detailed' 
+                            ? 'bg-zinc-50 text-emerald-600 border-b-2 border-emerald-500' 
+                            : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+                        }`}
+                    >
+                        Detailed View
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('summary')}
+                        className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-all ${
+                            activeTab === 'summary' 
+                            ? 'bg-zinc-50 text-emerald-600 border-b-2 border-emerald-500' 
+                            : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+                        }`}
+                    >
+                        GL Summary
+                    </button>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-zinc-50 border-b border-zinc-200">
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Date</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">GL-LOT</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Style</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Input Qty</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Output Qty</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Color</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Ship Date</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">SAM</th>
-                                <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Minutes</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan={9} className="p-8 text-center text-zinc-400">
-                                        <Icon icon="solar:spinner-bold-duotone" className="w-6 h-6 animate-spin mx-auto mb-3" />
-                                        <p className="text-xs font-bold tracking-wider uppercase">Loading Data...</p>
-                                    </td>
+                    {activeTab === 'detailed' ? (
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-zinc-50 border-b border-zinc-200">
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Date</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">GL-LOT</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Style</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Input Qty</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Output Qty</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Color</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Ship Date</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">SAM</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Minutes</th>
                                 </tr>
-                            ) : data.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="p-8 text-center text-zinc-400">
-                                        <Icon icon="solar:ghost-bold-duotone" className="w-6 h-6 mx-auto mb-3 opacity-50" />
-                                        <p className="text-xs font-bold tracking-wider uppercase">No Data Found</p>
-                                        <p className="text-[10px] mt-1">Try selecting a different date range.</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                data.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
-                                        <td className="p-2.5 px-3 text-xs font-medium text-zinc-700 whitespace-nowrap">{item.date}</td>
-                                        <td className="p-2.5 px-3 text-xs font-bold text-zinc-900 whitespace-nowrap">{item.gl_lot}</td>
-                                        <td className="p-2.5 px-3 text-xs font-medium text-zinc-600 whitespace-nowrap">{item.style || '-'}</td>
-                                        <td className="p-2.5 px-3 text-xs font-black text-zinc-700 text-right">{new Intl.NumberFormat().format(item.input_qty)}</td>
-                                        <td className="p-2.5 px-3 text-xs font-black text-emerald-600 text-right">{new Intl.NumberFormat().format(item.output_qty)}</td>
-                                        <td className="p-2.5 px-3 text-xs font-medium text-zinc-700 whitespace-nowrap">{item.color}</td>
-                                        <td className="p-2.5 px-3 text-xs font-medium text-zinc-500 whitespace-nowrap">{item.ship_date || '-'}</td>
-                                        <td className="p-2.5 px-3 text-xs font-medium text-zinc-700 text-right">{item.sam}</td>
-                                        <td className="p-2.5 px-3 text-xs font-black text-blue-600 text-right">{new Intl.NumberFormat().format(item.minutes)}</td>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={9} className="p-8 text-center text-zinc-400">
+                                            <Icon icon="solar:spinner-bold-duotone" className="w-6 h-6 animate-spin mx-auto mb-3" />
+                                            <p className="text-xs font-bold tracking-wider uppercase">Loading Data...</p>
+                                        </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="p-8 text-center text-zinc-400">
+                                            <Icon icon="solar:ghost-bold-duotone" className="w-6 h-6 mx-auto mb-3 opacity-50" />
+                                            <p className="text-xs font-bold tracking-wider uppercase">No Data Found</p>
+                                            <p className="text-[10px] mt-1">Try selecting a different date range.</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    data.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
+                                            <td className="p-2.5 px-3 text-xs font-medium text-zinc-700 whitespace-nowrap">{item.date}</td>
+                                            <td className="p-2.5 px-3 text-xs font-bold text-zinc-900 whitespace-nowrap">{item.gl_lot}</td>
+                                            <td className="p-2.5 px-3 text-xs font-medium text-zinc-600 whitespace-nowrap">{item.style || '-'}</td>
+                                            <td className="p-2.5 px-3 text-xs font-black text-zinc-700 text-right">{new Intl.NumberFormat().format(item.input_qty)}</td>
+                                            <td className="p-2.5 px-3 text-xs font-black text-emerald-600 text-right">{new Intl.NumberFormat().format(item.output_qty)}</td>
+                                            <td className="p-2.5 px-3 text-xs font-medium text-zinc-700 whitespace-nowrap">{item.color}</td>
+                                            <td className="p-2.5 px-3 text-xs font-medium text-zinc-500 whitespace-nowrap">{item.ship_date || '-'}</td>
+                                            <td className="p-2.5 px-3 text-xs font-medium text-zinc-700 text-right">{item.sam}</td>
+                                            <td className="p-2.5 px-3 text-xs font-black text-blue-600 text-right">{new Intl.NumberFormat().format(item.minutes)}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-zinc-50 border-b border-zinc-200">
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">GL-LOT</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap">Style</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Total Input Qty</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Total Output Qty</th>
+                                    <th className="p-3 text-[11px] font-black text-zinc-500 uppercase tracking-widest whitespace-nowrap text-right">Total Minutes</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={5} className="p-8 text-center text-zinc-400">
+                                            <Icon icon="solar:spinner-bold-duotone" className="w-6 h-6 animate-spin mx-auto mb-3" />
+                                            <p className="text-xs font-bold tracking-wider uppercase">Loading Data...</p>
+                                        </td>
+                                    </tr>
+                                ) : summaryData.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="p-8 text-center text-zinc-400">
+                                            <Icon icon="solar:ghost-bold-duotone" className="w-6 h-6 mx-auto mb-3 opacity-50" />
+                                            <p className="text-xs font-bold tracking-wider uppercase">No Data Found</p>
+                                            <p className="text-[10px] mt-1">Try selecting a different date range.</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    summaryData.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
+                                            <td className="p-2.5 px-3 text-xs font-bold text-zinc-900 whitespace-nowrap">{item.gl_lot}</td>
+                                            <td className="p-2.5 px-3 text-xs font-medium text-zinc-600 whitespace-nowrap">{item.style || '-'}</td>
+                                            <td className="p-2.5 px-3 text-xs font-black text-zinc-700 text-right">{new Intl.NumberFormat().format(item.input_qty)}</td>
+                                            <td className="p-2.5 px-3 text-xs font-black text-emerald-600 text-right">{new Intl.NumberFormat().format(item.output_qty)}</td>
+                                            <td className="p-2.5 px-3 text-xs font-black text-blue-600 text-right">{new Intl.NumberFormat().format(item.minutes)}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
         </div>
