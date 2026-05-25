@@ -184,7 +184,17 @@ export default function DetailedStatisticsTable({ data, isLoading }: DetailedSta
                                         {isExpanded && item.colors && item.colors.length > 0 && (
                                             <tr>
                                                 <td colSpan={8} className="bg-zinc-50/50 p-4 border-b border-zinc-100">
-                                                    <div className="pl-12 pr-4">
+                                                    <div className="pl-12 pr-4 space-y-4">
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <h4 className="text-sm font-black text-zinc-900 mb-1">Color Breakdown</h4>
+                                                                <p className="text-[10px] text-zinc-500">Summary of Input & Output per color for {item.gl_number}</p>
+                                                            </div>
+                                                            <a href={`/admin/detailed-statistics/${encodeURIComponent(item.gl_number)}`} className="inline-flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-lg font-black uppercase tracking-widest text-[10px] shadow-md hover:scale-105 active:scale-95 transition-all">
+                                                                <Icon icon="solar:chart-square-bold-duotone" className="w-4 h-4" />
+                                                                View Detailed Size Breakdown
+                                                            </a>
+                                                        </div>
                                                         <table className="w-full text-left text-[11px] border border-zinc-200 rounded-lg overflow-hidden bg-white shadow-sm">
                                                             <thead className="bg-zinc-100/80 text-zinc-500 font-bold uppercase tracking-widest text-[9px]">
                                                                 <tr>
