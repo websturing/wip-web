@@ -162,6 +162,20 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
 
     return (
         <div className="w-[240px] h-full bg-theme-bg-secondary flex flex-col rounded-lg border-r border-white/5 transition-all duration-300">
+            {/* Logo & App Name Header */}
+            <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-theme-primary flex items-center justify-center shadow-lg shadow-theme-primary/20">
+                        <Icon icon="solar:box-bold-duotone" className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white leading-tight">
+                            {process.env.NEXT_PUBLIC_APP_NAME || 'Antigravity'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <div className="flex-1 overflow-y-auto pt-5 px-2 no-scrollbar">
                 {isLoading ? (
                     <div className="space-y-4 px-4">
@@ -188,8 +202,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
 
             {/* User Profile / Logout */}
             <div className="p-4 border-t border-white/5 mt-auto">
-                <div 
-                    className="cursor-pointer hover:bg-white/5 transition-all flex items-center justify-between bg-black/20 p-3 rounded-2xl border border-white/5 shadow-sm group" 
+                <div
+                    className="cursor-pointer hover:bg-white/5 transition-all flex items-center justify-between bg-black/20 p-3 rounded-2xl border border-white/5 shadow-sm group"
                     onClick={() => setIsLogoutDialogOpen(true)}
                 >
                     <div className="flex items-center gap-3 overflow-hidden">
