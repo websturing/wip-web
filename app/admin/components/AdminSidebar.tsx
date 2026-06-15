@@ -101,9 +101,9 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         const content = (
             <div
                 className={cn(
-                    "flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer group mb-1",
-                    isActive && !isChild ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" :
-                        isActive && isChild ? "p-2 mx-2 bg-white/10 text-white shadow-sm" :
+                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer group mb-1",
+                    isActive && !isChild ? "bg-theme-primary text-white shadow-lg shadow-theme-primary/20" :
+                        isActive && isChild ? "p-1 mx-2 bg-white/10 text-white shadow-sm" :
                             "text-zinc-400 hover:bg-white/5 hover:text-white"
                 )}
                 onClick={() => hasChildren ? toggleMenu(item.name) : (isMobile && onClose?.())}
@@ -116,7 +116,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                             isActive ? "text-white" : "text-zinc-300 group-hover:text-white"
                         )}
                     />
-                    <span className={cn("text-[13px] capitalize", isActive ? "font-bold" : "font-semibold")}>
+                    <span className={cn("text-[13px] capitalize", isActive ? "font-bold" : "font-bold")}>
                         {item.name}
                     </span>
                 </div>
@@ -124,8 +124,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 <div className="flex items-center gap-2">
                     {item.badge && (
                         <span className={cn(
-                            "w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold",
-                            isActive && !isChild ? "bg-white text-blue-600" : "bg-blue-600 text-white"
+                            "w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold",
+                            isActive && !isChild ? "bg-white text-theme-primary" : "bg-theme-primary text-white"
                         )}>
                             {item.badge}
                         </span>
@@ -161,7 +161,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     };
 
     return (
-        <div className="w-[260px] h-full bg-[#111827] flex flex-col rounded-lg border-r border-white/5 transition-all duration-300">
+        <div className="w-[240px] h-full bg-theme-bg-secondary flex flex-col rounded-lg border-r border-white/5 transition-all duration-300">
             <div className="flex-1 overflow-y-auto pt-5 px-2 no-scrollbar">
                 {isLoading ? (
                     <div className="space-y-4 px-4">
@@ -187,26 +187,28 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             </div>
 
             {/* User Profile / Logout */}
-            <div className="p-4 border-t border-white/5">
-                <div className="cursor-pointer hover:bg-red-500/60 transition-all flex items-center justify-between bg-red-700 p-3 rounded-2xl border border-white/5 shadow-sm" onClick={() => setIsLogoutDialogOpen(true)}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden border border-white/10">
+            <div className="p-4 border-t border-white/5 mt-auto">
+                <div 
+                    className="cursor-pointer hover:bg-white/5 transition-all flex items-center justify-between bg-black/20 p-3 rounded-2xl border border-white/5 shadow-sm group" 
+                    onClick={() => setIsLogoutDialogOpen(true)}
+                >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-8 h-8 shrink-0 rounded-full bg-white/10 overflow-hidden border border-white/10">
                             <img
                                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'admin'}`}
                                 alt="avatar"
                                 className="w-full h-full"
                             />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-[11px] font-bold text-white truncate max-w-[100px]">
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[11px] font-bold text-white truncate">
                                 {user?.email || 'Admin'}
                             </span>
-                            <span className="text-[9px] text-zinc-300 font-medium uppercase tracking-wider">{user?.role?.name || 'Administrator'}</span>
+                            <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider">{user?.role?.name || 'Administrator'}</span>
                         </div>
                     </div>
                     <button
-
-                        className="p-2 text-zinc-300 hover:text-white hover:bg-red-900/30 rounded-xl transition-all cursor-pointer"
+                        className="p-2 shrink-0 text-zinc-400 group-hover:text-red-400 group-hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                     >
                         <LogOut className="w-4 h-4" />
                     </button>

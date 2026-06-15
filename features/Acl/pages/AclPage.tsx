@@ -13,17 +13,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { RolePermissionMatrix } from '../components/RolePermissionMatrix';
 import { UserManagement } from '../components/UserManagement';
+import { MenuManagement } from '../components/MenuManagement';
 import { useAclManagement } from '../hooks/useAclManagement';
 
 export const AclPage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { hasPermission, isLoading: isAclLoading } = useAcl();
-    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'menus'>('users');
 
     useEffect(() => {
         const tab = searchParams.get('tab');
-        if (tab === 'roles' || tab === 'permissions' || tab === 'users') {
+        if (tab === 'roles' || tab === 'permissions' || tab === 'users' || tab === 'menus') {
             setActiveTab(tab as any);
         }
     }, [searchParams]);
@@ -38,6 +39,7 @@ export const AclPage = () => {
         users,
         roles,
         permissions,
+        menus,
         isLoading,
         isUserModalOpen,
         editingUser,
@@ -45,6 +47,12 @@ export const AclPage = () => {
         isRoleModalOpen,
         editingRole,
         roleForm,
+        isPermissionModalOpen,
+        editingPermission,
+        permissionForm,
+        isMenuModalOpen,
+        editingMenu,
+        menuForm,
         confirmDelete,
         handleSync,
         openUserModal,
@@ -53,11 +61,20 @@ export const AclPage = () => {
         openRoleModal,
         closeRoleModal,
         handleSaveRole,
+        openPermissionModal,
+        closePermissionModal,
+        handleSavePermission,
+        openMenuModal,
+        closeMenuModal,
+        handleSaveMenu,
         openDeleteConfirmation,
         handleDelete,
         updateUserForm,
         updateRoleForm,
+        updatePermissionForm,
+        updateMenuForm,
         togglePermissionInRoleForm,
+        toggleMenuInRoleForm,
         setConfirmDelete,
         handleUpdateRolePermissions
     } = useAclManagement();
@@ -133,6 +150,15 @@ export const AclPage = () => {
                             Roles
                         </button>
                         <button
+                            onClick={() => setActiveTab('menus')}
+                            className={cn(
+                                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === 'menus' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-400 hover:text-zinc-600"
+                            )}
+                        >
+                            Menus
+                        </button>
+                        <button
                             onClick={() => setActiveTab('permissions')}
                             className={cn(
                                 "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
@@ -170,6 +196,13 @@ export const AclPage = () => {
                         onDeleteRole={(id) => openDeleteConfirmation(id, 'role')}
                         isLoading={isLoading}
                     />
+                ) : activeTab === 'menus' ? (
+                    <MenuManagement
+                        menus={menus}
+                        onAddMenu={() => openMenuModal()}
+                        onEditMenu={(menu) => openMenuModal(menu)}
+                        onDeleteMenu={(id) => openDeleteConfirmation(id.toString(), 'menu')}
+                    />
                 ) : (
                     <div className="bg-white rounded-[2rem] border border-zinc-200 overflow-hidden shadow-sm">
                         <div className="p-8 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
@@ -182,6 +215,13 @@ export const AclPage = () => {
                                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Master definitions of all system access points</p>
                                 </div>
                             </div>
+                            <Button
+                                onClick={() => openPermissionModal()}
+                                className="bg-zinc-900 text-white rounded-2xl h-12 px-6 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                            >
+                                <Icon icon="solar:add-circle-bold-duotone" className="w-4 h-4" />
+                                Create Permission
+                            </Button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse">
@@ -221,6 +261,22 @@ export const AclPage = () => {
                                                 </td>
                                                 <td className="px-8 py-4 border-b border-zinc-100">
                                                     <p className="text-[11px] font-bold text-zinc-600">{perm.label}</p>
+                                                </td>
+                                                <td className="px-8 py-4 border-b border-zinc-100 text-right opacity-0 group-hover:opacity-100 transition-all">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => openPermissionModal(perm)}
+                                                            className="w-8 h-8 rounded-lg bg-white border border-zinc-200 text-zinc-400 hover:bg-zinc-900 hover:text-white hover:border-zinc-900 flex items-center justify-center transition-all shadow-sm"
+                                                        >
+                                                            <Icon icon="solar:pen-bold-duotone" className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openDeleteConfirmation(perm.id.toString(), 'permission')}
+                                                            className="w-8 h-8 rounded-lg bg-white border border-zinc-200 text-zinc-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all shadow-sm"
+                                                        >
+                                                            <Icon icon="solar:trash-bin-trash-bold-duotone" className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -393,6 +449,69 @@ export const AclPage = () => {
                                         </div>
                                     </div>
     
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Sidebar Menus Allocation</label>
+                                            <span className="text-[9px] font-black text-purple-600 uppercase tracking-widest">{roleForm.menus.length} Menus Selected</span>
+                                        </div>
+
+                                        <div className="bg-zinc-50 rounded-[2rem] border border-zinc-100 p-6 max-h-[250px] overflow-y-auto no-scrollbar space-y-2">
+                                            {menus.map((menu: any) => (
+                                                <div key={menu.id} className="flex flex-col gap-2">
+                                                    <div
+                                                        onClick={() => toggleMenuInRoleForm(menu.id.toString())}
+                                                        className={cn(
+                                                            "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group",
+                                                            roleForm.menus.includes(menu.id.toString())
+                                                                ? "bg-white border-zinc-900 shadow-sm"
+                                                                : "bg-zinc-100/50 border-transparent hover:border-zinc-200"
+                                                        )}
+                                                    >
+                                                        <div className={cn(
+                                                            "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
+                                                            roleForm.menus.includes(menu.id.toString())
+                                                                ? "bg-zinc-900 border-zinc-900 text-white"
+                                                                : "bg-white border-zinc-200 group-hover:border-zinc-400"
+                                                        )}>
+                                                            {roleForm.menus.includes(menu.id.toString()) && <Icon icon="solar:check-read-bold" className="w-3 h-3" />}
+                                                        </div>
+                                                        <Icon icon={menu.icon || 'solar:folder-bold-duotone'} className="w-4 h-4 text-zinc-400" />
+                                                        <span className={cn(
+                                                            "text-[11px] font-bold uppercase tracking-tight",
+                                                            roleForm.menus.includes(menu.id.toString()) ? "text-zinc-900" : "text-zinc-400"
+                                                        )}>{menu.name}</span>
+                                                    </div>
+                                                    {menu.children && menu.children.length > 0 && menu.children.map((child: any) => (
+                                                        <div
+                                                            key={child.id}
+                                                            onClick={() => toggleMenuInRoleForm(child.id.toString())}
+                                                            className={cn(
+                                                                "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group ml-8",
+                                                                roleForm.menus.includes(child.id.toString())
+                                                                    ? "bg-white border-zinc-900 shadow-sm"
+                                                                    : "bg-zinc-100/50 border-transparent hover:border-zinc-200"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
+                                                                roleForm.menus.includes(child.id.toString())
+                                                                    ? "bg-zinc-900 border-zinc-900 text-white"
+                                                                    : "bg-white border-zinc-200 group-hover:border-zinc-400"
+                                                            )}>
+                                                                {roleForm.menus.includes(child.id.toString()) && <Icon icon="solar:check-read-bold" className="w-3 h-3" />}
+                                                            </div>
+                                                            <Icon icon={child.icon || 'solar:folder-bold-duotone'} className="w-4 h-4 text-zinc-400" />
+                                                            <span className={cn(
+                                                                "text-[11px] font-bold uppercase tracking-tight",
+                                                                roleForm.menus.includes(child.id.toString()) ? "text-zinc-900" : "text-zinc-400"
+                                                            )}>{child.name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+    
                                     <div className="flex gap-4 mt-8 pt-4">
                                         <Button
                                             variant="ghost"
@@ -407,6 +526,127 @@ export const AclPage = () => {
                                         >
                                             Deploy Role
                                         </Button>
+                                    </div>
+                                </form>
+                            </div>
+                        </DialogContent>
+                    </DialogPortal>
+                </Dialog>
+
+                {/* Permission Modal */}
+                <Dialog open={isPermissionModalOpen} onOpenChange={closePermissionModal}>
+                    <DialogPortal>
+                        <DialogContent className="max-w-md">
+                            <div className="p-8">
+                                <h2 className="text-2xl font-black text-zinc-900 uppercase tracking-tight mb-8">
+                                    {editingPermission ? 'Update Permission' : 'Create Custom Permission'}
+                                </h2>
+                                <form onSubmit={handleSavePermission} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Permission Name (Key)</label>
+                                        <input
+                                            required
+                                            className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
+                                            placeholder="e.g. users.create"
+                                            value={permissionForm.name}
+                                            onChange={e => updatePermissionForm({ name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Feature Group</label>
+                                        <input
+                                            required
+                                            className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
+                                            placeholder="e.g. Users Management"
+                                            value={permissionForm.feature}
+                                            onChange={e => updatePermissionForm({ feature: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Select
+                                            label="Action Type"
+                                            options={[
+                                                { id: 'read', label: 'Read' },
+                                                { id: 'write', label: 'Write' },
+                                                { id: 'update', label: 'Update' },
+                                                { id: 'delete', label: 'Delete' }
+                                            ]}
+                                            value={permissionForm.action}
+                                            onChange={val => updatePermissionForm({ action: val as any })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Label / Description</label>
+                                        <input
+                                            className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none"
+                                            placeholder="Short description..."
+                                            value={permissionForm.label}
+                                            onChange={e => updatePermissionForm({ label: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="flex gap-4 mt-8 pt-4">
+                                        <Button type="button" variant="ghost" onClick={closePermissionModal} className="flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-500">Cancel</Button>
+                                        <Button type="submit" className="flex-1 h-14 bg-zinc-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Save Permission</Button>
+                                    </div>
+                                </form>
+                            </div>
+                        </DialogContent>
+                    </DialogPortal>
+                </Dialog>
+
+                {/* Menu Modal */}
+                <Dialog open={isMenuModalOpen} onOpenChange={closeMenuModal}>
+                    <DialogPortal>
+                        <DialogContent className="max-w-md">
+                            <div className="p-8">
+                                <h2 className="text-2xl font-black text-zinc-900 uppercase tracking-tight mb-8">
+                                    {editingMenu ? 'Update Menu' : 'Create Menu Item'}
+                                </h2>
+                                <form onSubmit={handleSaveMenu} className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Label</label>
+                                            <input required className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none" placeholder="Menu Name" value={menuForm.name} onChange={e => updateMenuForm({ name: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Path</label>
+                                            <input required className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none" placeholder="/dashboard" value={menuForm.path} onChange={e => updateMenuForm({ path: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Icon (Solar)</label>
+                                            <input className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none" placeholder="solar:home-2-bold" value={menuForm.icon} onChange={e => updateMenuForm({ icon: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Sort Order</label>
+                                            <input type="number" required className="w-full bg-zinc-50 border border-zinc-100 h-14 rounded-2xl px-6 font-bold text-[13px] focus:bg-white focus:ring-2 focus:ring-zinc-900/5 transition-all outline-none" value={menuForm.sort_order} onChange={e => updateMenuForm({ sort_order: parseInt(e.target.value) || 0 })} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Select
+                                            label="Parent Menu"
+                                            options={[
+                                                { id: '', label: 'None (Top Level)' },
+                                                ...menus.map((m: any) => ({ id: m.id.toString(), label: m.name }))
+                                            ]}
+                                            value={menuForm.parent_id}
+                                            onChange={val => updateMenuForm({ parent_id: val.toString() })}
+                                        />
+                                        <Select
+                                            label="Platform"
+                                            options={[
+                                                { id: 'web', label: 'Web Only' },
+                                                { id: 'mobile', label: 'Mobile Only' },
+                                                { id: 'both', label: 'Web & Mobile' }
+                                            ]}
+                                            value={menuForm.platform}
+                                            onChange={val => updateMenuForm({ platform: val as any })}
+                                        />
+                                    </div>
+                                    <div className="flex gap-4 mt-8 pt-4">
+                                        <Button type="button" variant="ghost" onClick={closeMenuModal} className="flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-500">Cancel</Button>
+                                        <Button type="submit" className="flex-1 h-14 bg-zinc-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Save Menu</Button>
                                     </div>
                                 </form>
                             </div>

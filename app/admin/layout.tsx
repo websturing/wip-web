@@ -1,9 +1,10 @@
 'use client';
 
+import { HeaderProvider } from '@/app/contexts/HeaderContext';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
+import { useAppName } from '@/hooks/useAppName';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { useAppName } from '@/hooks/useAppName';
 import { AdminNavbar } from './components/AdminNavbar';
 import { AdminSidebar } from './components/AdminSidebar';
 
@@ -17,6 +18,7 @@ export default function AdminLayout({
     const pathname = usePathname();
     const { prefix } = useAppName();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !user) {
@@ -39,9 +41,9 @@ export default function AdminLayout({
                     {/* Logo with Blinking Border Animation */}
                     <div className="relative">
                         {/* Blinking border effect around the container */}
-                        <div className="absolute -inset-1.5 bg-blue-500/20 rounded-[2.1rem] blur-[2px] animate-pulse-fast"></div>
+                        <div className="absolute -inset-1.5 bg-theme-secondary/20 rounded-[2.1rem] blur-[2px] animate-pulse-fast"></div>
 
-                        <div className="relative w-20 h-20 bg-zinc-900 rounded-[1.8rem] flex items-center justify-center p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)] border-2 border-blue-500/30 animate-in zoom-in duration-700">
+                        <div className="relative w-20 h-20 bg-theme-bg-secondary rounded-[1.8rem] flex items-center justify-center p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)] border-2 border-theme-secondary/30 animate-in zoom-in duration-700">
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M21 7.5V16.5M21 7.5L12 3L3 7.5M21 7.5L12 12M12 12L3 7.5M12 12V21M3 7.5V16.5M3 16.5L12 21M12 21L21 16.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                 <path d="M7.5 9.75L12 12L16.5 9.75" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -50,12 +52,12 @@ export default function AdminLayout({
                     </div>
 
                     <div className="flex flex-col items-center gap-6">
-                        <h2 className="text-2xl md:text-3xl font-bold text-zinc-900 tracking-tight lowercase">{prefix}<span className="text-blue-500 font-extrabold">.</span></h2>
+                        <h2 className="text-2xl md:text-3xl font-bold text-theme-text-main tracking-tight lowercase">{prefix}<span className="text-theme-secondary font-extrabold">.</span></h2>
 
                         {/* Loading Indicator: Circle Spinner on the left, "initialising" on the right */}
                         <div className="flex items-center gap-3 px-5 py-2.5 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300 fill-mode-both">
-                            <div className="w-4 h-4 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">initialising</span>
+                            <div className="w-4 h-4 border-2 border-theme-secondary/20 border-t-theme-secondary rounded-full animate-spin"></div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-theme-text-muted">initialising</span>
                         </div>
                     </div>
                 </div>
@@ -78,49 +80,54 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#f1f5f9] font-sans selection:bg-blue-600 selection:text-white antialiased text-[#1f2937] overflow-hidden">
+        <div className="h-screen flex flex-col bg-theme-bg-primary font-sans selection:bg-theme-primary selection:text-white antialiased text-theme-text-main overflow-hidden">
+            <HeaderProvider>
+                {/* 2. Main Container (Sidebar + Content) */}
+                <div className="flex-1 flex overflow-hidden w-full relative">
 
-            {/* 1. Header Area (Full Width or Padded) */}
-            <div className="">
-                <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} />
-            </div>
+                    {/* Desktop Floating Sidebar Area (Left) */}
+                    <div className="hidden lg:flex p-2 pr-0 flex-col h-full z-50 shrink-0">
+                        <AdminSidebar />
+                    </div>
 
-            {/* 2. Main Container (Sidebar + Content) */}
-            <div className="flex-1 flex overflow-hidden w-full relative">
-
-                {/* Desktop Floating Sidebar Area (Left) */}
-                <div className="hidden lg:flex p-2 pr-0 flex-col h-full z-50 shrink-0">
-                    <AdminSidebar />
-                </div>
-
-                {/* Content Area (Right) */}
-                <div className="flex-1 flex flex-col min-w-0 h-full p-2 relative">
-                    {/* Scrollable Content Card */}
-                    <main className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-6 lg:px-10 lg:py-10 transition-all bg-white shadow-sm border border-zinc-50 rounded-2xl relative scroll-smooth no-scrollbar">
-                        <div key={pathname} className="animate-page-in w-full h-full">
-                            {children}
-                        </div>
-                    </main>
-                </div>
-            </div>
-
-            {/* 3. Mobile Sidebar Overlay (Drawer) */}
-            {isSidebarOpen && (
-                <div className="lg:hidden fixed inset-0 z-[100] flex">
-                    {/* Backdrop with transition */}
+                    {/* Content Area (Right) */}
                     <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
+                        className="flex-1 flex flex-col min-w-0 h-full p-2 relative overflow-y-auto hover-scrollbar"
+                        onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 10)}
+                    >
 
-                    {/* Sidebar Container with sliding animation */}
-                    <div className="relative w-[280px] p-2 h-full animate-in slide-in-from-left-full duration-500 ease-out flex flex-col">
-                        <div className="flex-1 h-full shadow-2xl rounded-2xl overflow-hidden bg-[#111827]">
-                            <AdminSidebar isMobile onClose={() => setIsSidebarOpen(false)} />
+                        {/* Header Area (Inside Content) */}
+                        <div className="sticky top-0 z-50 mb-2 transition-all duration-300">
+                            <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} isScrolled={isScrolled} />
                         </div>
+
+                        {/* Scrollable Content Card */}
+                        <main className="flex-1 px-6 py-6 lg:px-10 lg:py-10 transition-all bg-gradient-to-b from-white to-theme-bg-primary/40 shadow-sm border border-zinc-50 rounded-lg relative scroll-smooth ">
+                            <div key={pathname} className="animate-page-in w-full h-full">
+                                {children}
+                            </div>
+                        </main>
                     </div>
                 </div>
-            )}
+
+                {/* 3. Mobile Sidebar Overlay (Drawer) */}
+                {isSidebarOpen && (
+                    <div className="lg:hidden fixed inset-0 z-[100] flex">
+                        {/* Backdrop with transition */}
+                        <div
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+
+                        {/* Sidebar Container with sliding animation */}
+                        <div className="relative w-[280px] p-2 h-full animate-in slide-in-from-left-full duration-500 ease-out flex flex-col">
+                            <div className="flex-1 h-full shadow-2xl rounded-2xl overflow-hidden bg-theme-bg-secondary">
+                                <AdminSidebar isMobile onClose={() => setIsSidebarOpen(false)} />
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </HeaderProvider>
         </div>
     );
 }

@@ -1,8 +1,8 @@
 'use client';
 
+import { useAppName } from '@/hooks/useAppName';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { useAppName } from '@/hooks/useAppName';
 import { useAuth } from './AuthProvider';
 
 export const LoginForm = () => {
@@ -38,20 +38,22 @@ export const LoginForm = () => {
     };
 
     return (
-        <div className="w-full max-w-[440px] flex flex-col items-center">
-            {/* Logo */}
-            <div className="mb-14 text-center">
-                <h1 className="text-5xl font-black text-zinc-900 tracking-tighter flex items-center justify-center gap-2">
-                    <span className="capitalize">{prefix}</span>
-                    <span className="text-zinc-400 font-normal text-xs mb-6 uppercase">{suffix}</span>
-                </h1>
-                <p className="text-zinc-500 text-xs font-semibold tracking-[0.2em] uppercase mt-2">Manufacturing Monitoring System</p>
-            </div>
+        <div className="w-full  max-w-[440px] flex flex-col items-center">
+
 
             {/* Light Glassmorphism Card */}
-            <div className="w-full bg-white/40 backdrop-blur-2xl p-10 rounded-[2.5rem] border border-white/80 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] relative overflow-hidden group">
+            <div className="w-full bg-white/40 backdrop-blur-2xl p-10 rounded-[0.8rem] border border-white/80 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] relative overflow-hidden group">
                 {/* Subtle inner glow */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-none"></div>
+
+                {/* Logo */}
+                <div className="mb-14 text-center">
+                    <h1 className="text-5xl font-black text-zinc-900 tracking-tighter flex items-center justify-center gap-2">
+                        <span className="capitalize">{prefix}</span>
+                        <span className="text-zinc-400 font-normal text-xs mb-6 uppercase">{suffix}</span>
+                    </h1>
+                    <p className="text-zinc-500 text-xs font-semibold tracking-[0.2em] uppercase mt-2">Manufacturing Monitoring System</p>
+                </div>
 
                 {/* Error Area */}
                 <div className={`w-full transition-all duration-300 overflow-hidden ${error ? 'mb-6 max-h-20' : 'max-h-0'}`}>

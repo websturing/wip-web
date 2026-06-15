@@ -100,7 +100,7 @@ export default function AdminDashboard() {
                 <div className="px-8 max-w-[1600px] mx-auto">
                     {/* Main Welcome Message */}
                     <div className="mb-10 md:mb-12">
-                        <h1 className="text-2xl md:text-3xl lg:text-[2.2rem] font-bold text-zinc-900 tracking-tight mb-2">
+                        <h1 className="font-bold text-zinc-900 tracking-tight mb-2">
                             Welcome Back, <span className="text-zinc-800">{user?.email || 'admin@admin.com'}</span>
                         </h1>
                         <div className="flex flex-wrap items-center gap-2 md:gap-3">

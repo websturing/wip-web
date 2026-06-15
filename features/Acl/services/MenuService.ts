@@ -12,10 +12,6 @@ export interface MenuItem {
 }
 
 export class MenuService {
-    /**
-     * Fetches the menu structure authorized for the current user.
-     * Expected endpoint: GET /api/menus
-     */
     static async getSidebarMenus(): Promise<MenuItem[]> {
         try {
             const response = await apiClient.get('/acl/menus');
@@ -28,5 +24,27 @@ export class MenuService {
             // Return empty array on failure to prevent app crash
             return [];
         }
+    }
+
+    static async getAllMenus() {
+        const res = await apiClient.get('/acl/menus/all');
+        return await res.json();
+    }
+
+    static async createMenu(payload: any) {
+        const res = await apiClient.post('/acl/menus', payload);
+        if (!res.ok) throw new Error('Failed to create menu');
+        return await res.json();
+    }
+
+    static async updateMenu(id: string | number, payload: any) {
+        const res = await apiClient.put(`/acl/menus/${id}`, payload);
+        if (!res.ok) throw new Error('Failed to update menu');
+        return await res.json();
+    }
+
+    static async deleteMenu(id: string | number) {
+        const res = await apiClient.delete(`/acl/menus/${id}`);
+        return await res.json();
     }
 }

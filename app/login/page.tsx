@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function LoginPage() {
     return (
-        <main className="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden">
+        <main className="min-h-screen bg-theme-bg-primary flex items-center justify-center p-6 relative overflow-hidden">
             {/* Background Decorative Elements - Optimized for 1080p */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 {/* Expansive Mesh Gradients for High Res Depth */}
