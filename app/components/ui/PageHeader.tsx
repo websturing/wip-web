@@ -1,9 +1,9 @@
 'use client';
 
+import { useHeader } from '@/app/contexts/HeaderContext';
 import { cn } from '@/lib/utils';
 import React, { useEffect } from 'react';
-import { Breadcrumb, BreadcrumbItem } from './Breadcrumb';
-import { useHeader } from '@/app/contexts/HeaderContext';
+import { BreadcrumbItem } from './Breadcrumb';
 import { Icon } from './Icon';
 
 interface PageHeaderProps {
@@ -52,9 +52,9 @@ export const PageHeader = ({
             <div className="mb-4 group flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     {description && (
-                        <div className="flex items-start gap-2.5 bg-theme-bg-primary/50 text-theme-text-main p-3 rounded-xl border border-zinc-100/50 w-fit shadow-sm">
+                        <div className="flex items-start gap-2.5  text-theme-text-main p-3 w-fit  w-fit">
                             <Icon icon="solar:info-circle-bold-duotone" className="w-4 h-4 md:w-5 md:h-5 shrink-0 text-theme-secondary mt-0.5" />
-                            <p className="text-[11px] md:text-xs font-medium leading-relaxed opacity-80 max-w-3xl">
+                            <p className="text-[11px] md:text-xs font-bold leading-relaxed opacity-80 max-w-3xl">
                                 {description}
                             </p>
                         </div>

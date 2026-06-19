@@ -1,9 +1,10 @@
 'use client';
 
+import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
 import { cn } from '@/lib/utils';
-import { Button } from '@/app/components/ui/Button';
 import { formatDistanceToNow } from 'date-fns';
+import { useMemo, useState } from 'react';
 
 interface User {
     id: number;
@@ -24,11 +25,28 @@ interface UserManagementProps {
 }
 
 export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: UserManagementProps) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
+
+    const uniqueRoles = useMemo(() => {
+        const roles = new Set(users.map(u => u?.role?.name).filter(Boolean));
+        return Array.from(roles) as string[];
+    }, [users]);
+
+    const filteredUsers = useMemo(() => {
+        return users.filter(user => {
+            const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesRole = roleFilter === 'all' || user.role?.name === roleFilter;
+            return matchesSearch && matchesRole;
+        }).sort((a, b) => a.name.localeCompare(b.name));
+    }, [users, searchQuery, roleFilter]);
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* User Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm flex items-center justify-between group hover:shadow-xl hover:shadow-zinc-200/50 transition-all">
+                <div className="bg-white p-8 rounded-[1rem] border border-zinc-100 shadow-sm flex items-center justify-between group hover:shadow-xl hover:shadow-zinc-200/50 transition-all">
                     <div>
                         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Total Professionals</p>
                         <h4 className="text-3xl font-black text-zinc-900">{users.length}</h4>
@@ -37,7 +55,7 @@ export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: U
                         <Icon icon="solar:users-group-rounded-bold-duotone" className="w-7 h-7" />
                     </div>
                 </div>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm flex items-center justify-between group hover:shadow-xl hover:shadow-zinc-200/50 transition-all">
+                <div className="bg-white p-8 rounded-xl border border-zinc-100 shadow-sm flex items-center justify-between group hover:shadow-xl hover:shadow-zinc-200/50 transition-all">
                     <div>
                         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Active Now</p>
                         <h4 className="text-3xl font-black text-emerald-600">{users.filter(u => u.status === 'active').length}</h4>
@@ -46,7 +64,7 @@ export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: U
                         <Icon icon="solar:bolt-circle-bold-duotone" className="w-7 h-7" />
                     </div>
                 </div>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-zinc-100 shadow-sm flex items-center justify-between group hover:shadow-xl hover:shadow-zinc-200/50 transition-all">
+                <div className="bg-white p-8 rounded-xl border border-zinc-100 shadow-sm flex items-center justify-between group hover:shadow-xl hover:shadow-zinc-200/50 transition-all">
                     <div>
                         <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">Admin Roles</p>
                         <h4 className="text-3xl font-black text-blue-600">{users.filter(u => u.role?.name === 'Administrator').length}</h4>
@@ -66,17 +84,50 @@ export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: U
                         <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Manage your enterprise personnel and their access states.</p>
                     </div>
                 </div>
-                <Button
-                    onClick={onAddUser}
-                    className="bg-zinc-900 text-white rounded-2xl h-14 px-8 text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-2xl shadow-zinc-300 active:scale-95 transition-all"
-                >
-                    <Icon icon="solar:user-plus-bold-duotone" className="w-5 h-5" />
-                    Add Professional
-                </Button>
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-3 flex-1 md:flex-none justify-end w-full md:w-auto">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-64">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Icon icon="solar:magnifer-linear" className="w-4 h-4 text-zinc-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 h-12 bg-white border border-zinc-200 rounded-xl text-[13px] font-bold text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all shadow-sm"
+                        />
+                    </div>
+
+                    {/* Role Filter */}
+                    <div className="relative w-full md:w-auto">
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="w-full md:w-auto h-12 bg-white border border-zinc-200 rounded-xl px-4 pr-10 text-[13px] font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all shadow-sm appearance-none cursor-pointer"
+                        >
+                            <option value="all">All Roles</option>
+                            {uniqueRoles.map(role => (
+                                <option key={role} value={role}>{role}</option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <Icon icon="solar:alt-arrow-down-linear" className="w-4 h-4 text-zinc-400" />
+                        </div>
+                    </div>
+
+                    <Button
+                        onClick={onAddUser}
+                        className="w-full md:w-auto bg-zinc-900 text-white rounded-xl h-12 px-6 text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl shadow-zinc-300 active:scale-95 transition-all shrink-0"
+                    >
+                        <Icon icon="solar:user-plus-bold-duotone" className="w-5 h-5" />
+                        <span className="hidden sm:inline">Add Professional</span>
+                    </Button>
+                </div>
             </div>
 
             {/* User Table */}
-            <div className="bg-white border border-zinc-100 rounded-[2.5rem] overflow-hidden shadow-xl shadow-zinc-100/50">
+            <div className="bg-white border border-zinc-100 rounded-xl overflow-hidden shadow-xl shadow-zinc-100/50">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -89,7 +140,7 @@ export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: U
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-50">
-                            {users.map((user) => (
+                            {filteredUsers.map((user) => (
                                 <tr key={user.id} className="hover:bg-zinc-50/30 transition-all group">
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-4">
@@ -105,8 +156,8 @@ export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: U
                                     <td className="px-8 py-5 text-center">
                                         <span className={cn(
                                             "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border",
-                                            user.status === 'active' 
-                                                ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                            user.status === 'active'
+                                                ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                                                 : "bg-red-50 text-red-500 border-red-100"
                                         )}>
                                             <div className={cn("w-1.5 h-1.5 rounded-full", user.status === 'active' ? "bg-emerald-500 animate-pulse" : "bg-red-500")}></div>
@@ -138,7 +189,7 @@ export const UserManagement = ({ users, onAddUser, onEditUser, onDeleteUser }: U
                                         </div>
                                     </td>
                                     <td className="px-8 py-5">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                        <div className="flex justify-end gap-2 transition-all">
                                             <button
                                                 onClick={() => onEditUser(user)}
                                                 className="w-10 h-10 rounded-xl bg-white border border-zinc-100 text-zinc-400 hover:bg-zinc-900 hover:text-white hover:border-zinc-900 flex items-center justify-center transition-all active:scale-90 shadow-sm"
