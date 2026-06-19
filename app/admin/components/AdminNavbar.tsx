@@ -12,9 +12,11 @@ import { useEffect, useState } from 'react';
 interface AdminNavbarProps {
     onToggleSidebar?: () => void;
     isScrolled?: boolean;
+    isCollapsed?: boolean;
+    onToggleCollapse?: () => void;
 }
 
-export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbarProps) => {
+export const AdminNavbar = ({ onToggleSidebar, isScrolled = false, isCollapsed, onToggleCollapse }: AdminNavbarProps) => {
     const { user } = useAuth();
     const { prefix } = useAppName();
     const [dateTime, setDateTime] = useState('');
@@ -67,6 +69,17 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbar
                 >
                     <Icon icon="solar:hamburger-menu-bold-duotone" className="w-6 h-6" />
                 </button>
+
+                <button
+                    onClick={onToggleCollapse}
+                    className={cn(
+                        "hidden lg:flex p-2 -ml-2 rounded-xl transition-colors shrink-0",
+                        isScrolled ? "text-theme-text-muted hover:bg-theme-bg-primary" : "text-theme-text-muted hover:bg-[var(--theme-glass-hover-bg)]"
+                    )}
+                >
+                    <Icon icon={isCollapsed ? "solar:sidebar-minimalistic-outline" : "solar:sidebar-minimalistic-bold-duotone"} className="w-6 h-6" />
+                </button>
+
 
                 {hasHeader ? (
                     <div className="flex items-center gap-3 whitespace-nowrap overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">

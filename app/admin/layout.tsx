@@ -18,6 +18,7 @@ export default function AdminLayout({
     const pathname = usePathname();
     const { prefix } = useAppName();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -98,7 +99,7 @@ export default function AdminLayout({
 
                     {/* Desktop Floating Sidebar Area (Left) - Glass */}
                     <div className="hidden lg:flex p-2 pr-0 flex-col h-full z-50 shrink-0">
-                        <AdminSidebar />
+                        <AdminSidebar isCollapsed={isSidebarCollapsed} onExpand={() => setIsSidebarCollapsed(false)} />
                     </div>
 
                     {/* Content Area (Right) */}
@@ -109,7 +110,7 @@ export default function AdminLayout({
 
                         {/* Header Area (Inside Content) - Glass */}
                         <div className="sticky top-0 z-50 mb-2 transition-all duration-300">
-                            <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} isScrolled={isScrolled} />
+                            <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} isScrolled={isScrolled} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
                         </div>
 
                         {/* Scrollable Content Card - Glass */}

@@ -22,9 +22,11 @@ import { useEffect, useMemo, useState } from 'react';
 interface AdminSidebarProps {
     isMobile?: boolean;
     onClose?: () => void;
+    isCollapsed?: boolean;
+    onExpand?: () => void;
 }
 
-export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
+export const AdminSidebar = ({ isMobile, onClose, isCollapsed, onExpand }: AdminSidebarProps) => {
     const pathname = usePathname();
     const { logout, user } = useAuth();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
@@ -100,15 +102,25 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
 
         const content = (
             <div
+                title={isCollapsed ? item.name : undefined}
                 className={cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer group mb-0.5",
+                    cn("flex items-center rounded-lg transition-all duration-200 cursor-pointer group mb-0.5", isCollapsed ? "justify-center py-2.5 px-0" : "justify-between px-4 py-2.5"),
                     isActive && !isChild ? "bg-theme-secondary text-white shadow-lg shadow-theme-primary/20 backdrop-blur-sm" :
                         isActive && isChild ? "p-2 mx-3 bg-theme-bg-secondary/10 text-theme-text-on-dark" :
                             "text-theme-text-on-dark/60 hover:bg-[var(--theme-glass-hover-bg)] hover:text-theme-text-main hover:mx-1 "
                 )}
-                onClick={() => hasChildren ? toggleMenu(item.name) : (isMobile && onClose?.())}
+                onClick={() => {
+                    if (isCollapsed && onExpand) {
+                        onExpand();
+                        if (hasChildren && !isOpen) {
+                            toggleMenu(item.name);
+                        }
+                    } else {
+                        hasChildren ? toggleMenu(item.name) : (isMobile && onClose?.());
+                    }
+                }}
             >
-                <div className="flex items-center gap-3">
+                <div className={cn("flex items-center", isCollapsed ? "justify-center w-full" : "gap-3")}>
                     <Icon
                         icon={item.icon}
                         className={cn(
@@ -116,24 +128,26 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                             isActive ? "text-theme-text-on-dark" : "text-theme-text-muted group-hover:text-theme-text-main"
                         )}
                     />
-                    <span className={cn("text-[13px] capitalize", isActive ? "font-bold" : "font-bold")}>
+                    {!isCollapsed && <span className={cn("text-[13px] capitalize", isActive ? "font-bold" : "font-bold")}>
                         {item.name}
-                    </span>
+                    </span>}
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {item.badge && (
-                        <span className={cn(
-                            "w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold",
-                            isActive && !isChild ? "bg-white text-theme-primary" : "bg-theme-primary text-white"
-                        )}>
-                            {item.badge}
-                        </span>
-                    )}
-                    {hasChildren && (
-                        isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />
-                    )}
-                </div>
+                {!isCollapsed && (
+                    <div className="flex items-center gap-2">
+                        {item.badge && (
+                            <span className={cn(
+                                "w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold",
+                                isActive && !isChild ? "bg-white text-theme-primary" : "bg-theme-primary text-white"
+                            )}>
+                                {item.badge}
+                            </span>
+                        )}
+                        {hasChildren && (
+                            isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />
+                        )}
+                    </div>
+                )}
             </div>
         );
 
@@ -142,7 +156,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 {hasChildren ? (
                     <div>
                         {content}
-                        {isOpen && (
+                        {!isCollapsed && isOpen && (
                             <div className="relative ml-6 mt-1 mb-2">
                                 <div className="absolute left-[2px] top-0 bottom-0 w-[1px] bg-theme-border"></div>
                                 <div className="space-y-1   ">
@@ -161,18 +175,18 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     };
 
     return (
-        <div className="w-[240px] h-full flex flex-col rounded-xl transition-all duration-300 bg-[#334155]"
+        <div className={cn("h-full flex flex-col rounded-xl transition-all duration-300 bg-[#334155]", isCollapsed ? "w-[80px]" : "w-[240px]")}
         >
             {/* Logo & App Name Header */}
             <div className="h-16 flex items-center px-6 border-b border-theme-border shrink-0">
-                <div className="flex items-center gap-3">
+                <div className={cn("flex items-center", isCollapsed ? "justify-center w-full" : "gap-3")}>
                     <div className="w-8 h-8 rounded-xl bg-theme-secondary    flex items-center justify-center shadow-lg shadow-theme-primary/20">
                         <Icon icon="solar:box-bold-duotone" className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-sm font-bold text-theme-text-on-dark leading-tight">
+                        {!isCollapsed && <span className="text-sm font-bold text-theme-text-on-dark leading-tight">
                             {process.env.NEXT_PUBLIC_APP_NAME || 'Antigravity'}
-                        </span>
+                        </span>}
                     </div>
                 </div>
             </div>
@@ -204,11 +218,11 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             {/* User Profile / Logout */}
             <div className="p-3 border-t border-theme-border mt-auto">
                 <div
-                    className="cursor-pointer transition-all flex items-center justify-between p-3 rounded-xl group hover:bg-[var(--theme-glass-hover-bg)]"
+                    className={cn("cursor-pointer transition-all flex items-center rounded-xl group hover:bg-[var(--theme-glass-hover-bg)]", isCollapsed ? "justify-center p-2 flex-col gap-2" : "justify-between p-3")}
                     style={{ border: 'var(--theme-glass-border)' }}
                     onClick={() => setIsLogoutDialogOpen(true)}
                 >
-                    <div className="flex items-center gap-3 overflow-hidden">
+                    <div className={cn("flex items-center overflow-hidden", isCollapsed ? "justify-center" : "gap-3")}>
                         <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden border border-theme-border">
                             <img
                                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'admin'}`}
@@ -216,12 +230,12 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                                 className="w-full h-full"
                             />
                         </div>
-                        <div className="flex flex-col min-w-0">
+                        {!isCollapsed && <div className="flex flex-col min-w-0">
                             <span className="text-[11px] font-bold text-theme-text-on-dark truncate">
                                 {user?.email || 'Admin'}
                             </span>
                             <span className="text-[9px] text-theme-text-muted font-medium uppercase tracking-wider">{user?.role?.name || 'Administrator'}</span>
-                        </div>
+                        </div>}
                     </div>
                     <button
                         className="p-2 shrink-0 text-theme-text-muted group-hover:text-red-400 group-hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
