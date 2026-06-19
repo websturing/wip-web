@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/app/components/ui/Icon';
 import { useTheme } from "next-themes";
 import * as React from "react";
 
@@ -12,22 +13,30 @@ export function ThemeToggle() {
         setMounted(true);
     }, []);
 
-    if (!mounted) return <div className="h-10 w-10"></div>;
+    if (!mounted) return <div className="h-9 w-9"></div>;
+
+    const isDark = theme === 'dark';
 
     return (
         <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="relative h-10 w-10 flex items-center justify-center p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white transition-all hover:scale-105 active:scale-95 shadow-sm overflow-hidden"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="relative h-9 w-9 flex items-center justify-center rounded-xl bg-[var(--theme-glass-hover-bg)] text-theme-text-main transition-all duration-300 hover:scale-105 active:scale-95 border border-theme-border cursor-pointer"
+            aria-label="Toggle theme"
         >
-            <div className="relative h-5 w-5">
-                <span className={`absolute inset-0 transform transition-all duration-500 scale-100 ${theme === 'dark' ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`}>
-                    ☀️
-                </span>
-                <span className={`absolute inset-0 transform transition-all duration-500 ${theme === 'dark' ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-50'}`}>
-                    🌙
-                </span>
+            <div className="relative w-5 h-5">
+                {/* Sun Icon */}
+                <Icon
+                    icon="solar:sun-bold-duotone"
+                    className={`absolute inset-0 w-5 h-5 text-amber-500 transition-all duration-500 ${isDark ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'
+                        }`}
+                />
+                {/* Moon Icon */}
+                <Icon
+                    icon="solar:moon-bold-duotone"
+                    className={`absolute inset-0 w-5 h-5 text-blue-400 transition-all duration-500 ${isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'
+                        }`}
+                />
             </div>
-            <span className="sr-only">Toggle theme</span>
         </button>
     );
 }

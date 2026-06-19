@@ -101,10 +101,10 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
         const content = (
             <div
                 className={cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer group mb-1",
-                    isActive && !isChild ? "bg-theme-primary text-white shadow-lg shadow-theme-primary/20" :
-                        isActive && isChild ? "p-1 mx-2 bg-white/10 text-white shadow-sm" :
-                            "text-zinc-400 hover:bg-white/5 hover:text-white"
+                    "flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer group mb-0.5",
+                    isActive && !isChild ? "bg-theme-secondary text-white shadow-lg shadow-theme-primary/20 backdrop-blur-sm" :
+                        isActive && isChild ? "p-2 mx-3 bg-theme-bg-secondary/10 text-theme-text-on-dark" :
+                            "text-theme-text-on-dark/60 hover:bg-[var(--theme-glass-hover-bg)] hover:text-theme-text-main hover:mx-1 "
                 )}
                 onClick={() => hasChildren ? toggleMenu(item.name) : (isMobile && onClose?.())}
             >
@@ -113,7 +113,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         icon={item.icon}
                         className={cn(
                             "w-5 h-5",
-                            isActive ? "text-white" : "text-zinc-300 group-hover:text-white"
+                            isActive ? "text-theme-text-on-dark" : "text-theme-text-muted group-hover:text-theme-text-main"
                         )}
                     />
                     <span className={cn("text-[13px] capitalize", isActive ? "font-bold" : "font-bold")}>
@@ -144,7 +144,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                         {content}
                         {isOpen && (
                             <div className="relative ml-6 mt-1 mb-2">
-                                <div className="absolute left-[2px] top-0 bottom-0 w-[1px] bg-zinc-600"></div>
+                                <div className="absolute left-[2px] top-0 bottom-0 w-[1px] bg-theme-border"></div>
                                 <div className="space-y-1   ">
                                     {item.children?.map(child => renderItem(child, true))}
                                 </div>
@@ -161,15 +161,16 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
     };
 
     return (
-        <div className="w-[240px] h-full bg-theme-bg-secondary flex flex-col rounded-lg border-r border-white/5 transition-all duration-300">
+        <div className="w-[240px] h-full flex flex-col rounded-xl transition-all duration-300 bg-[#334155]"
+        >
             {/* Logo & App Name Header */}
-            <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
+            <div className="h-16 flex items-center px-6 border-b border-theme-border shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-theme-primary flex items-center justify-center shadow-lg shadow-theme-primary/20">
+                    <div className="w-8 h-8 rounded-xl bg-theme-secondary    flex items-center justify-center shadow-lg shadow-theme-primary/20">
                         <Icon icon="solar:box-bold-duotone" className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white leading-tight">
+                        <span className="text-sm font-bold text-theme-text-on-dark leading-tight">
                             {process.env.NEXT_PUBLIC_APP_NAME || 'Antigravity'}
                         </span>
                     </div>
@@ -180,7 +181,7 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                 {isLoading ? (
                     <div className="space-y-4 px-4">
                         {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="h-10 bg-white/5 rounded-xl animate-pulse"></div>
+                            <div key={i} className="h-10 bg-theme-bg-primary rounded-xl animate-pulse"></div>
                         ))}
                     </div>
                 ) : (
@@ -189,8 +190,8 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                             menuItems.map(item => renderItem(item))
                         ) : (
                             <div className="px-4 py-8 text-center space-y-2">
-                                <Icon icon="solar:shield-warning-linear" className="w-8 h-8 text-zinc-600 mx-auto" />
-                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-tight">
+                                <Icon icon="solar:shield-warning-linear" className="w-8 h-8 text-theme-text-on-dark mx-auto" />
+                                <p className="text-[10px] text-theme-text-on-dark font-bold uppercase tracking-widest leading-tight">
                                     Access not granted<br />
                                     <span className="text-[8px] font-medium lowercase tracking-normal">Please configure menus in backend</span>
                                 </p>
@@ -201,13 +202,14 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
             </div>
 
             {/* User Profile / Logout */}
-            <div className="p-4 border-t border-white/5 mt-auto">
+            <div className="p-3 border-t border-theme-border mt-auto">
                 <div
-                    className="cursor-pointer hover:bg-white/5 transition-all flex items-center justify-between bg-black/20 p-3 rounded-2xl border border-white/5 shadow-sm group"
+                    className="cursor-pointer transition-all flex items-center justify-between p-3 rounded-xl group hover:bg-[var(--theme-glass-hover-bg)]"
+                    style={{ border: 'var(--theme-glass-border)' }}
                     onClick={() => setIsLogoutDialogOpen(true)}
                 >
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 shrink-0 rounded-full bg-white/10 overflow-hidden border border-white/10">
+                        <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden border border-theme-border">
                             <img
                                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'admin'}`}
                                 alt="avatar"
@@ -215,14 +217,14 @@ export const AdminSidebar = ({ isMobile, onClose }: AdminSidebarProps) => {
                             />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[11px] font-bold text-white truncate">
+                            <span className="text-[11px] font-bold text-theme-text-on-dark truncate">
                                 {user?.email || 'Admin'}
                             </span>
-                            <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider">{user?.role?.name || 'Administrator'}</span>
+                            <span className="text-[9px] text-theme-text-muted font-medium uppercase tracking-wider">{user?.role?.name || 'Administrator'}</span>
                         </div>
                     </div>
                     <button
-                        className="p-2 shrink-0 text-zinc-400 group-hover:text-red-400 group-hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
+                        className="p-2 shrink-0 text-theme-text-muted group-hover:text-red-400 group-hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
                     >
                         <LogOut className="w-4 h-4" />
                     </button>

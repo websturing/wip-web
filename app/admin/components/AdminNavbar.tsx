@@ -1,5 +1,6 @@
 'use client';
 
+import { ThemeToggle } from '@/app/admin/components/ThemeToggle';
 import { Breadcrumb } from '@/app/components/ui/Breadcrumb';
 import { Icon } from '@/app/components/ui/Icon';
 import { useHeader } from '@/app/contexts/HeaderContext';
@@ -44,18 +45,24 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbar
 
     return (
         <div className={cn(
-            "h-14 flex items-center justify-between px-4 z-40 transition-all duration-500 rounded-lg",
-            isScrolled
-                ? "bg-white/90 backdrop-blur-xl shadow-xl shadow-black/10 text-zinc-900"
-                : "bg-white text-zinc-900"
-        )}>
+            "h-14 flex items-center justify-between px-4 z-40 transition-all duration-500 rounded-xl",
+            isScrolled ? "shadow-lg" : ""
+        )}
+            style={{
+                background: isScrolled ? 'var(--theme-glass-scrolled-bg)' : 'var(--theme-glass-scrolled-bg)',
+                backdropFilter: `blur(var(--theme-glass-blur)) saturate(var(--theme-glass-saturate))`,
+                WebkitBackdropFilter: `blur(var(--theme-glass-blur)) saturate(var(--theme-glass-saturate))`,
+                boxShadow: isScrolled ? 'var(--theme-glass-shadow)' : 'none',
+                border: 'var(--theme-glass-border)',
+            }}
+        >
             {/* Left: Brand + Toggle */}
             <div className="flex items-center gap-3 overflow-hidden flex-1">
                 <button
                     onClick={onToggleSidebar}
                     className={cn(
                         "lg:hidden p-2 -ml-2 rounded-xl transition-colors shrink-0",
-                        isScrolled ? "text-zinc-400 hover:bg-white/10" : "text-zinc-600 hover:bg-zinc-100"
+                        isScrolled ? "text-theme-text-muted hover:bg-theme-bg-primary" : "text-theme-text-muted hover:bg-theme-bg-primary"
                     )}
                 >
                     <Icon icon="solar:hamburger-menu-bold-duotone" className="w-6 h-6" />
@@ -64,10 +71,10 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbar
                 {hasHeader ? (
                     <div className="flex items-center gap-3 whitespace-nowrap overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
                         {breadcrumbItems && breadcrumbItems.length > 0 && (
-                            <Breadcrumb items={breadcrumbItems} className="!mb-0 hidden lg:flex border-r border-zinc-200 pr-3 mr-1" />
+                            <Breadcrumb items={breadcrumbItems} className="!mb-0 hidden lg:flex border-r border-theme-border pr-3 mr-1" />
                         )}
                         {title && (
-                            <h1 className="text-[13px] md:text-[14px] font-black uppercase tracking-wide truncate text-zinc-900">
+                            <h1 className="text-[13px] md:text-[14px] font-black uppercase tracking-wide truncate text-theme-text-main">
                                 {title}
                                 {subtitle && <span className="ml-1.5 text-theme-primary">{subtitle}</span>}
                             </h1>
@@ -76,12 +83,12 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbar
                 ) : (
                     <div className="flex items-center gap-2 shrink-0 animate-in fade-in duration-500">
                         <div className={cn(
-                            "h-8 w-8 rounded-lg flex items-center justify-center shadow-lg transition-colors bg-black shadow-black/20",
+                            "h-8 w-8 rounded-lg flex items-center justify-center shadow-lg transition-colors bg-theme-primary shadow-theme-primary/20",
                         )}>
                             <span className="text-white font-black text-sm italic capitalize">{prefix.charAt(0)}</span>
                         </div>
                         <span className={cn(
-                            "font-black text-xs uppercase tracking-[0.15em] hidden sm:block transition-colors text-zinc-900",
+                            "font-black text-xs uppercase tracking-[0.15em] hidden sm:block transition-colors text-theme-text-main",
                         )}>
                             {prefix} Administrator
                         </span>
@@ -89,39 +96,30 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbar
                 )}
             </div>
 
-            {/* Center: Clock */}
-            <div className={cn(
-                "hidden md:flex items-center px-4 py-1.5 rounded-full border transition-colors bg-blue-50/50 border-blue-100/50",
-            )}>
-                <div className={cn(
-                    "w-2 h-2 rounded-full animate-pulse mr-2.5 bg-theme-primary"
-                )}></div>
-                <span className={cn(
-                    "text-[12px] font-black font-mono tracking-tighter transition-colors text-blue-900",
-                )}>
-                    {dateTime}
-                </span>
-            </div>
+
 
             {/* Right: Actions + User */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
                 {/* Notification */}
                 <div className={cn(
-                    "relative group cursor-pointer p-2 rounded-xl transition-all text-zinc-400 hover:text-theme-primary hover:bg-blue-50"
+                    "relative group cursor-pointer p-2 rounded-xl transition-all text-theme-text-muted hover:text-theme-primary hover:bg-theme-secondary/10"
                 )}>
                     <Icon icon="solar:bell-bing-bold-duotone" className="w-5 h-5" />
                     <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-transparent rounded-full"></div>
                 </div>
 
                 <div className={cn(
-                    "h-8 w-px hidden sm:block mx-1 transition-colors",
+                    "h-8 w-px hidden sm:block mx-1 transition-colors bg-theme-border",
                 )}></div>
 
                 {/* User Profile */}
                 <div className="flex items-center gap-3 cursor-pointer group pl-1">
                     <div className="flex flex-col items-end hidden sm:flex">
                         <span className={cn(
-                            "text-[12px] font-black transition-colors tracking-tight text-zinc-900 group-hover:text-theme-primary"
+                            "text-[12px] font-black transition-colors tracking-tight text-theme-text-main group-hover:text-theme-primary"
                         )}>
                             {user?.email}
                         </span>
@@ -143,7 +141,7 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false }: AdminNavbar
                         icon="solar:alt-arrow-down-bold-duotone"
                         className={cn(
                             "w-3.5 h-3.5 group-hover:rotate-180 transition-all hidden xs:block",
-                            isScrolled ? "text-zinc-400 group-hover:text-white" : "text-zinc-400 group-hover:text-theme-primary"
+                            isScrolled ? "text-theme-text-muted group-hover:text-theme-text-main" : "text-theme-text-muted group-hover:text-theme-primary"
                         )}
                     />
                 </div>

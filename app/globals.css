@@ -1,12 +1,21 @@
 @import "tailwindcss";
 
+/* Tell Tailwind v4 to use class-based dark mode (for next-themes) */
+@custom-variant dark (&:is(.dark *));
+
 /* =========================================
    THEME CONFIGURATION
    Atur font, warna, dan background disini
+   Light = default (:root)
+   Dark  = override (.dark)
 ========================================= */
+
+/* -----------------------------------------
+   LIGHT THEME (Default)
+----------------------------------------- */
 :root {
-  /* Colors */
-  --background: #ffffff;
+  /* Base Colors */
+  --background: #f0f4f8;
   --foreground: #171717;
 
   /* Typography Scale (Default for 1920x1080) */
@@ -25,19 +34,51 @@
   --theme-h6-size: 0.875rem;
   /* 16px */
 
-  /* Colors */
-  --theme-bg-primary: #f1f5f9;
-  /* Latar belakang utama aplikasi */
-  --theme-bg-secondary: #111827;
-  /* Latar belakang sidebar/sekunder */
-  --theme-color-primary: #2563eb;
-  /* Warna utama (e.g., active menu, tombol) */
-  --theme-color-secondary: #3b82f6;
-  /* Warna sekunder/aksen */
-  --theme-text-main: #1f2937;
-  /* Warna teks utama */
-  --theme-text-muted: #a1a1aa;
-  /* Warna teks redup (untuk sidebar) */
+  /* Theme Colors - Light (Hybrid/Premium Style) */
+  --theme-bg-primary: #f9fafb;
+  /* Latar belakang utama (Solid Off-White agar tidak silau) */
+  --theme-bg-secondary: #ffffff;
+  /* Latar belakang CARD/CONTAINER (Solid Putih Premium) */
+  --theme-color-primary: #334155;
+  /* WARNA UTAMA: Warna Sidebar Gelap */
+  --theme-color-secondary: #2563eb;
+  /* Warna sekunder/aksen utama (Tombol, Link, Icon Active) */
+  --theme-color-accent: #60a5fa;
+  /* Warna aksen terang (Hover states, badges, ilustrasi) */
+  --theme-color-danger: #f87171;
+  /* Warna peringatan/bahaya (Hapus, error, badge alert) */
+
+  /* HEADER SPECIFIC COLORS (Old Palette dengan Glass Effect/Transparan) */
+  --theme-header-primary: rgba(33, 43, 54, 0.8);    /* #212b36 dengan 80% opacity */
+  --theme-header-secondary: rgba(59, 130, 246, 0.8); /* #3b82f6 dengan 80% opacity */
+
+  /* Warna Teks untuk Area Terang (Card & Konten Utama) */
+  --theme-text-main: #1e293b;
+  /* Abu-abu sangat gelap (Hampir hitam, nyaman dibaca) */
+  --theme-text-muted: #64748b;
+  /* Teks redup di area putih (Header tabel, sub-title) */
+
+  /* ========================================== */
+  /* REVERSE / INVERSE VARIABLES (Untuk Sidebar)*/
+  /* ========================================== */
+  --theme-text-on-dark: #f9fafb;
+  --theme-text-on-dark-danger: #f87171;
+  /* Teks utama di atas sidebar gelap */
+  --theme-text-muted-on-dark: #94a3b8;
+  /* Teks redup/email di atas sidebar gelap */
+  --theme-border-on-dark: rgba(255, 255, 255, 0.08);
+  /* Garis pembatas tipis di dalam sidebar */
+
+  /* Warna Border untuk Card Terang */
+  --theme-border-color: #e2e8f0;
+  /* Garis pembatas solid tipis untuk card putih */
+  /* Glass Effect Variables */
+  --theme-glass-blur: 32px;
+  --theme-glass-saturate: 2;
+  --theme-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 0 0 0.5px rgba(255, 255, 255, 0.4);
+  --theme-glass-border: 1px solid rgba(255, 255, 255, 0.35);
+  --theme-glass-hover-bg: rgba(255, 255, 255, 0.2);
+  --theme-glass-scrolled-bg: rgba(255, 255, 255, 0.65);
 }
 
 /* Scaling responsif untuk layar 1366px (laptop) */
@@ -78,8 +119,17 @@
   --color-theme-bg-secondary: var(--theme-bg-secondary);
   --color-theme-primary: var(--theme-color-primary);
   --color-theme-secondary: var(--theme-color-secondary);
+  --color-theme-header-primary: var(--theme-header-primary);
+  --color-theme-header-secondary: var(--theme-header-secondary);
+  --color-theme-accent: var(--theme-color-accent);
+  --color-theme-danger: var(--theme-color-danger);
   --color-theme-text-main: var(--theme-text-main);
   --color-theme-text-muted: var(--theme-text-muted);
+  --color-theme-text-on-dark: var(--theme-text-on-dark);
+  --color-theme-text-on-dark-danger: var(--theme-text-on-dark-danger);
+  --color-theme-text-muted-on-dark: var(--theme-text-muted-on-dark);
+  --color-theme-border: var(--theme-border-color);
+  --color-theme-border-on-dark: var(--theme-border-on-dark);
 }
 
 @layer base {
@@ -131,10 +181,41 @@ body {
   font-size: var(--theme-font-size);
 }
 
-/* Force Light variables even if .dark class is applied */
+/* -----------------------------------------
+   DARK THEME
+   Aktif saat class .dark ada di <html>
+   (diatur oleh next-themes)
+----------------------------------------- */
 .dark {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base Colors */
+  --background: #0a0f1a;
+  --foreground: #f1f5f9;
+
+  /* Theme Colors - Dark (Glass style) */
+  --theme-bg-primary: rgba(15, 23, 42, 0.7);
+  /* Latar belakang utama */
+  --theme-bg-secondary: rgba(30, 41, 59, 0.6);
+  /* Latar belakang sidebar/card - dark glass */
+  --theme-color-primary: #94a3b8;
+  /* Warna utama */
+  --theme-color-secondary: #60a5fa;
+  /* Warna sekunder/aksen */
+  --theme-header-primary: #94a3b8;
+  --theme-header-secondary: #60a5fa;
+  --theme-text-main: #f1f5f9;
+  /* Warna teks utama */
+  --theme-text-muted: #64748b;
+  /* Warna teks redup */
+  --theme-border-color: rgba(255, 255, 255, 0.08);
+  /* Warna border - dark glass edge */
+
+  /* Glass Effect Variables - Dark */
+  --theme-glass-blur: 24px;
+  --theme-glass-saturate: 1.5;
+  --theme-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --theme-glass-border: 1px solid rgba(255, 255, 255, 0.06);
+  --theme-glass-hover-bg: rgba(255, 255, 255, 0.05);
+  --theme-glass-scrolled-bg: rgba(15, 23, 42, 0.85);
 }
 
 html {
@@ -417,5 +498,13 @@ body::-webkit-scrollbar {
     &[data-state="closed"] {
       animation: slideOutToTop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+  }
+
+  .glass-panel {
+    background: var(--theme-bg-secondary);
+    backdrop-filter: blur(var(--theme-glass-blur)) saturate(var(--theme-glass-saturate));
+    -webkit-backdrop-filter: blur(var(--theme-glass-blur)) saturate(var(--theme-glass-saturate));
+    box-shadow: var(--theme-glass-shadow);
+    border: var(--theme-glass-border);
   }
 }

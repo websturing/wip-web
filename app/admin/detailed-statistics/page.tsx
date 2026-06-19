@@ -128,7 +128,7 @@ export default function DetailedStatisticsPage() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-white border border-zinc-200 p-1.5 rounded-xl shadow-sm">
+                    <div className="flex items-center gap-2 glass-panel p-1.5 rounded-xl">
                         <input
                             type="date"
                             value={startDate}
@@ -154,7 +154,7 @@ export default function DetailedStatisticsPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                <div className="glass-panel rounded-2xl p-5 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-zinc-500">
                         <Icon icon="solar:bolt-circle-bold-duotone" className="w-5 h-5 text-blue-500" />
                         <span className="text-xs font-black tracking-widest uppercase">Active GLs</span>
@@ -165,7 +165,7 @@ export default function DetailedStatisticsPage() {
                     <p className="text-[10px] font-bold text-zinc-400">On Selected Date Range</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-zinc-200 p-4 shadow-sm flex flex-col justify-center">
+                <div className="glass-panel rounded-2xl p-4 flex flex-col justify-center">
                     <div className="flex items-center gap-2 text-zinc-500 mb-2">
                         <Icon icon="solar:pie-chart-3-bold-duotone" className="w-5 h-5 text-emerald-500" />
                         <span className="text-xs font-black tracking-widest uppercase">On Track</span>
@@ -188,7 +188,7 @@ export default function DetailedStatisticsPage() {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                <div className="glass-panel rounded-2xl p-5 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-zinc-500">
                         <Icon icon="solar:target-bold-duotone" className="w-5 h-5 text-indigo-500" />
                         <span className="text-xs font-black tracking-widest uppercase">Avg. Achievement</span>
@@ -199,7 +199,7 @@ export default function DetailedStatisticsPage() {
                     <p className="text-[10px] font-bold text-zinc-400">Avg On Selected Date Range</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                <div className="glass-panel rounded-2xl p-5 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-zinc-500">
                         <Icon icon="solar:clock-circle-bold-duotone" className="w-5 h-5 text-red-500" />
                         <span className="text-xs font-black tracking-widest uppercase">Pending GLs</span>
@@ -210,7 +210,7 @@ export default function DetailedStatisticsPage() {
                     <p className="text-[10px] font-bold text-zinc-400">Pending / Inactive GLs</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                <div className="glass-panel rounded-2xl p-5 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-zinc-500">
                         <Icon icon="solar:box-minimalistic-bold-duotone" className="w-5 h-5 text-blue-500" />
                         <span className="text-xs font-black tracking-widest uppercase">Total Input</span>
@@ -221,7 +221,7 @@ export default function DetailedStatisticsPage() {
                     <p className="text-[10px] font-bold text-zinc-400">Total Order on Selected Tab</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-sm flex flex-col gap-2">
+                <div className="glass-panel rounded-2xl p-5 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-zinc-500">
                         <Icon icon="solar:box-bold-duotone" className="w-5 h-5 text-emerald-500" />
                         <span className="text-xs font-black tracking-widest uppercase">Total Output</span>
@@ -265,7 +265,7 @@ export default function DetailedStatisticsPage() {
             </div>
 
             {activeTab === 'cutting' ? (
-                <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-12 flex flex-col items-center justify-center text-center mt-4">
+                <div className="glass-panel rounded-xl p-12 flex flex-col items-center justify-center text-center mt-4">
                     <Icon icon="solar:programming-bold-duotone" className="w-16 h-16 text-zinc-300 mb-4" />
                     <h3 className="text-lg font-black text-zinc-900 tracking-tight">Work in Progress</h3>
                     <p className="text-sm font-medium text-zinc-500 mt-1 max-w-md">This feature is currently under development. The Cutting (Finished Cut) statistics will be available soon.</p>

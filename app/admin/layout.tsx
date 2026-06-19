@@ -80,12 +80,23 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="h-screen flex flex-col bg-theme-bg-primary font-sans selection:bg-theme-primary selection:text-white antialiased text-theme-text-main overflow-hidden">
+        <div className="h-screen flex flex-col font-sans selection:bg-theme-primary selection:text-white antialiased text-theme-text-main overflow-hidden relative">
+            {/* iOS-style animated gradient background */}
+            <div className="fixed inset-0 bg-[var(--background)] -z-10">
+                {/* Gradient mesh blobs - vivid for glass effect */}
+                <div className="absolute top-[-15%] left-[-5%] w-[65%] h-[65%] rounded-full bg-gradient-to-br from-blue-300/50 via-indigo-200/40 to-transparent blur-3xl dark:from-blue-900/20 dark:via-indigo-900/15 animate-pulse duration-[8000ms]"></div>
+                <div className="absolute bottom-[-5%] right-[-5%] w-[55%] h-[55%] rounded-full bg-gradient-to-tl from-violet-300/40 via-pink-200/30 to-transparent blur-3xl dark:from-purple-900/15 dark:via-pink-900/10 animate-pulse duration-[12000ms] delay-1000"></div>
+                <div className="absolute top-[25%] right-[15%] w-[35%] h-[35%] rounded-full bg-gradient-to-bl from-cyan-200/35 via-sky-200/25 to-transparent blur-3xl dark:from-cyan-900/10 dark:via-sky-900/5 animate-pulse duration-[10000ms] delay-500"></div>
+                <div className="absolute bottom-[20%] left-[25%] w-[25%] h-[25%] rounded-full bg-gradient-to-tr from-amber-100/25 via-orange-100/15 to-transparent blur-3xl dark:from-amber-900/5 dark:via-orange-900/5 animate-pulse duration-[14000ms] delay-2000"></div>
+                {/* Subtle noise texture overlay */}
+                <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }}></div>
+            </div>
+
             <HeaderProvider>
-                {/* 2. Main Container (Sidebar + Content) */}
+                {/* Main Container (Sidebar + Content) */}
                 <div className="flex-1 flex overflow-hidden w-full relative">
 
-                    {/* Desktop Floating Sidebar Area (Left) */}
+                    {/* Desktop Floating Sidebar Area (Left) - Glass */}
                     <div className="hidden lg:flex p-2 pr-0 flex-col h-full z-50 shrink-0">
                         <AdminSidebar />
                     </div>
@@ -96,13 +107,15 @@ export default function AdminLayout({
                         onScroll={(e) => setIsScrolled(e.currentTarget.scrollTop > 10)}
                     >
 
-                        {/* Header Area (Inside Content) */}
+                        {/* Header Area (Inside Content) - Glass */}
                         <div className="sticky top-0 z-50 mb-2 transition-all duration-300">
                             <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} isScrolled={isScrolled} />
                         </div>
 
-                        {/* Scrollable Content Card */}
-                        <main className="flex-1 px-6 py-6 lg:px-10 lg:py-10 transition-all bg-gradient-to-b from-white to-theme-bg-primary/40 shadow-sm border border-zinc-50 rounded-lg relative scroll-smooth ">
+                        {/* Scrollable Content Card - Glass */}
+                        <main className="flex-1 px-6 py-6 lg:px-10 lg:py-10 transition-all rounded-xl relative scroll-smooth"
+
+                        >
                             <div key={pathname} className="animate-page-in w-full h-full">
                                 {children}
                             </div>
@@ -110,18 +123,25 @@ export default function AdminLayout({
                     </div>
                 </div>
 
-                {/* 3. Mobile Sidebar Overlay (Drawer) */}
+                {/* Mobile Sidebar Overlay (Drawer) */}
                 {isSidebarOpen && (
                     <div className="lg:hidden fixed inset-0 z-[100] flex">
-                        {/* Backdrop with transition */}
+                        {/* Backdrop */}
                         <div
-                            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
+                            className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-in fade-in duration-300"
                             onClick={() => setIsSidebarOpen(false)}
                         />
 
-                        {/* Sidebar Container with sliding animation */}
+                        {/* Sidebar Container */}
                         <div className="relative w-[280px] p-2 h-full animate-in slide-in-from-left-full duration-500 ease-out flex flex-col">
-                            <div className="flex-1 h-full shadow-2xl rounded-2xl overflow-hidden bg-theme-bg-secondary">
+                            <div className="flex-1 h-full shadow-2xl rounded-2xl overflow-hidden"
+                                style={{
+                                    background: 'var(--theme-bg-secondary)',
+                                    backdropFilter: `blur(var(--theme-glass-blur)) saturate(var(--theme-glass-saturate))`,
+                                    WebkitBackdropFilter: `blur(var(--theme-glass-blur)) saturate(var(--theme-glass-saturate))`,
+                                    border: 'var(--theme-glass-border)',
+                                }}
+                            >
                                 <AdminSidebar isMobile onClose={() => setIsSidebarOpen(false)} />
                             </div>
                         </div>

@@ -82,7 +82,7 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Top Header & Breadcrumb */}
-                <div className="bg-white border-b border-zinc-200 px-8 py-4 mb-6">
+                <div className="glass-panel border-b px-8 py-4 mb-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <h1 className="text-lg font-bold text-zinc-800">Home</h1>
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
                         <label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-4">Assigned Lines:</label>
                         <div className="flex flex-wrap gap-2 items-center">
                             {assignedLines.slice(0, 3).map((line, i) => (
-                                <div key={i} className="px-3 md:px-4 py-1.5 md:py-2 bg-white rounded-xl border border-zinc-100 shadow-sm flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
+                                <div key={i} className="px-3 md:px-4 py-1.5 md:py-2 glass-panel rounded-xl flex items-center gap-2 group transition-all hover:scale-110 active:scale-95 cursor-pointer">
                                     <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-blue-500"></span>
                                     <span className="text-[11px] md:text-xs font-bold text-zinc-900">{line}</span>
                                 </div>
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
 
                     {/* Top 6 Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <div className="bg-white p-6 rounded-lg border border-zinc-200 flex items-center justify-between shadow-sm">
+                        <div className="glass-panel p-6 rounded-lg flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center">
                                     <Icon icon="solar:users-group-rounded-bold-duotone" className="w-7 h-7" />
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-lg border border-zinc-200 flex items-center justify-between shadow-sm">
+                        <div className="glass-panel p-6 rounded-lg flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center">
                                     <Icon icon="solar:wallet-bold-duotone" className="w-7 h-7" />
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-lg border border-zinc-200 flex items-center justify-between shadow-sm">
+                        <div className="glass-panel p-6 rounded-lg flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center">
                                     <Icon icon="solar:medical-kit-bold-duotone" className="w-7 h-7" />
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         {/* Main Analytical Chart Overlay */}
                         <div className="lg:col-span-12">
-                            <div className="bg-white rounded-lg border border-zinc-200 shadow-sm flex flex-col">
+                            <div className="glass-panel rounded-lg flex flex-col">
                                 <div className="p-8 pb-4">
                                     <div className="flex items-center justify-between mb-8">
                                         <div>
@@ -311,7 +311,7 @@ export default function AdminDashboard() {
                                                 {/* Tooltip Card Overlay */}
                                                 {hoveredData && (
                                                     <div
-                                                        className="absolute z-50 bg-white border border-zinc-100 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.1)] rounded-lg p-4 pointer-events-none min-w-[180px] animate-in fade-in zoom-in duration-200"
+                                                        className="absolute z-50 glass-panel rounded-lg p-4 pointer-events-none min-w-[180px] animate-in fade-in zoom-in duration-200"
                                                         style={{
                                                             left: `${(hoveredData.x / 1000) * 100}%`,
                                                             top: `${(hoveredData.y / 300) * 100}%`,
@@ -378,7 +378,7 @@ export default function AdminDashboard() {
                         <div className="lg:col-span-12 mt-4">
                             <div className="grid grid-cols-12 gap-4">
                                 <div className="lg:col-span-3 space-y-6">
-                                    <div className="bg-white rounded-lg border border-zinc-200 p-6 shadow-sm overflow-hidden h-fit">
+                                    <div className="glass-panel rounded-lg p-6 overflow-hidden h-fit">
                                         <h3 className="text-2xl font-bold text-zinc-800">
                                             {stats?.output_chart?.reduce((acc: number, cur: any) => acc + Number(cur.total_output), 0) || 0}
                                         </h3>
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="lg:col-span-9 bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+                                <div className="lg:col-span-9 glass-panel rounded-lg overflow-hidden">
                                     <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
