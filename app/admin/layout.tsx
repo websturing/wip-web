@@ -32,6 +32,36 @@ export default function AdminLayout({
         setIsSidebarOpen(false);
     }, [pathname]);
 
+    // Initialize desktop sidebar collapse state from user preferences or localStorage
+    useEffect(() => {
+        if (user && user.preferences?.ui?.sidebar_collapsed !== undefined) {
+            setIsSidebarCollapsed(user.preferences.ui.sidebar_collapsed);
+        } else {
+            const saved = localStorage.getItem('theme_sidebar_collapsed');
+            if (saved !== null) {
+                setIsSidebarCollapsed(saved === 'true');
+            }
+        }
+    }, [user]);
+
+    const setSidebarState = async (newValue: boolean) => {
+        setIsSidebarCollapsed(newValue);
+        localStorage.setItem('theme_sidebar_collapsed', String(newValue));
+
+        if (user) {
+            try {
+                const { apiClient } = await import('@/lib/api');
+                await apiClient.patch('/profile/preferences', {
+                    ui: { sidebar_collapsed: newValue }
+                });
+            } catch (error) {
+                console.error('Failed to sync preferences:', error);
+            }
+        }
+    };
+
+    const handleToggleCollapse = () => setSidebarState(!isSidebarCollapsed);
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden font-sans text-orange-400">
@@ -99,7 +129,7 @@ export default function AdminLayout({
 
                     {/* Desktop Floating Sidebar Area (Left) - Glass */}
                     <div className="hidden lg:flex p-2 pr-0 flex-col h-full z-50 shrink-0">
-                        <AdminSidebar isCollapsed={isSidebarCollapsed} onExpand={() => setIsSidebarCollapsed(false)} />
+                        <AdminSidebar isCollapsed={isSidebarCollapsed} onExpand={() => setSidebarState(false)} />
                     </div>
 
                     {/* Content Area (Right) */}
@@ -110,7 +140,12 @@ export default function AdminLayout({
 
                         {/* Header Area (Inside Content) - Glass */}
                         <div className="sticky top-0 z-50 mb-2 transition-all duration-300">
-                            <AdminNavbar onToggleSidebar={() => setIsSidebarOpen(true)} isScrolled={isScrolled} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+                            <AdminNavbar 
+                                onToggleSidebar={() => setIsSidebarOpen(true)} 
+                                isScrolled={isScrolled} 
+                                isCollapsed={isSidebarCollapsed}
+                                onToggleCollapse={handleToggleCollapse}
+                            />
                         </div>
 
                         {/* Scrollable Content Card - Glass */}
