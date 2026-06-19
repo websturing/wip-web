@@ -3,12 +3,21 @@
 import { ThemeToggle } from '@/app/admin/components/ThemeToggle';
 import { Breadcrumb } from '@/app/components/ui/Breadcrumb';
 import { Icon } from '@/app/components/ui/Icon';
+import { Button } from '@/app/components/ui/Button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/app/components/ui/Dialog';
 import { useHeader } from '@/app/contexts/HeaderContext';
 import { useAuth } from '@/features/Auth/components/AuthProvider';
 import { useAppName } from '@/hooks/useAppName';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
 
 interface AdminNavbarProps {
     onToggleSidebar?: () => void;
@@ -21,6 +30,18 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false, isCollapsed, 
     const { user, logout } = useAuth();
     const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     const { prefix } = useAppName();
     const [dateTime, setDateTime] = useState('');
     const { headerState } = useHeader();
@@ -132,8 +153,8 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false, isCollapsed, 
                 )}></div>
 
                 {/* User Profile */}
-                <div className="relative">
-                    <div 
+                <div className="relative" ref={dropdownRef}>
+                    <div
                         className="flex items-center gap-3 cursor-pointer group pl-1"
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     >
@@ -168,20 +189,21 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false, isCollapsed, 
                     </div>
 
                     {/* Dropdown Menu */}
-                    {isDropdownOpen && (
-                        <>
-                            <div 
-                                className="fixed inset-0 z-40" 
-                                onClick={() => setIsDropdownOpen(false)}
-                            />
-                            <div className="absolute right-0 mt-3 w-56 bg-theme-bg-primary border border-theme-border rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div 
+                        className={cn(
+                            "absolute right-0 mt-3 w-56 bg-theme-bg-primary border border-theme-border rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] z-50 p-2 transition-all duration-300 origin-top-right",
+                            isDropdownOpen 
+                                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" 
+                                : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                        )}
+                    >
                                 <div className="px-3 py-2 border-b border-theme-border mb-2">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-theme-text-muted mb-0.5">Signed in as</p>
                                     <p className="text-xs font-bold text-theme-text-main truncate">{user?.name}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <button 
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-theme-text-main hover:bg-theme-secondary/10 hover:text-theme-primary transition-all text-left group/item"
+                                    <button
+                                        className="w-full flex items-center cursor-pointer gap-3 px-3 py-2.5 rounded-xl text-theme-text-main hover:bg-theme-secondary/10 hover:text-theme-primary transition-all text-left group/item"
                                         onClick={() => {
                                             setIsDropdownOpen(false);
                                             router.push('/admin/profile');
@@ -192,12 +214,11 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false, isCollapsed, 
                                         </div>
                                         <span className="text-xs font-bold">My Profile</span>
                                     </button>
-                                    <button 
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-all text-left group/item"
+                                    <button
+                                        className="w-full flex items-center cursor-pointer gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-all text-left group/item"
                                         onClick={() => {
                                             setIsDropdownOpen(false);
-                                            if (logout) logout();
-                                            router.push('/login');
+                                            setIsLogoutDialogOpen(true);
                                         }}
                                     >
                                         <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover/item:bg-white transition-all shadow-sm">
@@ -207,10 +228,31 @@ export const AdminNavbar = ({ onToggleSidebar, isScrolled = false, isCollapsed, 
                                     </button>
                                 </div>
                             </div>
-                        </>
-                    )}
+                    </div>
                 </div>
-            </div>
+    
+            {/* Logout Dialog */}
+            <Dialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+                <DialogContent className="max-w-[340px] bg-zinc-900 border-white/10 z-[60]">
+                    <DialogHeader>
+                        <div className="mx-auto w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                            <Icon icon="solar:danger-triangle-bold-duotone" className="w-6 h-6 text-red-500" />
+                        </div>
+                        <DialogTitle className="text-center font-bold text-white">Sign Out</DialogTitle>
+                        <DialogDescription className="text-center mt-2 text-zinc-400">
+                            Are you sure you want to end your current session?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center gap-2 mt-6">
+                        <Button variant="ghost" className="rounded-xl px-6 text-zinc-400 hover:text-white hover:bg-white/5" onClick={() => setIsLogoutDialogOpen(false)}>
+                            Stay
+                        </Button>
+                        <Button variant="danger" className="rounded-xl px-6" onClick={() => { setIsLogoutDialogOpen(false); if (logout) logout(); }}>
+                            Sign Out
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
