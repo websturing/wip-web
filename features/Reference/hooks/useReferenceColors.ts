@@ -3,13 +3,10 @@
 import { useEffect, useState } from 'react';
 import { ReferenceService } from '../services/ReferenceService';
 
-export const useReference = () => {
-    const [lots, setLots] = useState<any[]>([]);
-    const [lastImport, setLastImport] = useState<string | null>(null);
+export const useReferenceColors = () => {
+    const [colors, setColors] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
-
-    const [colors, setColors] = useState<any[]>([]);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -19,17 +16,16 @@ export const useReference = () => {
     // Search state
     const [search, setSearch] = useState('');
 
-    const fetchLots = async (page: number = 1, searchQuery: string = search) => {
+    const fetchColors = async (page: number = 1, searchQuery: string = search) => {
         setIsLoading(true);
         setCurrentPage(page);
         setSearch(searchQuery);
         try {
-            const result = await ReferenceService.getLots(page, searchQuery);
+            const result = await ReferenceService.getColors(page, searchQuery);
             if (result.status === 'success') {
-                setLots(result.data.data || []);
+                setColors(result.data.data || []);
                 setTotal(result.data.total || 0);
                 setPerPage(result.data.per_page || 50);
-                setLastImport(result.meta?.last_import || null);
             }
         } catch (err) {
             setError(err instanceof Error ? err : new Error('An error occurred'));
@@ -41,20 +37,19 @@ export const useReference = () => {
 
 
     useEffect(() => {
-        fetchLots(1, search);
+        fetchColors(1, search);
     }, []);
 
     return {
-        lots,
-        lastImport,
+        colors,
         isLoading,
         error,
         currentPage,
         total,
         perPage,
         search,
-        refresh: () => fetchLots(currentPage, search),
-        setPage: (page: number) => fetchLots(page, search),
-        setSearch: (query: string) => fetchLots(1, query)
+        refresh: () => fetchColors(currentPage, search),
+        setPage: (page: number) => fetchColors(page, search),
+        setSearch: (query: string) => fetchColors(1, query)
     };
 };

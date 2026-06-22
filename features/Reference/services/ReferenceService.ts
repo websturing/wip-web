@@ -32,4 +32,14 @@ export class ReferenceService {
         const response = await apiClient.get(`${this.resource}/gl-groups/${glGroupId}/summary`);
         return await response.json();
     }
+
+    static async getColors(page: number = 1, search: string = '') {
+        const response = await apiClient.get(`${this.resource}/colors?page=${page}&search=${encodeURIComponent(search)}`);
+        return await response.json();
+    }
+
+    static async getGlnumbers(page: number = 1, search: string = '') {
+        const response = await apiClient.get(`${this.resource}/gl-groups?flat=true`);
+        return await response.json();
+    }
 }

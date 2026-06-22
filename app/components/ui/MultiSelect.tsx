@@ -17,6 +17,7 @@ interface MultiSelectProps {
     placeholder?: string;
     className?: string;
     disabled?: boolean;
+    creatable?: boolean;
 }
 
 export const MultiSelect = ({
@@ -25,7 +26,8 @@ export const MultiSelect = ({
     onChange,
     placeholder = "Select multiple...",
     className,
-    disabled
+    disabled,
+    creatable = false
 }: MultiSelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -36,7 +38,12 @@ export const MultiSelect = ({
         );
     }, [options, searchTerm]);
 
-    const selectedOptions = options.filter(opt => value.includes(opt.id));
+    // Jika creatable true, value yang diketik tapi tidak ada di options akan dirender sebagai custom tag
+    const selectedOptions = value.map(v => {
+        const found = options.find(opt => opt.id === v);
+        if (found) return found;
+        return { id: v, label: v.toString() };
+    });
 
     const toggleOption = (id: string | number) => {
         if (value.includes(id)) {
@@ -47,6 +54,9 @@ export const MultiSelect = ({
         setSearchTerm('');
         setOpen(false);
     };
+
+    const trimmedSearch = searchTerm.trim();
+    const showCreateOption = creatable && trimmedSearch !== '' && !options.some(opt => opt.label.toLowerCase() === trimmedSearch.toLowerCase());
 
     return (
         <div className={cn("space-y-1.5", className)}>
@@ -98,12 +108,17 @@ export const MultiSelect = ({
                                 <Icon icon="solar:magnifer-linear" className="absolute left-3 w-4 h-4 text-zinc-400" />
                                 <input
                                     className="w-full bg-zinc-50 rounded-xl py-2.5 pl-9 pr-4 text-[13px] font-medium outline-none placeholder:text-zinc-400"
-                                    placeholder="Search..."
+                                    placeholder="Search or type to create..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && filteredOptions.length > 0) {
-                                            toggleOption(filteredOptions[0].id);
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            if (filteredOptions.length > 0 && !showCreateOption) {
+                                                toggleOption(filteredOptions[0].id);
+                                            } else if (showCreateOption) {
+                                                toggleOption(trimmedSearch);
+                                            }
                                         }
                                     }}
                                     autoFocus
@@ -112,7 +127,18 @@ export const MultiSelect = ({
                         </div>
 
                         <div className="max-h-64 overflow-y-auto p-1.5 custom-scrollbar">
-                            {filteredOptions.length === 0 ? (
+                            {showCreateOption && (
+                                <button
+                                    type="button"
+                                    onClick={() => toggleOption(trimmedSearch)}
+                                    className="w-full px-3 py-2.5 rounded-xl text-left text-[13px] font-bold text-blue-600 bg-blue-50/50 hover:bg-blue-100/50 transition-all flex items-center gap-2 mb-1"
+                                >
+                                    <Icon icon="solar:add-circle-bold" className="w-4 h-4" />
+                                    <span>Add "{trimmedSearch}"</span>
+                                </button>
+                            )}
+
+                            {filteredOptions.length === 0 && !showCreateOption ? (
                                 <div className="py-8 text-center text-zinc-400 text-[10px] font-bold uppercase tracking-widest">
                                     No results found
                                 </div>
@@ -125,7 +151,7 @@ export const MultiSelect = ({
                                         className={cn(
                                             "w-full px-3 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all flex items-center justify-between group",
                                             value.includes(option.id)
-                                                ? "bg-blue-50 text-blue-600"
+                                                ? "bg-emerald-50 text-emerald-600"
                                                 : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                                         )}
                                     >
