@@ -1,10 +1,19 @@
 import { apiClient } from "@/lib/api";
 
 export class GLNumberService {
-    private static resource = '/glnumber';
+    private static resource = '/reference/gl-groups';
 
-    static async getAll() {
-        const response = await apiClient.get(this.resource);
+    static async getAll(page: number = 1, perPage: number = 20, search: string = '') {
+        const queryParams = new URLSearchParams({
+            page: String(page),
+            per_page: String(perPage)
+        });
+        
+        if (search) {
+            queryParams.append('search', search);
+        }
+
+        const response = await apiClient.get(`${this.resource}?${queryParams.toString()}`);
         return await response.json();
     }
 

@@ -7,15 +7,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${BLUE}========================================${NC}"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V4      ${NC}"
-=======
-echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V2      ${NC}"
->>>>>>> Stashed changes
-=======
-echo -e "${BLUE}   NEXT.JS 16 FEATURE GENERATOR V2      ${NC}"
->>>>>>> Stashed changes
 echo -e "${BLUE}========================================${NC}"
 
 # Input Handling
@@ -23,12 +15,6 @@ read -p "Nama Fitur (ex: GLNumber): " FEATURE_NAME_RAW
 read -p "Nama Komponen Utama (ex: GLTable): " COMPONENT_NAME
 
 # Formatting Names
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-FEATURE_NAME=$(echo "$FEATURE_NAME_RAW" | sed 's/ /-/g')
-=======
-=======
->>>>>>> Stashed changes
 # Convert to PascalCase for Directory/Component (e.g., GLNumber)
 # This logic ensures first letter upper, but preserves other casing if not space/dash
 # Simplified: just use input for Pascal if user followed example, or smarter conversion
@@ -38,10 +24,6 @@ FEATURE_NAME=$(echo "$FEATURE_NAME_RAW" | sed 's/ /-/g') # Just space to dash fo
 # and use kebab-case for the route.
 
 # Route URL (Kebab-case, e.g., gl-number)
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 LOWER_FEATURE=$(echo "$FEATURE_NAME_RAW" | sed 's/\([a-z0-9]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g')
 
 FILE_NAME="${COMPONENT_NAME}"
@@ -84,8 +66,6 @@ export const ${FILE_NAME} = () => {
 
     return (
         <div className="p-8 bg-white rounded-2xl border border-zinc-100 transition-all">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             <div className="flex items-center gap-4 mb-6 text-[#111827]">
                 <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
                     <Icon icon="solar:bolt-bold-duotone" className="w-6 h-6" />
@@ -93,20 +73,6 @@ export const ${FILE_NAME} = () => {
                 <div>
                     <h2 className="text-xl font-bold tracking-tight">${FILE_NAME}</h2>
                     <p className="text-zinc-500 text-xs font-medium">Part of ${FEATURE_NAME} module</p>
-=======
-=======
->>>>>>> Stashed changes
-            <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                    <Icon icon="solar:widget-5-bold-duotone" className="w-6 h-6" />
-                </div>
-                <div>
-                    <h2 className="text-xl font-bold text-zinc-900">${FILE_NAME}</h2>
-                    <p className="text-zinc-500 text-xs">Section part of ${FEATURE_NAME} feature</p>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 </div>
             </div>
             
@@ -114,8 +80,6 @@ export const ${FILE_NAME} = () => {
                 {/* Content Placeholder */}
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
                     <Icon icon="solar:box-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                     <span className="text-[10px] font-black uppercase tracking-widest">Workspace</span>
                 </div>
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
@@ -125,22 +89,6 @@ export const ${FILE_NAME} = () => {
                 <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
                     <Icon icon="solar:user-rounded-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Collaborators</span>
-=======
-=======
->>>>>>> Stashed changes
-                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 1</span>
-                </div>
-                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
-                    <Icon icon="solar:chart-2-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 2</span>
-                </div>
-                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
-                    <Icon icon="solar:user-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Placeholder 3</span>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 </div>
             </div>
         </div>
@@ -233,65 +181,27 @@ gen_page() {
         APP_PATH="app/$LOWER_FEATURE"
     fi
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     # 2. Buat REAL PAGE di folder fitur
     cat <<EOF > "$FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx"
 import React from 'react';
 import { PageHeader } from '@/app/components/ui/PageHeader';
 import { BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
-=======
-    # 2. Buat REAL PAGE di dalam folder fitur
-    cat <<EOF > "$FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx"
-import React from 'react';
-import { Breadcrumb, BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
->>>>>>> Stashed changes
-=======
-    # 2. Buat REAL PAGE di dalam folder fitur
-    cat <<EOF > "$FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx"
-import React from 'react';
-import { Breadcrumb, BreadcrumbItem } from '@/app/components/ui/Breadcrumb';
->>>>>>> Stashed changes
 import { ${FILE_NAME} } from '../components/${FILE_NAME}';
 
 export default function ${COMPONENT_NAME}Page() {
     const breadcrumbItems: BreadcrumbItem[] = [
         { label: 'Admin', href: '/admin', icon: 'solar:home-2-bold-duotone' },
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         { label: '${FEATURE_NAME}', icon: 'solar:widget-bold-duotone' },
-=======
-        { label: '${FEATURE_NAME}', icon: 'solar:widget-3-bold-duotone' },
->>>>>>> Stashed changes
-=======
-        { label: '${FEATURE_NAME}', icon: 'solar:widget-3-bold-duotone' },
->>>>>>> Stashed changes
     ];
 
     return (
         <div className="animate-in fade-in duration-700">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             <PageHeader 
                 items={breadcrumbItems}
                 title="${FEATURE_NAME}"
                 subtitle="Management"
                 description="Manage and monitor your ${FEATURE_NAME} operations efficiently."
             />
-=======
-=======
->>>>>>> Stashed changes
-            <Breadcrumb items={breadcrumbItems} />
-            
-            <div className="mb-10 pt-2">
-                <h1 className="text-[2.2rem] font-bold text-zinc-900 tracking-tight lowercase">
-                    ${FEATURE_NAME} <span className="text-blue-500 font-extrabold whitespace-nowrap">Management</span>
-                </h1>
-                <p className="text-zinc-500 text-xs font-medium mt-2 leading-relaxed opacity-80 uppercase tracking-widest">
-                    Manage and monitor your ${FEATURE_NAME} operations efficiently.
-                </p>
-            </div>
->>>>>>> Stashed changes
 
             <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm overflow-hidden">
                 <${FILE_NAME} />
@@ -307,18 +217,8 @@ EOF
 export { default } from '@/features/${FEATURE_NAME}/pages/${COMPONENT_NAME}Page';
 EOF
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     echo -e "${GREEN}✅ Feature Page created.${NC}"
     echo -e "${GREEN}✅ App Route Proxy created.${NC}"
-=======
-    echo -e "${GREEN}✅ Feature Page ($FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx) created.${NC}"
-    echo -e "${GREEN}✅ App Route Proxy ($APP_PATH/page.tsx) created.${NC}"
->>>>>>> Stashed changes
-=======
-    echo -e "${GREEN}✅ Feature Page ($FEATURE_PATH/pages/${COMPONENT_NAME}Page.tsx) created.${NC}"
-    echo -e "${GREEN}✅ App Route Proxy ($APP_PATH/page.tsx) created.${NC}"
->>>>>>> Stashed changes
 }
 
 
@@ -338,15 +238,7 @@ case $CHOICE in
         ;;
 esac
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 # Export index handling
-=======
-# Export index handling (Public API for the feature)
->>>>>>> Stashed changes
-=======
-# Export index handling (Public API for the feature)
->>>>>>> Stashed changes
 if [ "$CHOICE" -ne 4 ]; then
     cat <<EOF > "$FEATURE_PATH/index.ts"
 export * from './components/${FILE_NAME}';
@@ -355,26 +247,11 @@ export * from './services/${SERVICE_NAME}';
 export * from './types';
 export { default as ${COMPONENT_NAME}Page } from './pages/${COMPONENT_NAME}Page';
 EOF
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     echo -e "${GREEN}✅ index.ts created.${NC}"
-=======
-    echo -e "${GREEN}✅ index.ts (Public API) created/updated.${NC}"
->>>>>>> Stashed changes
-=======
-    echo -e "${GREEN}✅ index.ts (Public API) created/updated.${NC}"
->>>>>>> Stashed changes
 fi
 
 chmod +x "$FEATURE_PATH" 2>/dev/null || true
 
 echo -e "\n${BLUE}Success! Feature structure for ${CYAN}$FEATURE_NAME${BLUE} is complete.${NC}"
 echo -e "${YELLOW}URL Route:${NC} /$( [ "$IS_ADMIN" == "y" ] && echo "admin/" )$LOWER_FEATURE"
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-echo -e "${YELLOW}Feature Dir:${NC} $FEATURE_PATH"
->>>>>>> Stashed changes
-=======
-echo -e "${YELLOW}Feature Dir:${NC} $FEATURE_PATH"
->>>>>>> Stashed changes
+

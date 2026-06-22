@@ -1,44 +1,77 @@
 'use client';
 
-import { Icon } from '@/app/components/ui/Icon';
+import React from 'react';
 import { useGLNumber } from '../hooks/useGLNumber';
+import { DataTable, Column } from '@/app/components/ui/DataTable';
+import { GlGroup } from '../types';
 
 export const GLNumber = () => {
-    const { data, isLoading } = useGLNumber();
+    const { 
+        data, 
+        isLoading, 
+        page, 
+        perPage, 
+        total, 
+        setPage, 
+        setSearch 
+    } = useGLNumber();
 
-    if (isLoading) return (
-        <div className="flex items-center justify-center p-12">
-            <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-        </div>
-    );
+    const columns: Column<GlGroup>[] = [
+        {
+            header: 'GL Number',
+            accessorKey: 'gl_number',
+            sortable: true
+        },
+        {
+            header: 'Customer',
+            accessorKey: 'customer_id',
+            cell: (item) => item.customer?.name || '-',
+            sortable: true
+        },
+        {
+            header: 'Total Lots',
+            accessorKey: 'lots',
+            cell: (item) => (
+                <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-md font-bold text-xs">
+                    {item.lots?.length || 0} Lots
+                </span>
+            )
+        },
+        {
+            header: 'Lot List',
+            accessorKey: 'lots',
+            cell: (item) => (
+                <div className="flex flex-wrap gap-1 max-w-[300px]">
+                    {item.lots && item.lots.length > 0 ? (
+                        item.lots.slice(0, 3).map(lot => (
+                            <span key={lot.id} className="bg-zinc-100 text-zinc-600 text-[10px] px-2 py-0.5 rounded-sm uppercase tracking-wider border border-zinc-200">
+                                {lot.lot_number}
+                            </span>
+                        ))
+                    ) : (
+                        <span className="text-zinc-400 text-xs italic">-</span>
+                    )}
+                    {item.lots && item.lots.length > 3 && (
+                        <span className="text-zinc-400 text-[10px] px-1 py-0.5">+{item.lots.length - 3} more</span>
+                    )}
+                </div>
+            )
+        }
+    ];
 
     return (
-        <div className="p-8 bg-white rounded-2xl border border-zinc-100 transition-all">
-            <div className="flex items-center gap-4 mb-6 text-[#111827]">
-                <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-                    <Icon icon="solar:bolt-bold-duotone" className="w-6 h-6" />
-                </div>
-                <div>
-                    <h2 className="text-xl font-bold tracking-tight">GLNumber</h2>
-                    <p className="text-zinc-500 text-xs font-medium">Part of GLNumber module</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Content Placeholder */}
-                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
-                    <Icon icon="solar:box-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Workspace</span>
-                </div>
-                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
-                    <Icon icon="solar:chart-2-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Analytics</span>
-                </div>
-                <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 border-dashed min-h-[160px] flex flex-col items-center justify-center text-zinc-400 group hover:border-blue-200 transition-colors">
-                    <Icon icon="solar:user-rounded-bold-duotone" className="w-6 h-6 mb-2 opacity-20 group-hover:opacity-40 transition-opacity" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Collaborators</span>
-                </div>
-            </div>
+        <div className="p-1">
+            <DataTable 
+                data={data}
+                columns={columns}
+                isLoading={isLoading}
+                total={total}
+                currentPage={page}
+                perPage={perPage}
+                onPageChange={setPage}
+                onSearch={setSearch}
+                searchPlaceholder="Search GL Number or Customer..."
+            />
         </div>
     );
 };
