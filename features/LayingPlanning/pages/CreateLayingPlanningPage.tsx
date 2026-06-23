@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
@@ -18,7 +19,6 @@ export default function CreateLayingPlanningPage() {
     });
 
     const { glnumbers, glOptions, isLoading: isLoadingGl } = useReferenceGlnumbers();
-    const { colors, isLoading: isLoadingColors } = useReferenceColors();
 
     const {
         formData,
@@ -37,6 +37,8 @@ export default function CreateLayingPlanningPage() {
         triggerValidation,
         handleFinalSubmit
     } = useLayingPlanningForm();
+
+    const { colors, isLoading: isLoadingColors } = useReferenceColors(formData.gl_number_ids);
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -491,8 +493,8 @@ export default function CreateLayingPlanningPage() {
             </div>
 
             {/* CONFIRMATION MODAL */}
-            {isConfirmModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {isConfirmModalOpen && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setIsConfirmModalOpen(false)}></div>
                     <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-8">
@@ -500,30 +502,36 @@ export default function CreateLayingPlanningPage() {
                                 <Icon icon="solar:info-circle-bold" className="w-6 h-6" />
                             </div>
                             <h3 className="text-xl font-black text-zinc-900 mb-2">Final Confirmation</h3>
-                            <p className="text-sm font-medium text-zinc-500 mb-8">You are about to save this Laying Planning. Does this planning belong to an existing set (e.g. you're creating Pants for an existing Top)?</p>
+                            {formData.part_types.length === 1 ? (
+                                <p className="text-sm font-medium text-zinc-500 mb-8">You are about to save this Laying Planning. Does this planning belong to an existing set (e.g. you're creating Pants for an existing Top)?</p>
+                            ) : (
+                                <p className="text-sm font-medium text-zinc-500 mb-8">You are about to save this Laying Planning. Since you selected multiple part types, this will automatically be treated as a set. Please confirm to proceed.</p>
+                            )}
                             
-                            <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-sm font-bold text-zinc-900">Yes, it's part of a set</label>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" className="sr-only peer" checked={formData.is_linked_set} onChange={(e) => updateField('is_linked_set', e.target.checked)} />
-                                        <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                                
-                                {formData.is_linked_set && (
-                                    <div className="space-y-1.5 pt-4 border-t border-zinc-200/50">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Parent Laying Planning ID</label>
-                                        <input className={cn("w-full h-12 bg-white border rounded-xl px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm", errors.parent_laying_planning_id ? "border-red-300 ring-4 ring-red-500/10" : "border-zinc-200")} placeholder="e.g. LP-2026-0001" value={formData.parent_laying_planning_id} onChange={(e) => updateField('parent_laying_planning_id', e.target.value)} />
-                                        <ErrorMsg msg={errors.parent_laying_planning_id} />
+                            {formData.part_types.length === 1 && (
+                                <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-bold text-zinc-900">Yes, it's part of a set</label>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" className="sr-only peer" checked={formData.is_linked_set} onChange={(e) => updateField('is_linked_set', e.target.checked)} />
+                                            <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
                                     </div>
-                                )}
-                            </div>
+                                    
+                                    {formData.is_linked_set && (
+                                        <div className="space-y-1.5 pt-4 border-t border-zinc-200/50">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Parent Laying Planning ID</label>
+                                            <input className={cn("w-full h-12 bg-white border rounded-xl px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm", errors.parent_laying_planning_id ? "border-red-300 ring-4 ring-red-500/10" : "border-zinc-200")} placeholder="e.g. LP-2026-0001" value={formData.parent_laying_planning_id} onChange={(e) => updateField('parent_laying_planning_id', e.target.value)} />
+                                            <ErrorMsg msg={errors.parent_laying_planning_id} />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="flex gap-4">
                                 <Button type="button" variant="ghost" onClick={() => setIsConfirmModalOpen(false)} className="flex-1 h-12 rounded-xl font-black text-[11px] uppercase tracking-widest text-zinc-500 bg-zinc-50 hover:bg-zinc-100">Cancel</Button>
                                 <Button type="button" onClick={() => {
-                                    if (formData.is_linked_set && !formData.parent_laying_planning_id) {
+                                    if (formData.part_types.length === 1 && formData.is_linked_set && !formData.parent_laying_planning_id) {
                                         triggerValidation(); // Re-trigger validation to show error
                                         return;
                                     }
@@ -535,7 +543,8 @@ export default function CreateLayingPlanningPage() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

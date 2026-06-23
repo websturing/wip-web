@@ -33,13 +33,22 @@ export class ReferenceService {
         return await response.json();
     }
 
-    static async getColors(page: number = 1, search: string = '') {
-        const response = await apiClient.get(`${this.resource}/colors?page=${page}&search=${encodeURIComponent(search)}`);
+    static async getColors(page: number = 1, search: string = '', glIds?: string[]) {
+        let url = `${this.resource}/colors?page=${page}&search=${encodeURIComponent(search)}`;
+        if (glIds && glIds.length > 0) {
+            url += `&gl_ids=${encodeURIComponent(glIds.join(','))}`;
+        }
+        const response = await apiClient.get(url);
         return await response.json();
     }
 
     static async getGlnumbers(page: number = 1, search: string = '') {
         const response = await apiClient.get(`${this.resource}/gl-groups?flat=true`);
+        return await response.json();
+    }
+
+    static async getFabrics(page: number = 1, search: string = '') {
+        const response = await apiClient.get(`${this.resource}/fabrics?page=${page}&search=${encodeURIComponent(search)}`);
         return await response.json();
     }
 }

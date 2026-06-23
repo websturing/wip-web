@@ -47,6 +47,8 @@ export const AdminSidebar = ({ isMobile, onClose, isCollapsed, onExpand }: Admin
             id: 'f2', name: 'Master Data', path: '/admin/master', icon: 'solar:database-linear',
             children: [
                 { id: 'f2-1', name: 'Garment Reference', path: '/admin/reference', icon: 'solar:reorder-linear' },
+                { id: 'f2-3', name: 'System Colors', path: '/admin/reference/colors', icon: 'solar:palette-linear' },
+                { id: 'f2-4', name: 'System Fabrics', path: '/admin/reference/fabric', icon: 'solar:layers-minimalistic-linear' },
                 { id: 'f2-2', name: 'Media Library', path: '/admin/media', icon: 'solar:gallery-linear' },
             ]
         },

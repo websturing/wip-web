@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { ReferenceService } from '../services/ReferenceService';
 
-export const useReferenceColors = (glIds?: string[]) => {
-    const [colors, setColors] = useState<any[]>([]);
+export const useReferenceFabric = () => {
+    const [fabrics, setFabrics] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
 
@@ -16,14 +16,14 @@ export const useReferenceColors = (glIds?: string[]) => {
     // Search state
     const [search, setSearch] = useState('');
 
-    const fetchColors = async (page: number = 1, searchQuery: string = search) => {
+    const fetchFabrics = async (page: number = 1, searchQuery: string = search) => {
         setIsLoading(true);
         setCurrentPage(page);
         setSearch(searchQuery);
         try {
-            const result = await ReferenceService.getColors(page, searchQuery, glIds);
+            const result = await ReferenceService.getFabrics(page, searchQuery);
             if (result.status === 'success') {
-                setColors(result.data.data || []);
+                setFabrics(result.data.data || []);
                 setTotal(result.data.total || 0);
                 setPerPage(result.data.per_page || 50);
             }
@@ -34,22 +34,20 @@ export const useReferenceColors = (glIds?: string[]) => {
         }
     };
 
-
-
     useEffect(() => {
-        fetchColors(1, search);
-    }, [glIds?.join(',')]);
+        fetchFabrics(1, search);
+    }, []);
 
     return {
-        colors,
+        fabrics,
         isLoading,
         error,
         currentPage,
         total,
         perPage,
         search,
-        refresh: () => fetchColors(currentPage, search),
-        setPage: (page: number) => fetchColors(page, search),
-        setSearch: (query: string) => fetchColors(1, query)
+        refresh: () => fetchFabrics(currentPage, search),
+        setPage: (page: number) => fetchFabrics(page, search),
+        setSearch: (query: string) => fetchFabrics(1, query)
     };
 };
