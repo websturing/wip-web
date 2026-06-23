@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
@@ -29,13 +30,38 @@ export default function CreateLayingPlanningPage() {
         handleAddEmptySizeRow,
         handleUpdateSize,
         handleRemoveSize,
-        handleSubmit
+        handleAddEmptyColorRow,
+        handleUpdateColor,
+        handleUpdateColorFields,
+        handleRemoveColor,
+        triggerValidation,
+        handleFinalSubmit
     } = useLayingPlanningForm();
+
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+    const handleInitialSave = () => {
+        if (triggerValidation()) {
+            setIsConfirmModalOpen(true);
+        }
+    };
 
     const colorOptions = colors.map((c: any) => ({
         id: c.id.toString(),
         label: c.standard_name || c.code || 'Unknown Color'
     }));
+
+    const sizeOptions = [
+        { id: 'XXS', label: 'XXS' },
+        { id: 'XS', label: 'XS' },
+        { id: 'S', label: 'S' },
+        { id: 'M', label: 'M' },
+        { id: 'L', label: 'L' },
+        { id: 'XL', label: 'XL' },
+        { id: 'XXL', label: 'XXL' },
+        { id: '3XL', label: '3XL' },
+        { id: 'ALL SIZE', label: 'ALL SIZE' }
+    ];
 
     // Reusable Error Component
     const ErrorMsg = ({ msg }: { msg?: string }) => {
@@ -145,28 +171,37 @@ export default function CreateLayingPlanningPage() {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
-                                    <Select
-                                        label="GL Number (Garment Reference)"
-                                        placeholder={isLoadingGl ? "Loading GL Numbers..." : "Select GL Number..."}
-                                        options={glOptions}
-                                        value={formData.gl_number_id}
-                                        onChange={(val) => {
-                                            const selectedGl = glnumbers.find((gl: any) => gl.id.toString() === val.toString());
-                                            // Batch update fields directly in the hook's update method or using a loop.
-                                            // For simplicity here, we update them sequentially (React handles batching).
-                                            updateField('gl_number_id', val.toString());
-                                            updateField('style', selectedGl?.style_no || '');
-                                            updateField('buyer', selectedGl?.brand || '');
-                                            updateField('order_qty', selectedGl?.gmt_qty ? selectedGl.gmt_qty.toString() : '');
-                                            updateField('plan_date', selectedGl?.order_date || new Date().toISOString().split('T')[0]);
-                                            updateField('delivery_date', selectedGl?.delivery_date || '');
-                                        }}
-                                        disabled={isLoadingGl}
-                                    />
-                                    <ErrorMsg msg={errors.gl_number_id} />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">GL Numbers (Garment Reference)</label>
+                                        <MultiSelect
+                                            placeholder={isLoadingGl ? "Loading GL Numbers..." : "Select GL Numbers..."}
+                                            options={glOptions}
+                                            value={formData.gl_number_ids}
+                                            onChange={(vals) => {
+                                                const selectedGls = vals.map(v => glnumbers.find((gl: any) => gl.id.toString() === v)).filter(Boolean);
+                                                
+                                                updateField('gl_number_ids', vals as string[]);
+                                                
+                                                // Auto-calculate sum of order qty and set generic style/buyer based on first selected GL
+                                                if (selectedGls.length > 0) {
+                                                    const firstGl = selectedGls[0];
+                                                    const totalQty = selectedGls.reduce((sum, gl) => sum + (gl.gmt_qty || 0), 0);
+                                                    
+                                                    if (!formData.style) updateField('style', firstGl.style_no || '');
+                                                    if (!formData.buyer) updateField('buyer', firstGl.brand || '');
+                                                    if (!formData.delivery_date) updateField('delivery_date', firstGl.delivery_date || '');
+                                                    updateField('order_qty', totalQty.toString());
+                                                } else {
+                                                    updateField('order_qty', '');
+                                                }
+                                            }}
+                                            disabled={isLoadingGl}
+                                        />
+                                        <ErrorMsg msg={errors.gl_number_ids} />
+                                    </div>
                                 </div>
 
-                                {formData.gl_number_id && (
+                                {formData.gl_number_ids.length > 0 && (
                                     <>
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Style Number</label>
@@ -182,13 +217,96 @@ export default function CreateLayingPlanningPage() {
                                             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Buyer</label>
                                             <input className="w-full h-12 bg-zinc-50 border border-zinc-100 rounded-xl px-4 text-[13px] font-bold text-zinc-500 cursor-not-allowed" readOnly value={formData.buyer} />
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Colors Setup</label>
-                                            <MultiSelect options={colorOptions} value={formData.selected_colors} onChange={(val) => updateField('selected_colors', val as string[])} placeholder={isLoadingColors ? "Loading..." : "Search/Type..."} disabled={isLoadingColors} creatable={true} />
+
+                                        <div className="md:col-span-2 space-y-1.5">
+                                            <div className="flex items-center justify-between pb-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Colors Setup (System & Marker Alias)</label>
+                                            </div>
+                                            
+                                            <div className={cn("border rounded-xl overflow-hidden", errors.colors ? "border-red-300" : "border-zinc-100")}>
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-zinc-50 border-b border-zinc-100 text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                                        <tr>
+                                                            <th className="px-6 py-4 w-1/2">System Master Color</th>
+                                                            <th className="px-6 py-4 w-1/2">Marker / Local Alias (Optional)</th>
+                                                            <th className="px-6 py-4 w-16 text-center"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-zinc-50">
+                                                        {formData.colors.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={3} className="px-6 py-8 text-center text-zinc-400 text-[11px] font-bold uppercase tracking-widest">No colors added yet</td>
+                                                            </tr>
+                                                        ) : (
+                                                            formData.colors.map((c) => (
+                                                                <tr key={c.id} className="hover:bg-zinc-50/50 transition-colors group">
+                                                                    <td className="px-6 py-2 relative">
+                                                                        <Select
+                                                                            options={colorOptions}
+                                                                            value={c.system_color_id || c.system_color_name}
+                                                                            onChange={(val) => {
+                                                                                const matchedColor = colorOptions.find(opt => opt.id === val);
+                                                                                if (matchedColor) {
+                                                                                    handleUpdateColorFields(c.id, {
+                                                                                        system_color_name: matchedColor.label,
+                                                                                        system_color_id: matchedColor.id as string
+                                                                                    });
+                                                                                } else {
+                                                                                    handleUpdateColorFields(c.id, {
+                                                                                        system_color_name: val as string,
+                                                                                        system_color_id: ''
+                                                                                    });
+                                                                                }
+                                                                            }}
+                                                                            creatable
+                                                                            placeholder="Type or select color..."
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-6 py-2">
+                                                                        <div className="space-y-1">
+                                                                            <input 
+                                                                                type="text"
+                                                                                className="w-full h-10 bg-transparent border-b border-transparent group-hover:border-zinc-200 focus:border-blue-500 text-[13px] font-bold text-zinc-900 px-2 outline-none transition-all placeholder:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                placeholder="e.g. Black2, Warehouse Navy"
+                                                                                value={c.marker_alias}
+                                                                                onChange={(e) => handleUpdateColor(c.id, 'marker_alias', e.target.value)}
+                                                                                disabled={c.is_same_as_standard}
+                                                                            />
+                                                                            <label className="flex items-center gap-2 px-2 cursor-pointer w-max">
+                                                                                <input 
+                                                                                    type="checkbox" 
+                                                                                    className="w-3 h-3 rounded border-zinc-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer"
+                                                                                    checked={c.is_same_as_standard || false}
+                                                                                    onChange={(e) => handleUpdateColorFields(c.id, { is_same_as_standard: e.target.checked })}
+                                                                                />
+                                                                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-[1px]">Same as Standard</span>
+                                                                            </label>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-2 text-center align-top pt-4">
+                                                                        {formData.colors.length > 1 && (
+                                                                            <button type="button" onClick={() => handleRemoveColor(c.id)} className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors opacity-50 group-hover:opacity-100">
+                                                                                <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                                                            </button>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <ErrorMsg msg={errors.colors as string} />
+                                            
+                                            <div className="flex justify-end pt-2">
+                                                <Button type="button" onClick={handleAddEmptyColorRow} className="h-10 px-6 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
+                                                    <Icon icon="solar:add-circle-bold" className="w-4 h-4 mr-2 inline text-zinc-400" /> Add Color
+                                                </Button>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Order Quantity</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Order Quantity (Combined)</label>
                                             <input type="number" className={cn("w-full h-12 bg-zinc-50 border rounded-xl px-4 text-[13px] font-bold focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none", errors.order_qty ? "border-red-300" : "border-zinc-100")} value={formData.order_qty} onChange={(e) => updateField('order_qty', e.target.value)} />
                                             <ErrorMsg msg={errors.order_qty} />
                                         </div>
@@ -211,7 +329,7 @@ export default function CreateLayingPlanningPage() {
                         </div>
 
                         {/* SECTION B: FABRIC CONSUMPTION */}
-                        {formData.gl_number_id && (
+                        {formData.gl_number_ids.length > 0 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 border-b border-zinc-100 pb-2">B. Fabric Consumption</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -248,9 +366,10 @@ export default function CreateLayingPlanningPage() {
                         )}
 
                         {/* SECTION C: CLASSIFICATIONS */}
-                        {formData.gl_number_id && (
+                        {formData.gl_number_ids.length > 0 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 border-b border-zinc-100 pb-2">C. Classifications</h3>
+                                
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <CheckboxCard title="Part Type" options={['Top', 'Pants', 'Tank Top', 'Jacket']} stateKey="part_types" />
                                     <RadioCard title="Fabric Pattern" options={['Solid', 'Stripe']} stateKey="fabric_pattern" />
@@ -260,7 +379,7 @@ export default function CreateLayingPlanningPage() {
                         )}
 
                         {/* SECTION D: LIST SIZE */}
-                        {formData.gl_number_id && (
+                        {formData.gl_number_ids.length > 0 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
                                 <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">D. List Size Breakdown</h3>
@@ -294,11 +413,12 @@ export default function CreateLayingPlanningPage() {
                                                 formData.sizes.map((sz) => (
                                                     <tr key={sz.id} className="hover:bg-zinc-50/50 transition-colors group">
                                                         <td className="px-6 py-2">
-                                                            <input 
-                                                                className="w-full h-10 bg-transparent border-b border-transparent group-hover:border-zinc-200 focus:border-blue-500 text-[13px] font-bold text-zinc-900 px-2 outline-none transition-all placeholder:text-zinc-300"
-                                                                placeholder="E.g. S, M, L..."
+                                                            <Select
+                                                                options={sizeOptions}
                                                                 value={sz.name}
-                                                                onChange={(e) => handleUpdateSize(sz.id, 'name', e.target.value)}
+                                                                onChange={(val) => handleUpdateSize(sz.id, 'name', val as string)}
+                                                                creatable
+                                                                placeholder="E.g. S, M, L..."
                                                             />
                                                         </td>
                                                         <td className="px-6 py-2">
@@ -311,9 +431,11 @@ export default function CreateLayingPlanningPage() {
                                                             />
                                                         </td>
                                                         <td className="px-6 py-2 text-center">
-                                                            <button type="button" onClick={() => handleRemoveSize(sz.id)} className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors opacity-50 group-hover:opacity-100">
-                                                                <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
-                                                            </button>
+                                                            {formData.sizes.length > 1 && (
+                                                                <button type="button" onClick={() => handleRemoveSize(sz.id)} className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors opacity-50 group-hover:opacity-100">
+                                                                    <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 ))
@@ -339,7 +461,7 @@ export default function CreateLayingPlanningPage() {
                         )}
 
                         {/* SECTION E: REMARK */}
-                        {formData.gl_number_id && (
+                        {formData.gl_number_ids.length > 0 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 border-b border-zinc-100 pb-2">E. Additional Notes</h3>
                                 <div className="space-y-1.5">
@@ -354,10 +476,10 @@ export default function CreateLayingPlanningPage() {
                             <Button type="button" variant="ghost" className="h-12 px-8 rounded-xl font-black text-[10px] uppercase tracking-widest text-zinc-500">Cancel</Button>
                             <Button 
                                 type="button" 
-                                onClick={handleSubmit}
+                                onClick={handleInitialSave}
                                 className={cn(
                                     "h-12 px-8 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all",
-                                    !formData.gl_number_id ? "bg-zinc-200 text-zinc-400 shadow-none cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white active:scale-95"
+                                    formData.gl_number_ids.length === 0 ? "bg-zinc-200 text-zinc-400 shadow-none cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white active:scale-95"
                                 )}
                             >
                                 Save Planning
@@ -367,6 +489,54 @@ export default function CreateLayingPlanningPage() {
                     </form>
                 </div>
             </div>
+
+            {/* CONFIRMATION MODAL */}
+            {isConfirmModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setIsConfirmModalOpen(false)}></div>
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8">
+                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                                <Icon icon="solar:info-circle-bold" className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-black text-zinc-900 mb-2">Final Confirmation</h3>
+                            <p className="text-sm font-medium text-zinc-500 mb-8">You are about to save this Laying Planning. Does this planning belong to an existing set (e.g. you're creating Pants for an existing Top)?</p>
+                            
+                            <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-bold text-zinc-900">Yes, it's part of a set</label>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" className="sr-only peer" checked={formData.is_linked_set} onChange={(e) => updateField('is_linked_set', e.target.checked)} />
+                                        <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                
+                                {formData.is_linked_set && (
+                                    <div className="space-y-1.5 pt-4 border-t border-zinc-200/50">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Parent Laying Planning ID</label>
+                                        <input className={cn("w-full h-12 bg-white border rounded-xl px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm", errors.parent_laying_planning_id ? "border-red-300 ring-4 ring-red-500/10" : "border-zinc-200")} placeholder="e.g. LP-2026-0001" value={formData.parent_laying_planning_id} onChange={(e) => updateField('parent_laying_planning_id', e.target.value)} />
+                                        <ErrorMsg msg={errors.parent_laying_planning_id} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-4">
+                                <Button type="button" variant="ghost" onClick={() => setIsConfirmModalOpen(false)} className="flex-1 h-12 rounded-xl font-black text-[11px] uppercase tracking-widest text-zinc-500 bg-zinc-50 hover:bg-zinc-100">Cancel</Button>
+                                <Button type="button" onClick={() => {
+                                    if (formData.is_linked_set && !formData.parent_laying_planning_id) {
+                                        triggerValidation(); // Re-trigger validation to show error
+                                        return;
+                                    }
+                                    setIsConfirmModalOpen(false);
+                                    handleFinalSubmit();
+                                }} className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all">
+                                    Confirm & Save
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -20,6 +20,7 @@ interface SelectProps {
     error?: boolean;
     disabled?: boolean;
     size?: 'sm' | 'md' | 'lg';
+    creatable?: boolean;
 }
 
 export const Select = ({
@@ -31,7 +32,8 @@ export const Select = ({
     className,
     error,
     disabled,
-    size = 'md'
+    size = 'md',
+    creatable = false
 }: SelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +45,7 @@ export const Select = ({
     }, [options, searchTerm]);
 
     const selectedOption = options.find(opt => opt.id === value);
+    const displayValue = selectedOption ? selectedOption.label : (creatable && value ? value : placeholder);
 
     return (
         <div className={cn("space-y-1.5", className)}>
@@ -69,9 +72,9 @@ export const Select = ({
                         <span className={cn(
                             "font-bold truncate",
                             size === 'sm' ? "text-xs" : "text-[13px]",
-                            selectedOption ? "text-zinc-900" : "text-zinc-400"
+                            selectedOption || (creatable && value) ? "text-zinc-900" : "text-zinc-400"
                         )}>
-                            {selectedOption ? selectedOption.label : placeholder}
+                            {displayValue}
                         </span>
                         <Icon
                             icon="solar:alt-arrow-down-bold"
@@ -106,33 +109,54 @@ export const Select = ({
                         </div>
 
                         <div className="max-h-64 overflow-y-auto p-1.5 custom-scrollbar">
-                            {filteredOptions.length === 0 ? (
+                            {filteredOptions.length === 0 && !creatable ? (
                                 <div className="py-8 text-center text-zinc-400 text-[10px] font-black uppercase tracking-widest">
                                     No results found
                                 </div>
                             ) : (
-                                filteredOptions.map((option) => (
-                                    <button
-                                        key={option.id}
-                                        type="button"
-                                        onClick={() => {
-                                            onChange(option.id);
-                                            setOpen(false);
-                                            setSearchTerm('');
-                                        }}
-                                        className={cn(
-                                            "w-full px-3 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all flex items-center justify-between group",
-                                            value === option.id
-                                                ? "bg-blue-50 text-blue-600"
-                                                : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-                                        )}
-                                    >
-                                        <span>{option.label}</span>
-                                        {value === option.id && (
-                                            <Icon icon="solar:check-circle-bold" className="w-4 h-4" />
-                                        )}
-                                    </button>
-                                ))
+                                <>
+                                    {filteredOptions.map((option) => (
+                                        <button
+                                            key={option.id}
+                                            type="button"
+                                            onClick={() => {
+                                                onChange(option.id);
+                                                setOpen(false);
+                                                setSearchTerm('');
+                                            }}
+                                            className={cn(
+                                                "w-full px-3 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all flex items-center justify-between group",
+                                                value === option.id
+                                                    ? "bg-blue-50 text-blue-600"
+                                                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                                            )}
+                                        >
+                                            <span>{option.label}</span>
+                                            {value === option.id && (
+                                                <Icon icon="solar:check-circle-bold" className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                    ))}
+                                    {creatable && searchTerm && !options.some(opt => opt.label.toLowerCase() === searchTerm.toLowerCase()) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onChange(searchTerm);
+                                                setOpen(false);
+                                                setSearchTerm('');
+                                            }}
+                                            className="w-full px-3 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all flex items-center justify-between hover:bg-zinc-50 hover:text-zinc-900 text-zinc-600"
+                                        >
+                                            <span>Create "{searchTerm}"</span>
+                                            <Icon icon="solar:add-circle-bold" className="w-4 h-4 text-blue-500" />
+                                        </button>
+                                    )}
+                                    {creatable && filteredOptions.length === 0 && !searchTerm && (
+                                        <div className="py-8 text-center text-zinc-400 text-[10px] font-black uppercase tracking-widest">
+                                            Type to create...
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </Popover.Content>
