@@ -1,9 +1,9 @@
-export class LayingPlanningService {
-    private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { apiClient } from '@/lib/api';
 
-    static async getAll() {
+export class LayingPlanningService {
+    static async getAll(page: number = 1) {
         try {
-            const response = await fetch(`${this.baseUrl}/laying-planning`);
+            const response = await apiClient.get(`/layingplanning?page=${page}`);
             return await response.json();
         } catch (error) {
             console.error('Error fetching laying-planning:', error);
@@ -13,10 +13,20 @@ export class LayingPlanningService {
 
     static async getById(id: string | number) {
         try {
-            const response = await fetch(`${this.baseUrl}/laying-planning/${id}`);
+            const response = await apiClient.get(`/layingplanning/${id}`);
             return await response.json();
         } catch (error) {
             console.error('Error fetching laying-planning by ID:', error);
+            throw error;
+        }
+    }
+
+    static async create(payload: any) {
+        try {
+            const response = await apiClient.post('/layingplanning', payload);
+            return await response.json();
+        } catch (error) {
+            console.error('Error creating laying-planning:', error);
             throw error;
         }
     }

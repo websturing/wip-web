@@ -51,4 +51,9 @@ export class ReferenceService {
         const response = await apiClient.get(`${this.resource}/fabrics?page=${page}&search=${encodeURIComponent(search)}`);
         return await response.json();
     }
+
+    static async getSizes() {
+        const response = await apiClient.get(`${this.resource}/sizes`);
+        return await response.json();
+    }
 }

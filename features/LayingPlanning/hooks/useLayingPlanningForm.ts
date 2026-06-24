@@ -2,44 +2,23 @@ import { useState, useMemo } from 'react';
 
 export interface SizeEntry {
     id: string;
-    name: string;
-    qty: number;
-}
-
-export interface ColorEntry {
-    id: string;
-    system_color_id: string;
-    system_color_name: string;
-    marker_alias: string;
-    is_same_as_standard?: boolean;
+    size_id: string;
+    order_qty: number;
 }
 
 export interface LayingPlanningFormData {
-    gl_number_ids: string[];
-    style: string;
+    lot_id: string;
     buyer: string;
     order_qty: string;
+    laying_planning_type_id: string;
+    laying_planning_parent_id: string;
+    color_id: string;
+    color_alias: string;
+    fabric_id: string;
+    fabric_alias: string;
     plan_date: string;
-    delivery_date: string;
-    description: string;
-    fabric_po: string;
-    colors: ColorEntry[];
-    
-    portion: string;
-    qty_consumed: string;
-    fabric_type: string;
-    consumption_description: string;
-    fabric_type_content: string;
-
-    part_types: string[]; 
-    fabric_pattern: string; 
-    laying_planning_type: string; 
-    
-    is_linked_set: boolean;
-    parent_laying_planning_id: string;
-
-    remark: string;
-
+    fabric_pattern: string;
+    is_combine: boolean;
     sizes: SizeEntry[];
 }
 
@@ -47,51 +26,38 @@ export const useLayingPlanningForm = () => {
     const today = new Date().toISOString().split('T')[0];
 
     const [formData, setFormData] = useState<LayingPlanningFormData>({
-        gl_number_ids: [],
-        style: '',
+        lot_id: '',
         buyer: '',
         order_qty: '',
+        laying_planning_type_id: '',
+        laying_planning_parent_id: '',
+        color_id: '',
+        color_alias: '',
+        fabric_id: '',
+        fabric_alias: '',
         plan_date: today,
-        delivery_date: '',
-        description: '',
-        fabric_po: '',
-        colors: [],
-        
-        portion: '',
-        qty_consumed: '',
-        fabric_type: '',
-        consumption_description: '',
-        fabric_type_content: '',
-
-        part_types: [], 
-        fabric_pattern: '', 
-        laying_planning_type: '', 
-        
-        is_linked_set: false,
-        parent_laying_planning_id: '',
-
-        remark: '',
-
+        fabric_pattern: '',
+        is_combine: false,
         sizes: []
     });
 
     const [errors, setErrors] = useState<Partial<Record<keyof LayingPlanningFormData, string>>>({});
 
     // Derived states
-    const totalSizeQty = useMemo(() => formData.sizes.reduce((acc, curr) => acc + (curr.qty || 0), 0), [formData.sizes]);
+    const totalSizeQty = useMemo(() => formData.sizes.reduce((acc, curr) => acc + (curr.order_qty || 0), 0), [formData.sizes]);
     const orderQtyNum = parseInt(formData.order_qty) || 0;
     const isSizeMatch = totalSizeQty === orderQtyNum && orderQtyNum > 0;
 
     const handleAddEmptySizeRow = () => {
         const newSize = {
             id: Math.random().toString(36).substr(2, 9),
-            name: '',
-            qty: 0
+            size_id: '',
+            order_qty: 0
         };
         setFormData({ ...formData, sizes: [...formData.sizes, newSize] });
     };
 
-    const handleUpdateSize = (id: string, field: 'name' | 'qty', value: string | number) => {
+    const handleUpdateSize = (id: string, field: 'size_id' | 'order_qty', value: string | number) => {
         setFormData({
             ...formData,
             sizes: formData.sizes.map(s => s.id === id ? { ...s, [field]: value } : s)
@@ -101,45 +67,6 @@ export const useLayingPlanningForm = () => {
     const handleRemoveSize = (id: string) => {
         if (formData.sizes.length <= 1) return;
         setFormData({ ...formData, sizes: formData.sizes.filter(s => s.id !== id) });
-    };
-
-    const handleAddEmptyColorRow = () => {
-        const newColor: ColorEntry = {
-            id: Math.random().toString(36).substr(2, 9),
-            system_color_id: '',
-            system_color_name: '',
-            marker_alias: '',
-            is_same_as_standard: false
-        };
-        setFormData({ ...formData, colors: [...formData.colors, newColor] });
-    };
-
-    const handleUpdateColor = (id: string, field: keyof ColorEntry, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            colors: prev.colors.map(c => c.id === id ? { ...c, [field]: value } : c)
-        }));
-    };
-
-    const handleUpdateColorFields = (id: string, updates: Partial<ColorEntry>) => {
-        setFormData(prev => ({
-            ...prev,
-            colors: prev.colors.map(c => {
-                if (c.id === id) {
-                    const newColor = { ...c, ...updates };
-                    if (newColor.is_same_as_standard && newColor.system_color_name) {
-                        newColor.marker_alias = newColor.system_color_name;
-                    }
-                    return newColor;
-                }
-                return c;
-            })
-        }));
-    };
-
-    const handleRemoveColor = (id: string) => {
-        if (formData.colors.length <= 1) return;
-        setFormData(prev => ({ ...prev, colors: prev.colors.filter(c => c.id !== id) }));
     };
 
     const updateField = <K extends keyof LayingPlanningFormData>(field: K, value: LayingPlanningFormData[K]) => {
@@ -153,19 +80,21 @@ export const useLayingPlanningForm = () => {
     const validate = (): boolean => {
         const newErrors: Partial<Record<keyof LayingPlanningFormData, string>> = {};
 
-        if (!formData.gl_number_ids || formData.gl_number_ids.length === 0) newErrors.gl_number_ids = 'At least one GL Number is required';
-        if (formData.is_linked_set && !formData.parent_laying_planning_id) newErrors.parent_laying_planning_id = 'Parent Laying Planning is required';
-        if (!formData.order_qty) newErrors.order_qty = 'Order Quantity is required';
-        if (!formData.colors || formData.colors.length === 0) newErrors.colors = 'At least one Color must be configured';
-        if (formData.colors.some(c => !c.system_color_name)) newErrors.colors = 'System color must be selected or typed for all rows';
-        if (!formData.portion) newErrors.portion = 'Portion is required';
-        if (!formData.qty_consumed) newErrors.qty_consumed = 'Quantity Consumed is required';
-        if (!formData.fabric_type) newErrors.fabric_type = 'Fabric Type is required';
-        if (formData.part_types.length === 0) newErrors.part_types = 'At least one Part Type must be selected';
+        if (!formData.lot_id) newErrors.lot_id = 'Lot is required';
+        if (!formData.laying_planning_type_id) newErrors.laying_planning_type_id = 'Planning Type is required';
+        if (formData.is_combine && !formData.laying_planning_parent_id) {
+            newErrors.laying_planning_parent_id = 'Parent Planning is required when combine is true';
+        }
+        if (!formData.color_id) newErrors.color_id = 'Color is required';
+        if (!formData.fabric_id) newErrors.fabric_id = 'Fabric is required';
+        if (!formData.plan_date) newErrors.plan_date = 'Plan Date is required';
         if (!formData.fabric_pattern) newErrors.fabric_pattern = 'Fabric Pattern is required';
-        if (!formData.laying_planning_type) newErrors.laying_planning_type = 'Laying Planning Type is required';
-
-        if (!isSizeMatch) {
+        
+        if (!formData.sizes || formData.sizes.length === 0) {
+            newErrors.sizes = 'At least one size must be allocated';
+        } else if (formData.sizes.some(s => !s.size_id || s.order_qty <= 0)) {
+            newErrors.sizes = 'All size rows must have a valid size selected and quantity greater than 0';
+        } else if (!isSizeMatch) {
             newErrors.sizes = 'Total allocated sizes must match Order Quantity';
         }
 
@@ -178,10 +107,25 @@ export const useLayingPlanningForm = () => {
     };
 
     const handleFinalSubmit = async () => {
-        console.log('VALIDATED PAYLOAD PREPARED FOR SUBMISSION:', formData);
-        alert('Form validated successfully! Payload logged to console.');
-        // TODO: Call actual API endpoint once backend is ready
-        return true;
+        if (!validate()) return false;
+        
+        try {
+            console.log('VALIDATED PAYLOAD PREPARED FOR SUBMISSION:', formData);
+            const { LayingPlanningService } = await import('../services/LayingPlanningService');
+            
+            const result = await LayingPlanningService.create(formData);
+            
+            if (result.status === 'success' || result.data) {
+                alert('Form submitted successfully!');
+                return true;
+            } else {
+                throw new Error(result.message || 'Unknown error occurred');
+            }
+        } catch (error: any) {
+            console.error('Submission error:', error);
+            alert(`Failed to save Laying Planning: ${error.message || 'Check console for details'}`);
+            return false;
+        }
     };
 
     return {
@@ -195,10 +139,6 @@ export const useLayingPlanningForm = () => {
         handleAddEmptySizeRow,
         handleUpdateSize,
         handleRemoveSize,
-        handleAddEmptyColorRow,
-        handleUpdateColor,
-        handleUpdateColorFields,
-        handleRemoveColor,
         triggerValidation,
         handleFinalSubmit
     };
