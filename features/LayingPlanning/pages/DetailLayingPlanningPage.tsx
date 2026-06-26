@@ -224,7 +224,7 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                                 <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Parts Component Setup</h3>
                                     <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                                        Total Parts: {data.parts?.length || 0}
+                                        Total Parts: {(data.group_parts || data.parts)?.length || 0}
                                     </div>
                                 </div>
 
@@ -233,22 +233,37 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                                         <thead className="bg-zinc-50/80 border-b border-zinc-100 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-500">
                                             <tr>
                                                 <th className="px-6 py-4">Part Name</th>
-                                                <th className="px-6 py-4">Group Code (UUID)</th>
+                                                <th className="px-6 py-4">GL (Lot)</th>
+                                                <th className="px-6 py-4 text-center w-24">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-zinc-50">
-                                            {!data.parts || data.parts.length === 0 ? (
+                                            {(!data.group_parts && !data.parts) || (data.group_parts?.length === 0 && data.parts?.length === 0) ? (
                                                 <tr>
-                                                    <td colSpan={2} className="px-6 py-8 text-center text-zinc-400 text-[11px] font-bold uppercase tracking-widest">No parts available</td>
+                                                    <td colSpan={3} className="px-6 py-8 text-center text-zinc-400 text-[11px] font-bold uppercase tracking-widest">No parts available</td>
                                                 </tr>
                                             ) : (
-                                                data.parts.map((p: any) => (
+                                                (data.group_parts || data.parts).map((p: any) => (
                                                     <tr key={p.id} className="hover:bg-blue-50/30 transition-colors">
                                                         <td className="px-6 py-4 text-sm font-bold text-zinc-800">
                                                             {p.item_part}
                                                         </td>
-                                                        <td className="px-6 py-4 text-sm font-mono text-zinc-500">
-                                                            {p.item_part_group_code || '-'}
+                                                        <td className="px-6 py-4 text-sm font-bold text-zinc-700">
+                                                            {p.lot_code || data.lot_code}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <Button 
+                                                                onClick={() => {
+                                                                    if (p.laying_planning_id) {
+                                                                        router.push(`/admin/laying-planning/${p.laying_planning_id}`);
+                                                                    }
+                                                                }}
+                                                                variant="ghost" 
+                                                                className="h-8 px-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 border border-blue-100/50"
+                                                                disabled={!p.laying_planning_id || p.laying_planning_id === data.id}
+                                                            >
+                                                                {p.laying_planning_id === data.id ? 'Current' : 'Detail'}
+                                                            </Button>
                                                         </td>
                                                     </tr>
                                                 ))

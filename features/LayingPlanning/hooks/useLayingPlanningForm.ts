@@ -25,6 +25,7 @@ export interface LayingPlanningFormData {
         item_part: string;
         item_part_group_code?: string;
     }[];
+    set_item_group_code_link: string;
     sizes: Record<string, SizeEntry[]>;
 }
 
@@ -46,6 +47,7 @@ export const useLayingPlanningForm = () => {
         is_combine: false,
         is_set_item: false,
         parts: [],
+        set_item_group_code_link: '',
         sizes: {}
     });
 
@@ -108,7 +110,7 @@ export const useLayingPlanningForm = () => {
                     item_part: partName
                 }];
             }
-            const is_set_item = newParts.length > 1;
+            const is_set_item = newParts.length > 1 ? true : (newParts.length === 1 ? prev.is_set_item : false);
             return { ...prev, parts: newParts, is_set_item };
         });
     };
@@ -202,24 +204,37 @@ export const useLayingPlanningForm = () => {
         try {
             const { LayingPlanningService } = await import('../services/LayingPlanningService');
             
+            // Map set_item_group_code_link into parts array if it exists
+            const processedFormData = { ...formData };
+            if (processedFormData.is_set_item && processedFormData.set_item_group_code_link) {
+                processedFormData.parts = processedFormData.parts.map(p => ({
+                    ...p,
+                    item_part_group_code: processedFormData.set_item_group_code_link
+                }));
+            }
+            
             let payload: any;
-            if (formData.lot_ids.length > 1) {
-                payload = formData.lot_ids.map(lotId => ({
-                    ...formData,
+            if (processedFormData.lot_ids.length > 1) {
+                payload = processedFormData.lot_ids.map(lotId => ({
+                    ...processedFormData,
                     lot_id: lotId,
                     is_combine: true,
                     laying_planning_parent_id: null,
-                    sizes: formData.sizes[lotId] || []
+                    sizes: processedFormData.sizes[lotId] || []
                 }));
-                payload.forEach((p: any) => delete p.lot_ids);
+                payload.forEach((p: any) => {
+                    delete p.lot_ids;
+                    delete p.set_item_group_code_link;
+                });
             } else {
-                const singleLotId = formData.lot_ids[0];
+                const singleLotId = processedFormData.lot_ids[0];
                 const singlePayload: any = { 
-                    ...formData, 
+                    ...processedFormData, 
                     lot_id: singleLotId,
-                    sizes: formData.sizes[singleLotId] || []
+                    sizes: processedFormData.sizes[singleLotId] || []
                 };
                 delete singlePayload.lot_ids;
+                delete singlePayload.set_item_group_code_link;
                 payload = [singlePayload];
             }
 
@@ -227,8 +242,13 @@ export const useLayingPlanningForm = () => {
             const result = await LayingPlanningService.create(payload);
             
             if (result.status === 'success' || result.data) {
-                alert('Form submitted successfully!');
-                return true;
+                let createdId = null;
+                if (Array.isArray(result.data) && result.data.length > 0) {
+                    createdId = result.data[0].id;
+                } else if (result.data && result.data.id) {
+                    createdId = result.data.id;
+                }
+                return createdId || true;
             } else {
                 throw new Error(result.message || 'Unknown error occurred');
             }

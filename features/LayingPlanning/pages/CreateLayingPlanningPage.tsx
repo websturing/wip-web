@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
@@ -11,11 +11,13 @@ import { useReferenceColors } from '@/features/Reference/hooks/useReferenceColor
 import { useReferenceFabric } from '@/features/Reference/hooks/useReferenceFabric';
 import { useReferenceSizes } from '@/features/Reference/hooks/useReferenceSizes';
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLayingPlanningForm, LayingPlanningFormData } from '../hooks/useLayingPlanningForm';
 import { LayingPlanningService } from '../services/LayingPlanningService';
 
 export default function CreateLayingPlanningPage() {
+    const router = useRouter();
     const breadcrumbItems = useBreadcrumb({
         'create': { label: 'Create New Laying Planning', icon: 'solar:chart-2-bold-duotone' }
     });
@@ -39,6 +41,39 @@ export default function CreateLayingPlanningPage() {
     } = useLayingPlanningForm();
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    
+    // Fetch parent laying plannings
+    const [parentOptions, setParentOptions] = useState<{id: string, label: string, parts: string[], group_code: string}[]>([]);
+    const [isLoadingParents, setIsLoadingParents] = useState(false);
+    
+    useEffect(() => {
+        if (formData.is_set_item && formData.lot_ids.length > 0) {
+            const selectedLotId = formData.lot_ids[0];
+            const selectedLot = lots.find((l: any) => l.id.toString() === selectedLotId);
+            if (selectedLot && selectedLot.lot_code) {
+                setIsLoadingParents(true);
+                import('@/lib/api').then(({ apiClient }) => {
+                    apiClient.get(`/layingplanning?search=${encodeURIComponent(selectedLot.lot_code)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const plannings = data.data?.data || [];
+                            setParentOptions(plannings.map((p: any) => ({
+                                id: p.id.toString(),
+                                label: `${p.serial_number} - ${p.color?.name || p.color_name} (${p.parts?.map((pt: any) => pt.item_part).join(', ') || 'No parts'})`,
+                                parts: p.parts?.map((pt: any) => pt.item_part) || [],
+                                group_code: p.parts?.[0]?.item_part_group_code || ''
+                            })));
+                        })
+                        .catch(err => console.error('Failed to fetch parents', err))
+                        .finally(() => setIsLoadingParents(false));
+                });
+            } else {
+                setParentOptions([]);
+            }
+        } else {
+            setParentOptions([]);
+        }
+    }, [formData.is_set_item, formData.lot_ids, lots]);
 
     const handleInitialSave = () => {
         if (triggerValidation()) {
@@ -313,7 +348,7 @@ export default function CreateLayingPlanningPage() {
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-bold text-zinc-900">Item Parts Selection</label>
                                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-200/50 px-2.5 py-1 rounded-lg">
-                                        {formData.is_set_item ? 'Set Item (Multiple)' : 'Single Item'}
+                                        {formData.is_set_item ? 'Set Item' : 'Single Item'}
                                     </span>
                                 </div>
                                 
@@ -345,6 +380,43 @@ export default function CreateLayingPlanningPage() {
                                         })}
                                     </div>
                                     <ErrorMsg msg={errors.parts as string} />
+
+                                    {formData.parts.length === 1 && (
+                                        <div className="mt-5 flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-xl shadow-sm">
+                                            <div className="flex flex-col">
+                                                <label className="text-sm font-bold text-zinc-900">Is this a Set Item?</label>
+                                                <span className="text-[10px] text-zinc-500">Even with 1 part, it can belong to a set</span>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" checked={formData.is_set_item} onChange={(e) => updateField('is_set_item', e.target.checked)} />
+                                                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {formData.is_set_item && (
+                                        <div className="mt-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-800 ml-1">Link to Existing Set Item (Optional)</label>
+                                            <Select
+                                                placeholder={isLoadingParents ? "Loading Options..." : "Select existing Laying Planning to pair with"}
+                                                options={parentOptions.filter(opt => {
+                                                    const currentParts = formData.parts.map(p => p.item_part);
+                                                    return !opt.parts.some(pt => currentParts.includes(pt));
+                                                })}
+                                                value={parentOptions.find(o => o.group_code === formData.set_item_group_code_link)?.id || ''}
+                                                onChange={(val: any) => {
+                                                    const selectedOpt = parentOptions.find(o => o.id === val);
+                                                    if (selectedOpt && selectedOpt.group_code) {
+                                                        updateField('set_item_group_code_link', selectedOpt.group_code);
+                                                    } else {
+                                                        updateField('set_item_group_code_link', '');
+                                                    }
+                                                }}
+                                                disabled={isLoadingParents || formData.lot_ids.length === 0}
+                                            />
+                                            <p className="text-[10px] text-indigo-600 ml-1">If this is the first Laying Planning for the set, do not select anything. Otherwise, select the existing Laying Planning to share the same Group Code.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -486,13 +558,29 @@ export default function CreateLayingPlanningPage() {
                                 <Icon icon="solar:info-circle-bold" className="w-6 h-6" />
                             </div>
                             <h3 className="text-xl font-black text-zinc-900 mb-2">Final Confirmation</h3>
-                            <p className="text-sm font-medium text-zinc-500 mb-8">You are about to save this Laying Planning. Please confirm the details are correct.</p>
+                            <div className="mb-8 space-y-4">
+                                <p className="text-sm font-medium text-zinc-500">You are about to save this Laying Planning. Please confirm the details are correct.</p>
+                                {formData.parts.length === 1 && !formData.is_set_item && (
+                                    <div className="p-4 bg-amber-50 text-amber-700 rounded-xl border border-amber-200 shadow-inner">
+                                        <div className="flex items-center gap-2 font-black uppercase tracking-widest text-[10px] mb-1.5">
+                                            <Icon icon="solar:danger-triangle-bold" className="w-4 h-4" />
+                                            Verification Required
+                                        </div>
+                                        <p className="text-xs font-medium">You selected exactly 1 part but did not mark it as a <strong>Set Item</strong>. Are you sure this is a Single Item?</p>
+                                    </div>
+                                )}
+                            </div>
                             
                             <div className="flex gap-4">
                                 <Button type="button" variant="ghost" onClick={() => setIsConfirmModalOpen(false)} className="flex-1 h-12 rounded-xl font-black text-[11px] uppercase tracking-widest text-zinc-500 bg-zinc-50 hover:bg-zinc-100">Cancel</Button>
-                                <Button type="button" onClick={() => {
+                                <Button type="button" onClick={async () => {
                                     setIsConfirmModalOpen(false);
-                                    handleFinalSubmit();
+                                    const createdId = await handleFinalSubmit();
+                                    if (createdId && typeof createdId === 'string') {
+                                        router.push(`/admin/laying-planning/${createdId}`);
+                                    } else if (createdId) {
+                                        router.push('/admin/laying-planning');
+                                    }
                                 }} className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all">
                                     Confirm & Save
                                 </Button>

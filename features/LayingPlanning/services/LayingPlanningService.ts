@@ -17,7 +17,7 @@ export class LayingPlanningService {
 
     static async getById(id: string | number) {
         try {
-            const response = await apiClient.get(`/layingplanning/${id}?layingPlanningLots=true&layingPlanningCombine=true&layingPlanningTypes=true&layingPlanningColors=true&layingPlanningFabrics=true`);
+            const response = await apiClient.get(`/layingplanning/${id}?layingPlanningLots=true&layingPlanningCombine=true&layingPlanningTypes=true&layingPlanningColors=true&layingPlanningFabrics=true&layingPlanningGroupParts=true`);
             return await response.json();
         } catch (error) {
             console.error('Error fetching laying-planning by ID:', error);
