@@ -1,4 +1,4 @@
-export interface LayingPlanning {
+export interface LayingPlanningModel {
     id: number;
     name: string;
     created_at?: string;
@@ -6,7 +6,7 @@ export interface LayingPlanning {
 }
 
 export interface LayingPlanningState {
-    data: LayingPlanning[];
+    data: LayingPlanningModel[];
     loading: boolean;
     error: string | null;
 }

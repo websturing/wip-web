@@ -8,12 +8,13 @@ import { Icon } from './Icon';
 interface Option {
     id: string | number;
     label: string;
+    colorClass?: string;
 }
 
 interface SelectProps {
     options: Option[];
-    value: string | number;
-    onChange: (val: string | number) => void;
+    value: any; // string | number | (string | number)[]
+    onChange: (val: any) => void;
     placeholder?: string;
     label?: string;
     className?: string;
@@ -21,6 +22,7 @@ interface SelectProps {
     disabled?: boolean;
     size?: 'sm' | 'md' | 'lg';
     creatable?: boolean;
+    isMulti?: boolean;
 }
 
 export const Select = ({
@@ -33,7 +35,8 @@ export const Select = ({
     error,
     disabled,
     size = 'md',
-    creatable = false
+    creatable = false,
+    isMulti = false
 }: SelectProps) => {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -44,8 +47,26 @@ export const Select = ({
         );
     }, [options, searchTerm]);
 
-    const selectedOption = options.find(opt => opt.id === value);
-    const displayValue = selectedOption ? selectedOption.label : (creatable && value ? value : placeholder);
+    const isSelected = (optId: string | number) => {
+        if (isMulti && Array.isArray(value)) {
+            return value.includes(optId);
+        }
+        return value === optId;
+    };
+
+    let displayValue = placeholder;
+    if (isMulti && Array.isArray(value)) {
+        const selectedLabels = options.filter(opt => value.includes(opt.id)).map(o => o.label);
+        if (selectedLabels.length > 0) {
+            displayValue = selectedLabels.join(', ');
+        }
+    } else {
+        const selectedOption = options.find(opt => opt.id === value);
+        if (selectedOption) displayValue = selectedOption.label;
+        else if (creatable && value) displayValue = value;
+    }
+
+    const hasSelection = isMulti ? Array.isArray(value) && value.length > 0 : value !== undefined && value !== null && value !== '';
 
     return (
         <div className={cn("space-y-1.5", className)}>
@@ -72,7 +93,7 @@ export const Select = ({
                         <span className={cn(
                             "font-bold truncate",
                             size === 'sm' ? "text-xs" : "text-[13px]",
-                            selectedOption || (creatable && value) ? "text-zinc-900" : "text-zinc-400"
+                            hasSelection || (creatable && value) ? "text-zinc-900" : "text-zinc-400"
                         )}>
                             {displayValue}
                         </span>
@@ -98,9 +119,18 @@ export const Select = ({
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && filteredOptions.length > 0) {
-                                            onChange(filteredOptions[0].id);
-                                            setOpen(false);
-                                            setSearchTerm('');
+                                            const optId = filteredOptions[0].id;
+                                            if (isMulti) {
+                                                const currentVal = Array.isArray(value) ? value : [];
+                                                const newVal = currentVal.includes(optId) 
+                                                    ? currentVal.filter(v => v !== optId)
+                                                    : [...currentVal, optId];
+                                                onChange(newVal);
+                                            } else {
+                                                onChange(optId);
+                                                setOpen(false);
+                                                setSearchTerm('');
+                                            }
                                         }
                                     }}
                                     autoFocus
@@ -120,19 +150,37 @@ export const Select = ({
                                             key={option.id}
                                             type="button"
                                             onClick={() => {
-                                                onChange(option.id);
-                                                setOpen(false);
-                                                setSearchTerm('');
+                                                if (isMulti) {
+                                                    const currentVal = Array.isArray(value) ? value : [];
+                                                    const newVal = currentVal.includes(option.id) 
+                                                        ? currentVal.filter(v => v !== option.id)
+                                                        : [...currentVal, option.id];
+                                                    onChange(newVal);
+                                                } else {
+                                                    onChange(option.id);
+                                                    setOpen(false);
+                                                    setSearchTerm('');
+                                                }
                                             }}
                                             className={cn(
                                                 "w-full px-3 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all flex items-center justify-between group",
-                                                value === option.id
+                                                isSelected(option.id)
                                                     ? "bg-blue-50 text-blue-600"
-                                                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                                                    : (option.colorClass || "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900")
                                             )}
                                         >
-                                            <span>{option.label}</span>
-                                            {value === option.id && (
+                                            <div className="flex items-center gap-3">
+                                                {isMulti && (
+                                                    <div className={cn(
+                                                        "w-4 h-4 border rounded flex items-center justify-center transition-colors",
+                                                        isSelected(option.id) ? "bg-blue-600 border-blue-600 text-white" : "border-zinc-300"
+                                                    )}>
+                                                        {isSelected(option.id) && <Icon icon="solar:check-read-bold" className="w-3 h-3" />}
+                                                    </div>
+                                                )}
+                                                <span className="truncate">{option.label}</span>
+                                            </div>
+                                            {!isMulti && isSelected(option.id) && (
                                                 <Icon icon="solar:check-circle-bold" className="w-4 h-4" />
                                             )}
                                         </button>

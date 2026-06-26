@@ -22,6 +22,7 @@ interface DataTableProps<T> {
     searchPlaceholder?: string;
     title?: string;
     onRowClick?: (item: T) => void;
+    renderExpandedRow?: (item: T) => React.ReactNode;
     // Pagination props
     total?: number;
     currentPage?: number;
@@ -36,6 +37,7 @@ export const DataTable = <T extends { [key: string]: any }>({
     isLoading = false,
     searchPlaceholder = "Search records...",
     onRowClick,
+    renderExpandedRow,
     total,
     currentPage = 1,
     perPage = 20,
@@ -45,6 +47,16 @@ export const DataTable = <T extends { [key: string]: any }>({
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null });
     const [filters, setFilters] = useState<{ [key: string]: string }>({});
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    const toggleRow = (index: number) => {
+        setExpandedRows(prev => {
+            const next = new Set(prev);
+            if (next.has(index)) next.delete(index);
+            else next.add(index);
+            return next;
+        });
+    };
 
     // Filtering & Searching Logic
     const filteredData = useMemo(() => {
@@ -183,6 +195,7 @@ export const DataTable = <T extends { [key: string]: any }>({
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-zinc-50/50">
+                            {renderExpandedRow && <th className="w-12 px-4 py-5 border-b border-zinc-50"></th>}
                             {columns.map((col, idx) => (
                                 <th
                                     key={idx}
@@ -215,13 +228,13 @@ export const DataTable = <T extends { [key: string]: any }>({
                     <tbody className="divide-y divide-zinc-50">
                         {isLoading ? (
                             <tr>
-                                <td colSpan={columns.length} className="py-20 text-center">
+                                <td colSpan={renderExpandedRow ? columns.length + 1 : columns.length} className="py-20 text-center">
                                     <div className="inline-block w-6 h-6 border-3 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
                                 </td>
                             </tr>
                         ) : sortedData.length === 0 ? (
                             <tr>
-                                <td colSpan={columns.length} className="py-32 text-center text-zinc-400">
+                                <td colSpan={renderExpandedRow ? columns.length + 1 : columns.length} className="py-32 text-center text-zinc-400">
                                     <Icon icon="solar:box-minimalistic-linear" className="w-12 h-12 mx-auto mb-4 opacity-10" />
                                     <p className="text-sm font-medium">No results match your criteria.</p>
                                     {(searchQuery || Object.values(filters).some(v => v)) && (
@@ -235,22 +248,47 @@ export const DataTable = <T extends { [key: string]: any }>({
                                 </td>
                             </tr>
                         ) : (
-                            sortedData.map((item, rowIdx) => (
-                                <tr
-                                    key={rowIdx}
-                                    onClick={() => onRowClick?.(item)}
-                                    className={cn(
-                                        "group transition-all duration-300",
-                                        onRowClick ? "cursor-pointer hover:bg-zinc-50/50" : "hover:bg-zinc-50/30"
-                                    )}
-                                >
-                                    {columns.map((col, colIdx) => (
-                                        <td key={colIdx} className={cn("px-8 py-6 text-zinc-600 text-sm font-medium", col.className)}>
-                                            {col.cell ? col.cell(item, rowIdx) : item[col.accessorKey]}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))
+                            sortedData.map((item, rowIdx) => {
+                                const isExpanded = expandedRows.has(rowIdx);
+                                return (
+                                    <React.Fragment key={rowIdx}>
+                                        <tr
+                                            onClick={() => {
+                                                if (renderExpandedRow) toggleRow(rowIdx);
+                                                else onRowClick?.(item);
+                                            }}
+                                            className={cn(
+                                                "group transition-all duration-300",
+                                                (onRowClick || renderExpandedRow) ? "cursor-pointer hover:bg-zinc-50/50" : "hover:bg-zinc-50/30",
+                                                isExpanded && "bg-zinc-50/50"
+                                            )}
+                                        >
+                                            {renderExpandedRow && (
+                                                <td className="px-4 py-6 text-center text-zinc-400">
+                                                    <Icon 
+                                                        icon="solar:alt-arrow-right-bold" 
+                                                        className={cn("w-4 h-4 transition-transform duration-200", isExpanded && "rotate-90 text-blue-600")} 
+                                                    />
+                                                </td>
+                                            )}
+                                            {columns.map((col, colIdx) => (
+                                                <td key={colIdx} className={cn("px-8 py-6 text-zinc-600 text-sm font-medium", col.className)}>
+                                                    {col.cell ? col.cell(item, rowIdx) : item[col.accessorKey]}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        {isExpanded && renderExpandedRow && (
+                                            <tr className="bg-zinc-50/30">
+                                                <td colSpan={columns.length + 1} className="p-0 border-t border-zinc-50/50">
+                                                    <div className="overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
+                                                        {renderExpandedRow(item)}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
