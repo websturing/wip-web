@@ -224,7 +224,7 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                                 <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Parts Component Setup</h3>
                                     <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                                        Total Parts: {(data.group_parts || data.parts)?.length || 0}
+                                        Total Parts: {(data.group_parts?.length > 0 ? data.group_parts : data.parts)?.length || 0}
                                     </div>
                                 </div>
 
@@ -243,7 +243,7 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                                                     <td colSpan={3} className="px-6 py-8 text-center text-zinc-400 text-[11px] font-bold uppercase tracking-widest">No parts available</td>
                                                 </tr>
                                             ) : (
-                                                (data.group_parts || data.parts).map((p: any) => (
+                                                (data.group_parts?.length > 0 ? data.group_parts : data.parts).map((p: any) => (
                                                     <tr key={p.id} className="hover:bg-blue-50/30 transition-colors">
                                                         <td className="px-6 py-4 text-sm font-bold text-zinc-800">
                                                             {p.item_part}
