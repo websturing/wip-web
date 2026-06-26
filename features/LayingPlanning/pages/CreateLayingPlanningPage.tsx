@@ -42,38 +42,52 @@ export default function CreateLayingPlanningPage() {
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     
-    // Fetch parent laying plannings
-    const [parentOptions, setParentOptions] = useState<{id: string, label: string, parts: string[], group_code: string}[]>([]);
-    const [isLoadingParents, setIsLoadingParents] = useState(false);
+    // Fetch related laying plannings (for Set Item linking and Parent Body linking)
+    const [relatedLayingPlannings, setRelatedLayingPlannings] = useState<any[]>([]);
+    const [isLoadingRelated, setIsLoadingRelated] = useState(false);
     
     useEffect(() => {
-        if (formData.is_set_item && formData.lot_ids.length > 0) {
+        const isCombinasi = formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816';
+        if ((formData.is_set_item || isCombinasi) && formData.lot_ids.length > 0) {
             const selectedLotId = formData.lot_ids[0];
             const selectedLot = lots.find((l: any) => l.id.toString() === selectedLotId);
             if (selectedLot && selectedLot.lot_code) {
-                setIsLoadingParents(true);
+                setIsLoadingRelated(true);
                 import('@/lib/api').then(({ apiClient }) => {
-                    apiClient.get(`/layingplanning?search=${encodeURIComponent(selectedLot.lot_code)}`)
+                    apiClient.get(`/layingplanning?search=${encodeURIComponent(selectedLot.lot_code)}&layingPlanningTypes=true`)
                         .then(res => res.json())
                         .then(data => {
                             const plannings = data.data?.data || [];
-                            setParentOptions(plannings.map((p: any) => ({
-                                id: p.id.toString(),
-                                label: `${p.serial_number} - ${p.color?.name || p.color_name} (${p.parts?.map((pt: any) => pt.item_part).join(', ') || 'No parts'})`,
-                                parts: p.parts?.map((pt: any) => pt.item_part) || [],
-                                group_code: p.parts?.[0]?.item_part_group_code || ''
-                            })));
+                            setRelatedLayingPlannings(plannings);
                         })
-                        .catch(err => console.error('Failed to fetch parents', err))
-                        .finally(() => setIsLoadingParents(false));
+                        .catch(err => console.error('Failed to fetch related LPs', err))
+                        .finally(() => setIsLoadingRelated(false));
                 });
             } else {
-                setParentOptions([]);
+                setRelatedLayingPlannings([]);
             }
         } else {
-            setParentOptions([]);
+            setRelatedLayingPlannings([]);
         }
-    }, [formData.is_set_item, formData.lot_ids, lots]);
+    }, [formData.is_set_item, formData.laying_planning_type_id, formData.lot_ids, lots]);
+
+    const setItemOptions = useMemo(() => {
+        return relatedLayingPlannings.map((p: any) => ({
+            id: p.id.toString(),
+            label: `${p.serial_number} - ${p.color?.name || p.color_name} (${p.parts?.map((pt: any) => pt.item_part).join(', ') || 'No parts'})`,
+            parts: p.parts?.map((pt: any) => pt.item_part) || [],
+            group_code: p.parts?.[0]?.item_part_group_code || ''
+        }));
+    }, [relatedLayingPlannings]);
+
+    const bodyOptions = useMemo(() => {
+        return relatedLayingPlannings
+            .filter((p: any) => p.type?.id === '019ef740-1826-72ce-8cd6-2003ea77f496' || p.laying_planning_type_id === '019ef740-1826-72ce-8cd6-2003ea77f496')
+            .map((p: any) => ({
+                id: p.id.toString(),
+                label: `${p.serial_number} - ${p.color?.name || p.color_name}`
+            }));
+    }, [relatedLayingPlannings]);
 
     const handleInitialSave = () => {
         if (triggerValidation()) {
@@ -323,26 +337,35 @@ export default function CreateLayingPlanningPage() {
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <RadioCard title="Laying Planning Type" options={typeOptions} stateKey="laying_planning_type_id" />
+                                <ErrorMsg msg={errors.laying_planning_type_id} />
                                 <RadioCard title="Fabric Pattern" options={patternOptions} stateKey="fabric_pattern" />
                             </div>
 
-                            <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-sm font-bold text-zinc-900">Combine / Support Marker</label>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" className="sr-only peer" checked={formData.is_combine} onChange={(e) => updateField('is_combine', e.target.checked)} />
-                                        <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                                
-                                {formData.is_combine && formData.lot_ids.length <= 1 && (
-                                    <div className="space-y-1.5 pt-4 border-t border-zinc-200/50">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Parent Laying Planning ID (UUID)</label>
-                                        <input className={cn("w-full h-12 bg-white border rounded-xl px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm", errors.laying_planning_parent_id ? "border-red-300 ring-4 ring-red-500/10" : "border-zinc-200")} placeholder="e.g. 123e4567-e89b-12d3..." value={formData.laying_planning_parent_id} onChange={(e) => updateField('laying_planning_parent_id', e.target.value)} />
-                                        <ErrorMsg msg={errors.laying_planning_parent_id} />
+                            {(formData.lot_ids.length > 1 || formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816') && (
+                                <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-bold text-zinc-900">Combine / Support Marker</label>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" className="sr-only peer" checked={formData.is_combine} onChange={(e) => updateField('is_combine', e.target.checked)} disabled={formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816'} />
+                                            <div className={cn("w-11 h-6 bg-zinc-200 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white", formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816' ? "opacity-60 cursor-not-allowed" : "cursor-pointer")}></div>
+                                        </label>
                                     </div>
-                                )}
-                            </div>
+                                    
+                                    {formData.is_combine && formData.lot_ids.length <= 1 && (
+                                        <div className="space-y-1.5 pt-4 border-t border-zinc-200/50">
+                                            <Select
+                                                label="Parent Body (Same GL)"
+                                                options={bodyOptions}
+                                                value={formData.laying_planning_parent_id}
+                                                onChange={(val: any) => updateField('laying_planning_parent_id', val)}
+                                                disabled={isLoadingRelated || formData.lot_ids.length === 0}
+                                            />
+                                            <p className="text-[10px] text-zinc-500 mt-2 ml-1 font-medium">Select the main BODY Laying Planning for this Support Marker.</p>
+                                            <ErrorMsg msg={errors.laying_planning_parent_id} />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
                                 <div className="flex items-center justify-between">
@@ -398,21 +421,21 @@ export default function CreateLayingPlanningPage() {
                                         <div className="mt-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-indigo-800 ml-1">Link to Existing Set Item (Optional)</label>
                                             <Select
-                                                placeholder={isLoadingParents ? "Loading Options..." : "Select existing Laying Planning to pair with"}
-                                                options={parentOptions.filter(opt => {
+                                                placeholder={isLoadingRelated ? "Loading Options..." : "Select existing Laying Planning to pair with"}
+                                                options={setItemOptions.filter(opt => {
                                                     const currentParts = formData.parts.map(p => p.item_part);
-                                                    return !opt.parts.some(pt => currentParts.includes(pt));
+                                                    return !opt.parts.some((pt: any) => currentParts.includes(pt));
                                                 })}
-                                                value={parentOptions.find(o => o.group_code === formData.set_item_group_code_link)?.id || ''}
+                                                value={setItemOptions.find(o => o.group_code === formData.set_item_group_code_link)?.id || ''}
                                                 onChange={(val: any) => {
-                                                    const selectedOpt = parentOptions.find(o => o.id === val);
+                                                    const selectedOpt = setItemOptions.find(o => o.id === val);
                                                     if (selectedOpt && selectedOpt.group_code) {
                                                         updateField('set_item_group_code_link', selectedOpt.group_code);
                                                     } else {
                                                         updateField('set_item_group_code_link', '');
                                                     }
                                                 }}
-                                                disabled={isLoadingParents || formData.lot_ids.length === 0}
+                                                disabled={isLoadingRelated || formData.lot_ids.length === 0}
                                             />
                                             <p className="text-[10px] text-indigo-600 ml-1">If this is the first Laying Planning for the set, do not select anything. Otherwise, select the existing Laying Planning to share the same Group Code.</p>
                                         </div>

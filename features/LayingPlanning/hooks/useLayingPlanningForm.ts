@@ -140,6 +140,14 @@ export const useLayingPlanningForm = () => {
                 });
                 next.sizes = newSizes;
             }
+            if (field === 'laying_planning_type_id') {
+                if (value === '019ef740-184d-714c-aa4c-c0d6f023a816') {
+                    next.is_combine = true;
+                } else if (next.lot_ids.length <= 1) {
+                    next.is_combine = false;
+                    next.laying_planning_parent_id = '';
+                }
+            }
             return next;
         });
         // Clear error when field is updated
