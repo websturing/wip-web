@@ -7,11 +7,21 @@ import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useLayingPlanningDetail } from '../hooks/useLayingPlanningDetail';
+import { useLayingPlanningDetails } from '../hooks/useLayingPlanningDetails';
+import { LayingPlanningDetailsTab } from '../components/LayingPlanningDetailsTab';
 
 export default function DetailLayingPlanningPage({ id }: { id: string }) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'lot' | 'size' | 'parts'>('lot');
+    const [activeTab, setActiveTab] = useState<'details' | 'size' | 'parts'>('details');
     const { data, isLoading, error } = useLayingPlanningDetail(id);
+    const { 
+        details, 
+        detailTypes, 
+        isLoading: detailsLoading, 
+        createDetail, 
+        updateDetail, 
+        deleteDetail 
+    } = useLayingPlanningDetails(id);
 
     const breadcrumbItems = useBreadcrumb({
         'detail': { label: data?.serial_number || 'Loading...', icon: 'solar:document-text-bold-duotone' }
@@ -38,8 +48,25 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
         );
     }
 
-    const sizes = data.size_details || [];
+    const sizes = data.sizes || [];
     const totalQty = sizes.reduce((sum: number, s: any) => sum + (s.order_qty || 0), 0);
+
+    const totalCutMap: Record<string, number> = {};
+    details?.forEach((detail: any) => {
+        detail.sizes?.forEach((sz: any) => {
+            const sid = sz.size_id || sz.id;
+            totalCutMap[sid] = (totalCutMap[sid] || 0) + (parseInt(sz.ratio_per_size) || 0);
+        });
+    });
+
+    let isFullyAllocated = sizes.length > 0;
+    sizes.forEach((sz: any) => {
+        const orderQty = sz.order_qty || 0;
+        const cut = totalCutMap[sz.size_id || sz.id] || 0;
+        if (orderQty > cut) {
+            isFullyAllocated = false;
+        }
+    });
 
     const DetailRow = ({ label, value }: { label: string, value: React.ReactNode }) => (
         <div className="grid grid-cols-[140px_10px_auto] gap-2 items-start py-1.5 text-[13px]">
@@ -142,12 +169,12 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                     {/* Tabs Navigation */}
                     <div className="flex items-center gap-8 mt-12 border-b border-zinc-100/80">
                         <button
-                            onClick={() => setActiveTab('lot')}
-                            className={`pb-4 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'lot' ? 'text-blue-600' : 'text-zinc-400 hover:text-zinc-600'}`}
+                            onClick={() => setActiveTab('details')}
+                            className={`pb-4 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'details' ? 'text-blue-600' : 'text-zinc-400 hover:text-zinc-600'}`}
                         >
                             <Icon icon="solar:document-text-bold-duotone" className="w-5 h-5" />
-                            Lot Details
-                            {activeTab === 'lot' && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-600 rounded-t-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />}
+                            Laying Details
+                            {activeTab === 'details' && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-600 rounded-t-full shadow-[0_0_8px_rgba(37,99,235,0.4)]" />}
                         </button>
                         <button
                             onClick={() => setActiveTab('size')}
@@ -169,8 +196,17 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
 
                     {/* Tab Content */}
                     <div className="mt-8 animate-in fade-in duration-500">
-                        {activeTab === 'lot' && (
-                            <div>ini lot</div>
+                        {activeTab === 'details' && (
+                            <LayingPlanningDetailsTab 
+                                sizes={sizes} 
+                                details={details}
+                                detailTypes={detailTypes}
+                                isLoading={detailsLoading}
+                                createDetail={createDetail}
+                                updateDetail={updateDetail}
+                                deleteDetail={deleteDetail}
+                                isFullyAllocated={isFullyAllocated}
+                            />
                         )}
 
                         {activeTab === 'size' && (
@@ -187,31 +223,46 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                                         <thead className="bg-zinc-50/80 border-b border-zinc-100 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-500">
                                             <tr>
                                                 <th className="px-6 py-4">Size Code</th>
-                                                <th className="px-6 py-4 text-right">Order Quantity</th>
+                                                <th className="px-6 py-4 text-center">Order Quantity</th>
+                                                <th className="px-6 py-4 text-center">Total Cut</th>
+                                                <th className="px-6 py-4 text-right">Remaining</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-zinc-50">
                                             {data.sizes.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={2} className="px-6 py-8 text-center text-zinc-400 text-[11px] font-bold uppercase tracking-widest">No sizes available</td>
+                                                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-400 text-[11px] font-bold uppercase tracking-widest">No sizes available</td>
                                                 </tr>
                                             ) : (
-                                                sizes.map((sz: any) => (
-                                                    <tr key={sz.id} className="hover:bg-blue-50/30 transition-colors">
-                                                        <td className="px-6 py-4 text-sm font-bold text-zinc-800">
-                                                            {sz.size?.size || sz.size?.size_code || sz.size?.name || 'Unknown'}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-sm font-bold text-zinc-700 text-right">
-                                                            {sz.order_qty}
-                                                        </td>
-                                                    </tr>
-                                                ))
+                                                sizes.map((sz: any) => {
+                                                    const orderQty = sz.order_qty || 0;
+                                                    const cutQty = totalCutMap[sz.size_id || sz.id] || 0;
+                                                    const remaining = orderQty - cutQty;
+                                                    return (
+                                                        <tr key={sz.id} className="hover:bg-blue-50/30 transition-colors">
+                                                            <td className="px-6 py-4 text-sm font-bold text-zinc-800">
+                                                                {typeof sz.size === 'string' ? sz.size : (sz.size?.size || sz.size?.size_code || sz.size?.name || 'Unknown')}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-sm font-bold text-zinc-700 text-center">
+                                                                {orderQty}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-sm font-bold text-blue-600 text-center">
+                                                                {cutQty}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-sm font-bold text-zinc-700 text-right">
+                                                                {remaining}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })
                                             )}
                                         </tbody>
                                         <tfoot className="bg-zinc-900 text-white">
                                             <tr>
                                                 <td className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-white/50">Total Allocated</td>
-                                                <td className="px-6 py-4 text-[14px] font-bold text-white text-right">{totalQty} pcs</td>
+                                                <td className="px-6 py-4 text-[14px] font-bold text-white text-center">{totalQty} pcs</td>
+                                                <td className="px-6 py-4 text-[14px] font-bold text-blue-300 text-center">{Object.values(totalCutMap).reduce((a, b) => a + b, 0)} pcs</td>
+                                                <td className="px-6 py-4 text-[14px] font-bold text-white text-right">{totalQty - Object.values(totalCutMap).reduce((a, b) => a + b, 0)} pcs</td>
                                             </tr>
                                         </tfoot>
                                     </table>
