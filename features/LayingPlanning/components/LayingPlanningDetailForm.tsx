@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
+import { useEffect, useState } from 'react';
 
 interface LayingPlanningDetailFormProps {
     initialData?: any;
@@ -9,6 +9,7 @@ interface LayingPlanningDetailFormProps {
     allDetails: any[];
     onSubmit: (data: any) => Promise<boolean>;
     onCancel: () => void;
+    onError?: (msg: string) => void;
     isLoading?: boolean;
 }
 
@@ -19,6 +20,7 @@ export const LayingPlanningDetailForm = ({
     allDetails,
     onSubmit,
     onCancel,
+    onError,
     isLoading
 }: LayingPlanningDetailFormProps) => {
     const [formData, setFormData] = useState({
@@ -56,6 +58,19 @@ export const LayingPlanningDetailForm = ({
         }
     }, [initialData, sizes]);
 
+    // Set default detail type to "Normal" for new records
+    useEffect(() => {
+        if (!initialData && detailTypes?.length > 0) {
+            setFormData(prev => {
+                if (!prev.laying_planning_detail_type_id) {
+                    const normalType = detailTypes.find((t: any) => t.detail_type?.toLowerCase() === 'normal');
+                    return normalType ? { ...prev, laying_planning_detail_type_id: normalType.id } : prev;
+                }
+                return prev;
+            });
+        }
+    }, [initialData, detailTypes]);
+
     const [totalCutMap, setTotalCutMap] = useState<Record<string, number>>({});
 
     useEffect(() => {
@@ -63,7 +78,7 @@ export const LayingPlanningDetailForm = ({
         allDetails.forEach((detail: any) => {
             // skip the detail currently being edited
             if (initialData && detail.id === initialData.id) return;
-            
+
             detail.sizes?.forEach((sz: any) => {
                 const sid = sz.size_id || sz.id;
                 cuts[sid] = (cuts[sid] || 0) + (parseInt(sz.ratio_per_size) || 0);
@@ -79,7 +94,7 @@ export const LayingPlanningDetailForm = ({
     const handleSizeChange = (sizeId: string, value: string) => {
         setFormData(prev => ({
             ...prev,
-            sizes: prev.sizes.map(sz => 
+            sizes: prev.sizes.map(sz =>
                 sz.size_id === sizeId ? { ...sz, ratio_per_size: value } : sz
             )
         }));
@@ -87,7 +102,7 @@ export const LayingPlanningDetailForm = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         const layerQty = parseInt(formData.layer_qty) || 0;
         let hasError = false;
 
@@ -100,16 +115,18 @@ export const LayingPlanningDetailForm = ({
             const previousCut = totalCutMap[sz.size_id] || 0;
             const remaining = orderQty - previousCut;
             const currentRatio = parseInt(sz.ratio_per_size) || 0;
-            
+
             if (currentRatio > remaining) {
-                alert(`Error: Size ${sizeData?.size?.size || 'Unknown'} exceeds remaining quantity by ${currentRatio - remaining}. (Max allowed: ${remaining})`);
+                if (onError) {
+                    onError(`Error: Size ${sizeData?.size?.size || 'Unknown'} exceeds remaining quantity by ${currentRatio - remaining}. (Max allowed: ${remaining})`);
+                }
                 hasError = true;
                 break;
             }
         }
 
         if (hasError) return;
-        
+
         const payload = {
             ...formData,
             layer_qty: parseInt(formData.layer_qty),
@@ -118,29 +135,42 @@ export const LayingPlanningDetailForm = ({
             allowance_inch: parseFloat(formData.allowance_inch),
             sizes: filteredSizes
         };
-        
+
         await onSubmit(payload);
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-700">Detail Type</label>
-                    <select
-                        className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                        value={formData.laying_planning_detail_type_id}
-                        onChange={(e) => handleChange('laying_planning_detail_type_id', e.target.value)}
-                    >
-                        <option value="">Select Type</option>
-                        {detailTypes.map((type: any) => (
-                            <option key={type.id} value={type.id}>
-                                {type.detail_type} {type.description ? `(${type.description})` : ''}
-                            </option>
-                        ))}
-                    </select>
+            <div className="space-y-3 mb-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Detail Type <span className="text-red-500">*</span></label>
+                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(140px, 1fr))` }}>
+                    {detailTypes.map((type: any) => {
+                        const isSelected = formData.laying_planning_detail_type_id == type.id;
+                        return (
+                            <button
+                                key={type.id}
+                                type="button"
+                                onClick={() => handleChange('laying_planning_detail_type_id', type.id)}
+                                className={`h-14 rounded-xl border flex items-center justify-between px-4 transition-all text-left group ${isSelected
+                                        ? "bg-blue-50/50 border-blue-200 ring-2 ring-blue-500/20"
+                                        : "bg-zinc-50 border-zinc-100 hover:border-zinc-200"
+                                    }`}
+                            >
+                                <span className={`text-[12px] font-bold ${isSelected ? "text-blue-700" : "text-zinc-600 group-hover:text-zinc-900"}`}>
+                                    {type.detail_type}
+                                </span>
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "border-blue-500 bg-blue-500" : "border-zinc-300"
+                                    }`}>
+                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </div>
+                            </button>
+                        );
+                    })}
                 </div>
-                
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                 <div className="space-y-1.5">
                     <label className="text-xs font-bold text-zinc-700">Marker Code <span className="text-red-500">*</span></label>
                     <input
@@ -246,12 +276,12 @@ export const LayingPlanningDetailForm = ({
                                 const orderQty = sz.order_qty || 0;
                                 const previousCut = totalCutMap[sizeId] || 0;
                                 const remaining = orderQty - previousCut;
-                                
+
                                 const formSize = formData.sizes.find(s => s.size_id === sizeId);
                                 const currentRatio = parseInt(formSize?.ratio_per_size || '0') || 0;
-                                
+
                                 const isExceeding = currentRatio > remaining;
-                                
+
                                 return (
                                     <tr key={sizeId} className={isExceeding ? 'bg-red-50/50' : 'hover:bg-zinc-50/50'}>
                                         <td className="px-4 py-3 font-bold text-zinc-800">{sizeName}</td>

@@ -47,13 +47,12 @@ export const useLayingPlanningDetails = (lpId: string | number) => {
         try {
             const response = await LayingPlanningService.createDetail(lpId, payload);
             if (response.status === 'success') {
-                alert('Detail created successfully');
                 await fetchDetails();
                 return true;
             }
             throw new Error(response.message || 'Failed to create detail');
         } catch (err: any) {
-            alert(err.message || 'Failed to create detail');
+            console.error(err.message || 'Failed to create detail');
             return false;
         }
     };
@@ -62,13 +61,12 @@ export const useLayingPlanningDetails = (lpId: string | number) => {
         try {
             const response = await LayingPlanningService.updateDetail(lpId, detailId, payload);
             if (response.status === 'success') {
-                alert('Detail updated successfully');
                 await fetchDetails();
                 return true;
             }
             throw new Error(response.message || 'Failed to update detail');
         } catch (err: any) {
-            alert(err.message || 'Failed to update detail');
+            console.error(err.message || 'Failed to update detail');
             return false;
         }
     };
@@ -77,13 +75,12 @@ export const useLayingPlanningDetails = (lpId: string | number) => {
         try {
             const response = await LayingPlanningService.deleteDetail(lpId, detailId);
             if (response.status === 'success') {
-                alert('Detail deleted successfully');
                 await fetchDetails();
                 return true;
             }
             throw new Error(response.message || 'Failed to delete detail');
         } catch (err: any) {
-            alert(err.message || 'Failed to delete detail');
+            console.error(err.message || 'Failed to delete detail');
             return false;
         }
     };
