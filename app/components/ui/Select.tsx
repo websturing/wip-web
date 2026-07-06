@@ -43,7 +43,7 @@ export const Select = ({
 
     const filteredOptions = useMemo(() => {
         return options.filter(option =>
-            option.label.toLowerCase().includes(searchTerm.toLowerCase())
+            (option.label || '').toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [options, searchTerm]);
 
@@ -106,7 +106,7 @@ export const Select = ({
 
                 <Popover.Portal>
                     <Popover.Content
-                        className="z-[100] w-[var(--radix-popover-trigger-width)] bg-white border border-zinc-100 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        className="z-[99999] w-[var(--radix-popover-trigger-width)] bg-white border border-zinc-100 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
                         sideOffset={8}
                     >
                         <div className="p-2 border-b border-zinc-50">

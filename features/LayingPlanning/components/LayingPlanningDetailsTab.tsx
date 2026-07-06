@@ -202,13 +202,10 @@ export const LayingPlanningDetailsTab = ({
         const tableNumbers = warehouseDetails.map(d => d.table_number || '-');
 
         warehouseDetails.forEach(detail => {
-            const yard = parseFloat(detail.marker_yard) || 0;
-            const inch = parseFloat(detail.marker_inch) || 0;
-            const allowance = parseFloat(detail.allowance_inch) || 0;
             const layerQty = parseInt(detail.layer_qty) || 0;
-            const markerLengthYard = yard + (inch / 36) + (allowance / 36);
+            const totalYard = detail.total_length || 0;
             
-            aggregatedTotalYard += markerLengthYard * layerQty;
+            aggregatedTotalYard += totalYard;
             aggregatedLayers += layerQty;
         });
 
@@ -443,12 +440,9 @@ export const LayingPlanningDetailsTab = ({
                                 <tbody className="divide-y divide-zinc-100">
                                     {filteredDetails.map((detail: any, index: number) => {
                                         const isSelected = selectedDetailIds.includes(detail.id);
-                                        const yard = parseFloat(detail.marker_yard) || 0;
-                                        const inch = parseFloat(detail.marker_inch) || 0;
-                                        const allowance = parseFloat(detail.allowance_inch) || 0;
                                         const layerQty = parseInt(detail.layer_qty) || 0;
-                                        const markerLengthYard = yard + (inch / 36) + (allowance / 36);
-                                        const totalYard = markerLengthYard * layerQty;
+                                        const markerLengthYard = detail.marker_length || 0;
+                                        const totalYard = detail.total_length || 0;
 
                                         return (
                                             <tr key={detail.id} className={`hover:bg-zinc-50/80 transition-colors ${isSelected ? 'bg-indigo-50/30' : ''}`}>
@@ -563,12 +557,8 @@ export const LayingPlanningDetailsTab = ({
                                             )}
                                         </div>
                                         {(() => {
-                                            const yard = parseFloat(detail.marker_yard) || 0;
-                                            const inch = parseFloat(detail.marker_inch) || 0;
-                                            const allowance = parseFloat(detail.allowance_inch) || 0;
-                                            const layerQty = parseInt(detail.layer_qty) || 0;
-                                            const markerLengthYard = yard + (inch / 36) + (allowance / 36);
-                                            const totalYard = markerLengthYard * layerQty;
+                                            const markerLengthYard = detail.marker_length || 0;
+                                            const totalYard = detail.total_length || 0;
 
                                             return (
                                                 <div className="flex flex-wrap items-center gap-3 text-[13px] text-zinc-500 font-medium">

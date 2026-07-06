@@ -1,5 +1,7 @@
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
+import { Select } from '@/app/components/ui/Select';
+import { ReferenceService } from '../../Reference/services/ReferenceService';
 import { useEffect, useState } from 'react';
 
 interface LayingPlanningDetailFormProps {
@@ -34,8 +36,36 @@ export const LayingPlanningDetailForm = ({
         sizes: sizes.map(sz => ({
             size_id: sz.size_id || sz.id,
             ratio_per_size: ''
-        }))
+        })),
+        materials: [] as any[]
     });
+
+    const [colors, setColors] = useState<any[]>([]);
+    const [fabrics, setFabrics] = useState<any[]>([]);
+    const [isFetchingRefs, setIsFetchingRefs] = useState(false);
+
+    useEffect(() => {
+        const fetchRefs = async () => {
+            setIsFetchingRefs(true);
+            try {
+                const [colRes, fabRes] = await Promise.all([
+                    ReferenceService.getColors(1, ''),
+                    ReferenceService.getFabrics(1, '')
+                ]);
+                if (colRes.status === 'success') {
+                    setColors(colRes.data.data.map((c: any) => ({ id: c.id, label: c.standard_name || c.name || c.color_name || 'Unknown Color' })));
+                }
+                if (fabRes.status === 'success') {
+                    setFabrics(fabRes.data.data.map((f: any) => ({ id: f.id, label: f.standard_content || f.name || 'Unknown Fabric' })));
+                }
+            } catch (err) {
+                console.error('Failed to load refs', err);
+            } finally {
+                setIsFetchingRefs(false);
+            }
+        };
+        fetchRefs();
+    }, []);
 
     useEffect(() => {
         if (initialData) {
@@ -53,7 +83,19 @@ export const LayingPlanningDetailForm = ({
                         size_id: sz.size_id || sz.id,
                         ratio_per_size: existingSize ? existingSize.ratio_per_size : ''
                     };
-                })
+                }),
+                materials: initialData.materials ? initialData.materials.map((m: any) => ({
+                    id: m.id || Math.random().toString(36).substring(7),
+                    laying_planning_detail_type_id: m.laying_planning_detail_type_id || '',
+                    value_per_layer: m.value_per_layer || '',
+                    unit: m.unit || 'meter',
+                    color_id: m.color_id || '',
+                    fabric_id: m.fabric_id || '',
+                    marker_code: m.properties?.marker_code || '',
+                    marker_yard: m.properties?.marker_yard || '',
+                    marker_inch: m.properties?.marker_inch || '',
+                    use_parent_marker: !m.properties?.marker_code
+                })) : []
             });
         }
     }, [initialData, sizes]);
@@ -100,6 +142,43 @@ export const LayingPlanningDetailForm = ({
         }));
     };
 
+    const handleAddMaterial = () => {
+        setFormData(prev => ({
+            ...prev,
+            materials: [
+                ...prev.materials,
+                {
+                    id: Math.random().toString(36).substring(7),
+                    laying_planning_detail_type_id: '',
+                    value_per_layer: '',
+                    unit: 'yard',
+                    color_id: '',
+                    fabric_id: '',
+                    marker_code: '',
+                    marker_yard: '',
+                    marker_inch: '',
+                    use_parent_marker: true
+                }
+            ]
+        }));
+    };
+
+    const handleRemoveMaterial = (id: string) => {
+        setFormData(prev => ({
+            ...prev,
+            materials: prev.materials.filter(m => m.id !== id)
+        }));
+    };
+
+    const handleMaterialChange = (id: string, field: string, value: any) => {
+        setFormData(prev => ({
+            ...prev,
+            materials: prev.materials.map(m =>
+                m.id === id ? { ...m, [field]: value } : m
+            )
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -127,13 +206,36 @@ export const LayingPlanningDetailForm = ({
 
         if (hasError) return;
 
+        const formattedMaterials = formData.materials.map(m => {
+            const props: any = {};
+            if (m.use_parent_marker) {
+                if (formData.marker_code) props.marker_code = formData.marker_code;
+                if (formData.marker_yard) props.marker_yard = parseFloat(formData.marker_yard) || 0;
+                if (formData.marker_inch) props.marker_inch = parseFloat(formData.marker_inch) || 0;
+            } else {
+                if (m.marker_code) props.marker_code = m.marker_code;
+                if (m.marker_yard) props.marker_yard = parseFloat(m.marker_yard) || 0;
+                if (m.marker_inch) props.marker_inch = parseFloat(m.marker_inch) || 0;
+            }
+            
+            return {
+                laying_planning_detail_type_id: m.laying_planning_detail_type_id,
+                value_per_layer: parseFloat(m.value_per_layer) || 0,
+                unit: m.unit,
+                color_id: m.color_id || null,
+                fabric_id: m.fabric_id || null,
+                ...(Object.keys(props).length > 0 ? { properties: props } : {})
+            };
+        });
+
         const payload = {
             ...formData,
             layer_qty: parseInt(formData.layer_qty),
             marker_yard: parseInt(formData.marker_yard),
             marker_inch: parseFloat(formData.marker_inch),
             allowance_inch: parseFloat(formData.allowance_inch),
-            sizes: filteredSizes
+            sizes: filteredSizes,
+            materials: formattedMaterials
         };
 
         await onSubmit(payload);
@@ -302,6 +404,136 @@ export const LayingPlanningDetailForm = ({
                             })}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Materials Section */}
+            <div className="space-y-4 pt-4 border-t border-zinc-100">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                    <div className="flex items-center gap-2">
+                        <Icon icon="solar:box-minimalistic-bold-duotone" className="w-5 h-5 text-blue-500" />
+                        <h4 className="text-sm font-bold text-zinc-800">Materials (Accessories / Binding)</h4>
+                    </div>
+                    <Button type="button" onClick={handleAddMaterial} size="sm" variant="ghost" className="text-xs">
+                        <Icon icon="solar:add-circle-bold" className="w-4 h-4 mr-1 text-blue-500" />
+                        Add Material
+                    </Button>
+                </div>
+                
+                <div className="space-y-4">
+                    {formData.materials.length === 0 && (
+                        <div className="text-center py-6 bg-zinc-50 rounded-xl border border-dashed border-zinc-200">
+                            <span className="text-sm text-zinc-500">No additional materials.</span>
+                        </div>
+                    )}
+                    {formData.materials.map((material, idx) => (
+                        <div key={material.id} className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-4 relative group">
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <button type="button" onClick={() => handleRemoveMaterial(material.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors">
+                                    <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-8">
+                                <Select
+                                    label="Material Type *"
+                                    options={detailTypes.filter(t => (t.detail_type || '').toLowerCase() !== 'normal').map(t => ({ id: t.id, label: t.detail_type || 'Unknown Type' }))}
+                                    value={material.laying_planning_detail_type_id}
+                                    onChange={(v) => handleMaterialChange(material.id, 'laying_planning_detail_type_id', v)}
+                                />
+                                
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Value / Layer *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        step="0.01"
+                                        className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                        placeholder="0.00"
+                                        value={material.value_per_layer}
+                                        onChange={(e) => handleMaterialChange(material.id, 'value_per_layer', e.target.value)}
+                                    />
+                                </div>
+
+                                <Select
+                                    label="Unit *"
+                                    options={[
+                                        { id: 'yard', label: 'Yard' },
+                                        { id: 'pcs', label: 'Pcs' }
+                                    ]}
+                                    value={material.unit}
+                                    onChange={(v) => handleMaterialChange(material.id, 'unit', v)}
+                                />
+
+                                <Select
+                                    label="Color"
+                                    options={colors}
+                                    value={material.color_id}
+                                    onChange={(v) => handleMaterialChange(material.id, 'color_id', v)}
+                                    placeholder="Optional"
+                                />
+
+                                <Select
+                                    label="Fabric"
+                                    options={fabrics}
+                                    value={material.fabric_id}
+                                    onChange={(v) => handleMaterialChange(material.id, 'fabric_id', v)}
+                                    placeholder="Optional"
+                                />
+                            </div>
+
+                            <div className="pt-4 border-t border-zinc-200">
+                                <label className="flex items-center space-x-2 cursor-pointer mb-4">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-4 h-4 text-blue-600 rounded border-zinc-300 focus:ring-blue-500"
+                                        checked={material.use_parent_marker}
+                                        onChange={(e) => handleMaterialChange(material.id, 'use_parent_marker', e.target.checked)}
+                                    />
+                                    <span className="text-sm text-zinc-700 font-medium">Use Parent Marker Yard & Code</span>
+                                </label>
+                                
+                                {!material.use_parent_marker && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Code</label>
+                                            <input
+                                                type="text"
+                                                className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                                placeholder="Optional"
+                                                value={material.marker_code}
+                                                onChange={(e) => handleMaterialChange(material.id, 'marker_code', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Yard</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                                placeholder="0"
+                                                value={material.marker_yard}
+                                                onChange={(e) => handleMaterialChange(material.id, 'marker_yard', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Inch</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                                placeholder="0.00"
+                                                value={material.marker_inch}
+                                                onChange={(e) => handleMaterialChange(material.id, 'marker_inch', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
