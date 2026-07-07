@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Button } from '@/app/components/ui/Button';
 import { Column, DataTable } from '@/app/components/ui/DataTable';
 import { Icon } from '@/app/components/ui/Icon';
-import { Button } from '@/app/components/ui/Button';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLayingPlanning } from '../hooks/useLayingPlanning';
 
 export const LayingPlanning = () => {
@@ -28,7 +28,13 @@ export const LayingPlanning = () => {
             accessorKey: 'color_name',
             sortable: true,
             filterable: true,
-            cell: (item) => item.color_name || item.color?.name || item.color?.code || '-'
+            cell: (item) => (
+                <>
+                    <span>{item.color_name || item.color?.name || item.color?.code || '-'} </span>
+                    <br />
+                    <span className="text-xs text-zinc-500">Fabric: {item.fabric_content || item.fabric?.content || item.fabric?.standard_content || '-'} </span>
+                </>
+            )
         },
         {
             header: 'Type',
@@ -39,52 +45,6 @@ export const LayingPlanning = () => {
             cell: (item) => (
                 <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold tracking-wide">
                     {item.planning_type || item.laying_planning_type?.name || '-'}
-                </span>
-            )
-        },
-        {
-            header: 'Fabric',
-            accessorKey: 'fabric_content',
-            sortable: true,
-            cell: (item) => item.fabric_content || item.fabric?.content || item.fabric?.standard_content || '-'
-        },
-        {
-            header: 'Plan Date',
-            accessorKey: 'plan_date',
-            sortable: true,
-        },
-        {
-            header: 'Created At',
-            accessorKey: 'created_at',
-            sortable: true,
-            cell: (item) => {
-                if (!item.created_at) return '-';
-                const date = new Date(item.created_at);
-                const day = date.getDate();
-                const month = date.toLocaleDateString('id-ID', { month: 'long' });
-                const year = date.getFullYear();
-                const time = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
-                return <span className="text-zinc-600">{`${day} ${month} ${year} ${time}`}</span>;
-            }
-        },
-        {
-            header: 'Total Sizes',
-            accessorKey: 'size_details',
-            cell: (item) => {
-                const sizes = item.size_details || [];
-                return (
-                    <div className="flex flex-col">
-                        <span className="font-bold text-zinc-900">{sizes.length} Sizes</span>
-                    </div>
-                );
-            }
-        },
-        {
-            header: 'Combine',
-            accessorKey: 'is_combine',
-            cell: (item) => (
-                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${item.is_combine ? 'bg-amber-50 text-amber-700' : 'bg-zinc-100 text-zinc-600'}`}>
-                    {item.is_combine ? 'Yes' : 'No'}
                 </span>
             )
         },
@@ -113,9 +73,9 @@ export const LayingPlanning = () => {
             header: '',
             accessorKey: 'action',
             cell: (item) => (
-                <Button 
+                <Button
                     onClick={() => router.push(`/admin/laying-planning/${item.id}`)}
-                    variant="ghost" 
+                    variant="ghost"
                     className="h-8 px-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 border border-blue-100/50"
                 >
                     Detail

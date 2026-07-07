@@ -151,14 +151,15 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                         {/* Left Column Information */}
                         <div className="flex flex-col">
                             <DetailRow label="Buyer" value={data.lot?.gl_group?.customer?.name || data.lot?.brand || '-'} />
+                            <DetailRow label="PO Number" value={data.po_number || data.lot?.po_number || data.lot?.gl_group?.po_number || '-'} />
                             <DetailRow label="Style" value={data.lot?.style_no || '-'} />
-                            <DetailRow label="Color" value={`${data.color_name || data.color?.name || '-'} ${data.color_alias ? `(${data.color_alias})` : ''}`} />
+                            <DetailRow label="Color" value={`${data.color_name || data.color?.standard_name || data.color?.name || '-'} ${data.color_alias || data.color?.aliases?.find((a: any) => a.department === 'cutting')?.alias_name ? `(${data.color_alias || data.color?.aliases?.find((a: any) => a.department === 'cutting')?.alias_name})` : ''}`.trim()} />
                             <DetailRow label="Set Item" value={data.is_set_item ? 'Yes (Multi-part)' : 'No'} />
                         </div>
 
                         {/* Right Column Information */}
                         <div className="flex flex-col">
-                            <DetailRow label="Fabric Type" value={`${data.fabric_content || data.fabric?.content || '-'} ${data.fabric_alias ? `(${data.fabric_alias})` : ''}`} />
+                            <DetailRow label="Fabric Type" value={`${data.fabric_content || data.fabric?.standard_content || data.fabric?.content || '-'} ${data.fabric_alias || data.fabric?.aliases?.find((a: any) => a.department === 'cutting')?.alias_content ? `(${data.fabric_alias || data.fabric?.aliases?.find((a: any) => a.department === 'cutting')?.alias_content})` : ''}`.trim()} />
                             <DetailRow label="Delivery Date" value={data.lot?.delivery_date ? new Date(data.lot.delivery_date).toLocaleDateString('id-ID', { dateStyle: 'medium' }) : '-'} />
                             <DetailRow label="Plan Date" value={data.plan_date ? new Date(data.plan_date).toLocaleDateString('id-ID', { dateStyle: 'medium' }) : '-'} />
                             <DetailRow label="Fabric Pattern" value={data.fabric_pattern || '-'} />

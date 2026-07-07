@@ -215,11 +215,14 @@ export default function CreateLayingPlanningPage() {
                                                     return acc + Math.max(0, lotQty - plannedQty);
                                                 }, 0);
                                                 const buyer = selectedLots[0].gl_group?.customer?.name || '';
+                                                const po = selectedLots[0].gl_group?.po_number || selectedLots[0].po_number || '';
                                                 updateField('order_qty', totalQty.toString());
                                                 updateField('buyer', buyer);
+                                                updateField('po_number', po);
                                             } else {
                                                 updateField('order_qty', '');
                                                 updateField('buyer', '');
+                                                updateField('po_number', '');
                                             }
                                         }}
                                         disabled={isLoadingLots}
@@ -239,6 +242,11 @@ export default function CreateLayingPlanningPage() {
                                 </div>
 
                                 <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">PO Number</label>
+                                    <input className="w-full h-12 bg-white border border-zinc-200 rounded-xl px-4 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm" value={formData.po_number} onChange={(e) => updateField('po_number', e.target.value)} placeholder="Auto-filled from Lot or type manually" />
+                                </div>
+
+                                <div className="space-y-1.5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Order Quantity</label>
                                     <input className="w-full h-12 bg-zinc-50 border border-zinc-100 rounded-xl px-4 text-[13px] font-bold text-zinc-500 cursor-not-allowed" readOnly value={formData.order_qty} placeholder="Auto-filled from Lot" />
                                 </div>
@@ -254,7 +262,16 @@ export default function CreateLayingPlanningPage() {
                                                 placeholder={isLoadingColors ? "Loading Colors..." : "Select Color..."}
                                                 options={colorOptions}
                                                 value={formData.color_id}
-                                                onChange={(val) => updateField('color_id', val as string)}
+                                                onChange={(val) => {
+                                                    updateField('color_id', val as string);
+                                                    const selectedColor = colors.find((c: any) => c.id.toString() === val);
+                                                    const cuttingAlias = selectedColor?.aliases?.find((a: any) => a.department === 'cutting');
+                                                    if (cuttingAlias) {
+                                                        updateField('color_alias', cuttingAlias.alias_name);
+                                                    } else {
+                                                        updateField('color_alias', '');
+                                                    }
+                                                }}
                                                 disabled={isLoadingColors}
                                             />
                                             <ErrorMsg msg={errors.color_id} />
@@ -297,7 +314,16 @@ export default function CreateLayingPlanningPage() {
                                                 placeholder={isLoadingFabrics ? "Loading Fabrics..." : "Select Fabric..."}
                                                 options={fabricOptions}
                                                 value={formData.fabric_id}
-                                                onChange={(val) => updateField('fabric_id', val as string)}
+                                                onChange={(val) => {
+                                                    updateField('fabric_id', val as string);
+                                                    const selectedFabric = fabrics.find((f: any) => f.id.toString() === val);
+                                                    const cuttingAlias = selectedFabric?.aliases?.find((a: any) => a.department === 'cutting');
+                                                    if (cuttingAlias) {
+                                                        updateField('fabric_alias', cuttingAlias.alias_content);
+                                                    } else {
+                                                        updateField('fabric_alias', '');
+                                                    }
+                                                }}
                                                 disabled={isLoadingFabrics}
                                             />
                                             <ErrorMsg msg={errors.fabric_id} />

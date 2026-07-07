@@ -9,6 +9,7 @@ export interface SizeEntry {
 export interface LayingPlanningFormData {
     lot_ids: string[];
     buyer: string;
+    po_number: string;
     order_qty: string;
     laying_planning_type_id: string;
     laying_planning_parent_id: string;
@@ -35,6 +36,7 @@ export const useLayingPlanningForm = () => {
     const [formData, setFormData] = useState<LayingPlanningFormData>({
         lot_ids: [],
         buyer: '',
+        po_number: '',
         order_qty: '',
         laying_planning_type_id: '',
         laying_planning_parent_id: '',

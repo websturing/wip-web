@@ -40,6 +40,16 @@ export const LayingPlanningDetailForm = ({
         materials: [] as any[]
     });
 
+    const [activeMaterialId, setActiveMaterialId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (formData.materials.length > 0 && !formData.materials.find(m => m.id === activeMaterialId)) {
+            setActiveMaterialId(formData.materials[0].id);
+        } else if (formData.materials.length === 0) {
+            setActiveMaterialId(null);
+        }
+    }, [formData.materials, activeMaterialId]);
+
     const [colors, setColors] = useState<any[]>([]);
     const [fabrics, setFabrics] = useState<any[]>([]);
     const [isFetchingRefs, setIsFetchingRefs] = useState(false);
@@ -143,12 +153,14 @@ export const LayingPlanningDetailForm = ({
     };
 
     const handleAddMaterial = () => {
+        if (formData.materials.length >= 3) return;
+        const newId = Math.random().toString(36).substring(7);
         setFormData(prev => ({
             ...prev,
             materials: [
                 ...prev.materials,
                 {
-                    id: Math.random().toString(36).substring(7),
+                    id: newId,
                     laying_planning_detail_type_id: '',
                     value_per_layer: '',
                     unit: 'yard',
@@ -161,6 +173,7 @@ export const LayingPlanningDetailForm = ({
                 }
             ]
         }));
+        setActiveMaterialId(newId);
     };
 
     const handleRemoveMaterial = (id: string) => {
@@ -414,10 +427,12 @@ export const LayingPlanningDetailForm = ({
                         <Icon icon="solar:box-minimalistic-bold-duotone" className="w-5 h-5 text-blue-500" />
                         <h4 className="text-sm font-bold text-zinc-800">Materials (Accessories / Binding)</h4>
                     </div>
-                    <Button type="button" onClick={handleAddMaterial} size="sm" variant="ghost" className="text-xs">
-                        <Icon icon="solar:add-circle-bold" className="w-4 h-4 mr-1 text-blue-500" />
-                        Add Material
-                    </Button>
+                    {formData.materials.length < 3 && (
+                        <Button type="button" onClick={handleAddMaterial} size="sm" variant="ghost" className="text-xs">
+                            <Icon icon="solar:add-circle-bold" className="w-4 h-4 mr-1 text-blue-500" />
+                            Add Material
+                        </Button>
+                    )}
                 </div>
                 
                 <div className="space-y-4">
@@ -426,13 +441,39 @@ export const LayingPlanningDetailForm = ({
                             <span className="text-sm text-zinc-500">No additional materials.</span>
                         </div>
                     )}
-                    {formData.materials.map((material, idx) => (
-                        <div key={material.id} className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-4 relative group">
-                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                <button type="button" onClick={() => handleRemoveMaterial(material.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors">
-                                    <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
-                                </button>
+                    
+                    {formData.materials.length > 0 && (
+                        <div>
+                            <div className="flex border-b border-zinc-200 overflow-x-auto hide-scrollbar mb-4">
+                                {formData.materials.map((m, idx) => {
+                                    const typeName = detailTypes.find(t => t.id == m.laying_planning_detail_type_id)?.detail_type || `Material ${idx + 1}`;
+                                    const isActive = m.id === activeMaterialId;
+                                    return (
+                                        <button
+                                            key={m.id}
+                                            type="button"
+                                            onClick={() => setActiveMaterialId(m.id)}
+                                            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                                                isActive 
+                                                    ? 'border-blue-600 text-blue-600' 
+                                                    : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
+                                            }`}
+                                        >
+                                            {typeName}
+                                        </button>
+                                    );
+                                })}
                             </div>
+
+                            {formData.materials.map((material, idx) => {
+                                if (material.id !== activeMaterialId) return null;
+                                return (
+                                    <div key={material.id} className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-4 relative group">
+                                        <div className="absolute top-4 right-4 z-10">
+                                            <button type="button" onClick={() => handleRemoveMaterial(material.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="Remove material">
+                                                <Icon icon="solar:trash-bin-trash-bold" className="w-4 h-4" />
+                                            </button>
+                                        </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-8">
                                 <Select
@@ -533,7 +574,10 @@ export const LayingPlanningDetailForm = ({
                                 )}
                             </div>
                         </div>
-                    ))}
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
