@@ -84,4 +84,13 @@ export class LayingPlanningService {
             throw error;
         }
     }
+
+    static async downloadPdf(id: string | number, serialNumber: string) {
+        try {
+            await apiClient.download(`/layingplanning/${id}/export-pdf`, `Laying_Planning_Report_${serialNumber}.pdf`);
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            throw error;
+        }
+    }
 }

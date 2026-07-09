@@ -13,6 +13,7 @@ import { LayingPlanningDetailsTab } from '../components/LayingPlanningDetailsTab
 export default function DetailLayingPlanningPage({ id }: { id: string }) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'details' | 'size' | 'parts'>('details');
+    const [isPrinting, setIsPrinting] = useState(false);
     const { data, isLoading, error } = useLayingPlanningDetail(id);
     const { 
         details, 
@@ -88,6 +89,21 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
         </div>
     );
 
+    const handlePrintPdf = async () => {
+        setIsPrinting(true);
+        try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+            const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+            const url = `${BASE_URL}/layingplanning/${id}/export-pdf${token ? `?token=${token}` : ''}`;
+            window.open(url, '_blank');
+        } catch (err) {
+            console.error('Print error:', err);
+            alert('Failed to open PDF. Please ensure the backend is running.');
+        } finally {
+            setIsPrinting(false);
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-6xl mx-auto pb-12">
             <div className="flex items-center justify-between animate-in fade-in duration-700">
@@ -113,8 +129,17 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                                 </div>
                             </div>
                         </div>
-                        <Button className="h-10 px-6 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-zinc-900/20 transition-all hover:-translate-y-0.5">
-                            <Icon icon="solar:printer-bold" className="w-4 h-4 mr-2" /> Print PDF
+                        <Button 
+                            onClick={handlePrintPdf} 
+                            disabled={isPrinting}
+                            className="h-10 px-6 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-zinc-900/20 transition-all hover:-translate-y-0.5"
+                        >
+                            {isPrinting ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                            ) : (
+                                <Icon icon="solar:printer-bold" className="w-4 h-4 mr-2" />
+                            )}
+                            {isPrinting ? 'Printing...' : 'Print PDF'}
                         </Button>
                     </div>
 

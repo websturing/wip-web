@@ -139,6 +139,27 @@ export const LayingPlanningDetailForm = ({
         setTotalCutMap(cuts);
     }, [allDetails, initialData]);
 
+    // Auto-calculate value_per_layer for materials based on yard & inch
+    useEffect(() => {
+        setFormData(prev => {
+            let hasChanges = false;
+            const newMaterials = prev.materials.map(m => {
+                const yard = m.use_parent_marker ? (parseFloat(prev.marker_yard) || 0) : (parseFloat(m.marker_yard) || 0);
+                const inch = m.use_parent_marker ? (parseFloat(prev.marker_inch) || 0) : (parseFloat(m.marker_inch) || 0);
+                const allowance = m.use_parent_marker ? (parseFloat(prev.allowance_inch) || 0) : 0;
+                const calculatedValue = yard + ((inch + allowance) / 36);
+                const newValueStr = calculatedValue > 0 ? calculatedValue.toFixed(4).replace(/\.?0+$/, '') : '';
+                
+                if (m.value_per_layer !== newValueStr) {
+                    hasChanges = true;
+                    return { ...m, value_per_layer: newValueStr };
+                }
+                return m;
+            });
+            return hasChanges ? { ...prev, materials: newMaterials } : prev;
+        });
+    }, [formData.marker_yard, formData.marker_inch, formData.allowance_inch, formData.materials.map(m => `${m.id}-${m.use_parent_marker}-${m.marker_yard}-${m.marker_inch}`).join(',')]);
+
     const handleChange = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -327,7 +348,7 @@ export const LayingPlanningDetailForm = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-zinc-50/80 rounded-xl border border-zinc-100">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 bg-zinc-50/80 rounded-xl border border-zinc-100">
                 <div className="space-y-1.5">
                     <label className="text-xs font-bold text-zinc-700">Marker Yard <span className="text-red-500">*</span></label>
                     <input
@@ -365,6 +386,12 @@ export const LayingPlanningDetailForm = ({
                         value={formData.allowance_inch}
                         onChange={(e) => handleChange('allowance_inch', e.target.value)}
                     />
+                </div>
+                <div className="space-y-1.5">
+                    <label className="text-xs font-black uppercase tracking-widest text-indigo-500">Total Yard</label>
+                    <div className="w-full px-4 py-2.5 bg-indigo-50 border border-indigo-200 rounded-xl text-sm font-black text-indigo-700 flex items-center h-[42px] shadow-sm" title="Total Yard = (Marker Yard + Marker Inch/36 + Allowance Inch/36) × Layer Qty">
+                        {(((parseFloat(formData.marker_yard) || 0) + ((parseFloat(formData.marker_inch) || 0) / 36) + ((parseFloat(formData.allowance_inch) || 0) / 36)) * (parseInt(formData.layer_qty) || 0)).toFixed(2)} YD
+                    </div>
                 </div>
             </div>
 
@@ -475,38 +502,23 @@ export const LayingPlanningDetailForm = ({
                                             </button>
                                         </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-8">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-8">
                                 <Select
                                     label="Material Type *"
                                     options={detailTypes.filter(t => (t.detail_type || '').toLowerCase() !== 'normal').map(t => ({ id: t.id, label: t.detail_type || 'Unknown Type' }))}
                                     value={material.laying_planning_detail_type_id}
                                     onChange={(v) => handleMaterialChange(material.id, 'laying_planning_detail_type_id', v)}
                                 />
-                                
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Value / Layer *</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min="0"
-                                        step="0.01"
-                                        className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
-                                        placeholder="0.00"
-                                        value={material.value_per_layer}
-                                        onChange={(e) => handleMaterialChange(material.id, 'value_per_layer', e.target.value)}
-                                    />
-                                </div>
-
                                 <Select
                                     label="Unit *"
                                     options={[
                                         { id: 'yard', label: 'Yard' },
+                                        { id: 'meter', label: 'Meter' },
                                         { id: 'pcs', label: 'Pcs' }
                                     ]}
                                     value={material.unit}
                                     onChange={(v) => handleMaterialChange(material.id, 'unit', v)}
                                 />
-
                                 <Select
                                     label="Color"
                                     options={colors}
@@ -514,7 +526,6 @@ export const LayingPlanningDetailForm = ({
                                     onChange={(v) => handleMaterialChange(material.id, 'color_id', v)}
                                     placeholder="Optional"
                                 />
-
                                 <Select
                                     label="Fabric"
                                     options={fabrics}
@@ -535,43 +546,72 @@ export const LayingPlanningDetailForm = ({
                                     <span className="text-sm text-zinc-700 font-medium">Use Parent Marker Yard & Code</span>
                                 </label>
                                 
-                                {!material.use_parent_marker && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Code</label>
-                                            <input
-                                                type="text"
-                                                className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
-                                                placeholder="Optional"
-                                                value={material.marker_code}
-                                                onChange={(e) => handleMaterialChange(material.id, 'marker_code', e.target.value)}
-                                            />
+                                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-white p-4 rounded-xl border border-zinc-100">
+                                    {!material.use_parent_marker ? (
+                                        <>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Code</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                                    placeholder="Optional"
+                                                    value={material.marker_code}
+                                                    onChange={(e) => handleMaterialChange(material.id, 'marker_code', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Yard</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                                    placeholder="0"
+                                                    value={material.marker_yard}
+                                                    onChange={(e) => handleMaterialChange(material.id, 'marker_yard', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Inch</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
+                                                    placeholder="0.00"
+                                                    value={material.marker_inch}
+                                                    onChange={(e) => handleMaterialChange(material.id, 'marker_inch', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Value / Layer *</label>
+                                                <input
+                                                    type="number"
+                                                    required
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="w-full h-12 px-4 bg-blue-50 border border-blue-200 rounded-xl text-[13px] font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-blue-700 transition-all"
+                                                    placeholder="0.00"
+                                                    value={material.value_per_layer}
+                                                    readOnly={true}
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="col-span-4 flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 rounded-xl py-3">
+                                            <span className="text-sm font-medium text-zinc-400">Using Parent Marker Length</span>
+                                            <span className="text-sm font-bold text-zinc-500 mt-1" title="Includes Parent Allowance">
+                                                {((parseFloat(formData.marker_yard) || 0) + ((parseFloat(formData.marker_inch) || 0) / 36) + ((parseFloat(formData.allowance_inch) || 0) / 36)).toFixed(4).replace(/\.?0+$/, '')} Yard / Layer
+                                            </span>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Yard</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
-                                                placeholder="0"
-                                                value={material.marker_yard}
-                                                onChange={(e) => handleMaterialChange(material.id, 'marker_yard', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Properties: Marker Inch</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                className="w-full h-12 px-4 bg-white border border-zinc-100 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 transition-all"
-                                                placeholder="0.00"
-                                                value={material.marker_inch}
-                                                onChange={(e) => handleMaterialChange(material.id, 'marker_inch', e.target.value)}
-                                            />
+                                    )}
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Total Value</label>
+                                        <div className="w-full h-12 px-4 bg-zinc-800 border border-zinc-700 rounded-xl flex items-center text-[13px] font-bold text-white shadow-inner">
+                                            {((parseFloat(material.value_per_layer) || 0) * (parseInt(formData.layer_qty) || 0)).toFixed(2)} {material.unit}
                                         </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                                 );

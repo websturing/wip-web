@@ -379,12 +379,10 @@ export const LayingPlanningDetailsTab = ({
                     )}
 
                     {/* Add Detail */}
-                    {!isFullyAllocated && (
-                        <Button onClick={handleAdd} className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 w-full sm:w-auto shrink-0">
-                            <Icon icon="solar:add-circle-bold-duotone" className="w-5 h-5 mr-2" /> 
-                            Add Detail
-                        </Button>
-                    )}
+                    <Button onClick={handleAdd} className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 w-full sm:w-auto shrink-0">
+                        <Icon icon="solar:add-circle-bold-duotone" className="w-5 h-5 mr-2" /> 
+                        Add Detail
+                    </Button>
                 </div>
             </div>
 
@@ -409,14 +407,12 @@ export const LayingPlanningDetailsTab = ({
                         <h4 className="text-base font-bold text-zinc-900 mb-1">No Details Found</h4>
                         <p className="text-sm text-zinc-500 max-w-sm mx-auto mb-6">
                             {isFullyAllocated 
-                                ? "All sizes have been fully allocated. You cannot add more details." 
+                                ? "All sizes have been fully allocated. You can still add more details if needed." 
                                 : "You haven't added any laying planning details yet. Click the button above to create one."}
                         </p>
-                        {!isFullyAllocated && (
-                            <Button onClick={handleAdd} variant="ghost" className="border-blue-200 text-blue-600 hover:bg-blue-50">
-                                Add First Detail
-                            </Button>
-                        )}
+                        <Button onClick={handleAdd} variant="ghost" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+                            Add First Detail
+                        </Button>
                     </div>
                 ) : viewMode === 'table' ? (
                     <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
@@ -479,12 +475,12 @@ export const LayingPlanningDetailsTab = ({
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <div className="flex flex-col gap-0.5">
-                                                        <span className="text-zinc-900 font-bold">{markerLengthYard.toFixed(4)} YD</span>
+                                                        <span className="text-zinc-900 font-bold">{markerLengthYard.toFixed(2)} YD</span>
                                                         <span className="text-xs text-zinc-400 font-medium">{detail.marker_yard} YD {detail.marker_inch}" (A: {detail.allowance_inch}")</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <span className="text-indigo-600 font-bold">{totalYard.toFixed(4)} YD</span>
+                                                    <span className="text-indigo-600 font-bold">{totalYard.toFixed(2)} YD</span>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <div className="flex flex-wrap gap-1 max-w-xs">
@@ -629,11 +625,11 @@ export const LayingPlanningDetailsTab = ({
                                                     <span>Allowance: {detail.allowance_inch}"</span>
                                                     <span className="w-1 h-1 bg-zinc-300 rounded-full" />
                                                     <span className="text-emerald-600 font-bold" title="Marker Length = Yard + (Inch/36) + (Allowance/36)">
-                                                        Length: {markerLengthYard.toFixed(4)} YD
+                                                        Length: {markerLengthYard.toFixed(2)} YD
                                                     </span>
                                                     <span className="w-1 h-1 bg-zinc-300 rounded-full" />
                                                     <span className="text-indigo-600 font-bold" title="Total Yard = Marker Length × Layer Qty">
-                                                        Total: {totalYard.toFixed(4)} YD
+                                                        Total: {totalYard.toFixed(2)} YD
                                                     </span>
                                                     {detail.materials?.length > 0 && (
                                                         <>
