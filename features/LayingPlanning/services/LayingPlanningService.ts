@@ -25,6 +25,17 @@ export class LayingPlanningService {
         }
     }
 
+    static async getTypes() {
+        try {
+            const response = await apiClient.get('/layingplanning/types?per_page=100');
+            const payload = await response.json();
+            return payload?.data?.data || payload?.data || [];
+        } catch (error) {
+            console.error('Error fetching laying-planning types:', error);
+            throw error;
+        }
+    }
+
     static async create(payload: any) {
         try {
             const response = await apiClient.post('/layingplanning', payload);

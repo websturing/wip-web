@@ -1,26 +1,11 @@
 'use client'
-
-interface SizeItem {
-  id: string | number
-  size_id?: string | number
-  order_qty: number
-  ratio_per_size?: string | number
-  size?:
-    | string
-    | {
-        size?: string
-        size_code?: string
-        name?: string
-      }
-}
-
+import { SizeItem } from '@/features/LayingPlanning/types'
 // Definisikan bentuk props secara utuh
 interface LayingPlanningSizeAllocationProps {
   sizes: SizeItem[]
   totalQty: number
   totalCutMap?: Record<string, number> // Tambahkan ini agar tidak error 'variable not found'
 }
-
 
 
 export const LayingPlanningSizeAllocation = ({

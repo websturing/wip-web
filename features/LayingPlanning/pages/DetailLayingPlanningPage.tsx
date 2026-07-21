@@ -7,6 +7,7 @@ import { useBreadcrumb } from '@/hooks/useBreadcrumb'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LayingPlanningDetailsTab } from '../components/LayingPlanningDetailsTab'
+import { LayingPlanningParts } from '../components/LayingPlanningParts'
 import { LayingPlanningSizeAllocation } from '../components/LayingPlanningSizeAllocation'
 import { useLayingPlanningDetail } from '../hooks/useLayingPlanningDetail'
 import { useLayingPlanningDetails } from '../hooks/useLayingPlanningDetails'
@@ -14,31 +15,7 @@ import { useLayingPlanningDetails } from '../hooks/useLayingPlanningDetails'
 // ==========================================
 // 1. DEFINISI TYPE / INTERFACE (Anti-Any)
 // ==========================================
-interface SizeItem {
-  id: string | number
-  size_id?: string | number
-  order_qty: number
-  ratio_per_size?: string | number
-  size?:
-    | string
-    | {
-        size?: string
-        size_code?: string
-        name?: string
-      }
-}
 
-interface DetailItem {
-  id: string | number
-  sizes?: SizeItem[]
-}
-
-interface PartItem {
-  id: string | number
-  item_part: string
-  lot_code?: string
-  laying_planning_id?: string
-}
 
 // ==========================================
 // 2. SUB-KOMPONEN DI LUAR RENDER UTAMA
@@ -93,7 +70,16 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
   )
   const [isPrinting, setIsPrinting] = useState(false)
 
-  const { data, isLoading, error } = useLayingPlanningDetail(id)
+  const {
+    data,
+    isLoading,
+    error,
+    sizes, // <--- Siap pakai
+    totalQty, // <--- Siap pakai
+    totalCutMap,
+    parts,
+    groupParts
+  } = useLayingPlanningDetail(id)
   const {
     details,
     detailTypes,
@@ -139,22 +125,6 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
       </div>
     )
   }
-
-  // Penerapan Type Safety pada manipulasi array
-  const sizes: SizeItem[] = data.sizes || []
-  const totalQty = sizes.reduce(
-    (sum: number, s: SizeItem) => sum + (s.order_qty || 0),
-    0,
-  )
-
-  const totalCutMap: Record<string, number> = {}
-  ;(details as DetailItem[])?.forEach((detail) => {
-    detail.sizes?.forEach((sz) => {
-      const sid = String(sz.size_id || sz.id)
-      totalCutMap[sid] =
-        (totalCutMap[sid] || 0) + (parseInt(sz.ratio_per_size as string) || 0)
-    })
-  })
 
   let isFullyAllocated = sizes.length > 0
   sizes.forEach((sz) => {
@@ -405,11 +375,13 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
                     Parts Component Setup
                   </h3>
+
+                  <LayingPlanningParts parts={parts} groupParts={groupParts} />
                   <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                     Total Parts:{' '}
-                    {(data.group_parts?.length > 0
-                      ? data.group_parts
-                      : data.parts
+                    {(groupParts.length > 0
+                      ? groupParts
+                      : parts
                     )?.length || 0}
                   </div>
                 </div>

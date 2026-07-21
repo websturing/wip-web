@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LayingPlanningService } from '../services/LayingPlanningService';
+
+
+
 
 export const useLayingPlanningDetails = (lpId: string | number) => {
     const [details, setDetails] = useState<any[]>([]);
@@ -15,7 +18,7 @@ export const useLayingPlanningDetails = (lpId: string | number) => {
             if (response.status === 'success') {
                 setDetails(response.data);
             } else {
-                throw new Error(response.message || 'Failed to fetch details');
+                throw new Error(response.message || 'Failed to fetch     details');
             }
         } catch (err: any) {
             setError(err);
@@ -24,6 +27,7 @@ export const useLayingPlanningDetails = (lpId: string | number) => {
             setIsLoading(false);
         }
     }, [lpId]);
+
 
     const fetchDetailTypes = useCallback(async () => {
         try {

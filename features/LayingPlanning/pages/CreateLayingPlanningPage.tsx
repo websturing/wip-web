@@ -1,7 +1,5 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Button } from '@/app/components/ui/Button';
 import { Icon } from '@/app/components/ui/Icon';
 import { PageHeader } from '@/app/components/ui/PageHeader';
@@ -11,9 +9,11 @@ import { useReferenceColors } from '@/features/Reference/hooks/useReferenceColor
 import { useReferenceFabric } from '@/features/Reference/hooks/useReferenceFabric';
 import { useReferenceSizes } from '@/features/Reference/hooks/useReferenceSizes';
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useLayingPlanningForm, LayingPlanningFormData } from '../hooks/useLayingPlanningForm';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { LayingPlanningFormData, useLayingPlanningForm } from '../hooks/useLayingPlanningForm';
 import { LayingPlanningService } from '../services/LayingPlanningService';
 
 export default function CreateLayingPlanningPage() {
@@ -41,13 +41,54 @@ export default function CreateLayingPlanningPage() {
     } = useLayingPlanningForm();
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [typeOptions, setTypeOptions] = useState<{ id: string; label: string }[]>([]);
+    const [isLoadingTypes, setIsLoadingTypes] = useState(false);
     
     // Fetch related laying plannings (for Set Item linking and Parent Body linking)
     const [relatedLayingPlannings, setRelatedLayingPlannings] = useState<any[]>([]);
     const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+
+    const bodyTypeId = useMemo(() => {
+        return typeOptions.find((opt) => opt.label.toUpperCase() === 'BODY')?.id || '';
+    }, [typeOptions]);
+
+    const combinasiTypeId = useMemo(() => {
+        return typeOptions.find((opt) => opt.label.toUpperCase() === 'COMBINASI')?.id || '';
+    }, [typeOptions]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchTypes = async () => {
+            setIsLoadingTypes(true);
+            try {
+                const types = await LayingPlanningService.getTypes();
+                if (!isMounted) return;
+
+                setTypeOptions((types || []).map((type: any) => ({
+                    id: type.id?.toString() || '',
+                    label: type.type || 'Unknown Type'
+                })));
+            } catch (error) {
+                console.error('Failed to fetch laying planning types', error);
+                if (isMounted) {
+                    setTypeOptions([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoadingTypes(false);
+                }
+            }
+        };
+
+        fetchTypes();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
     
     useEffect(() => {
-        const isCombinasi = formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816';
+        const isCombinasi = formData.laying_planning_type_id === combinasiTypeId;
         if ((formData.is_set_item || isCombinasi) && formData.lot_ids.length > 0) {
             const selectedLotId = formData.lot_ids[0];
             const selectedLot = lots.find((l: any) => l.id.toString() === selectedLotId);
@@ -69,7 +110,7 @@ export default function CreateLayingPlanningPage() {
         } else {
             setRelatedLayingPlannings([]);
         }
-    }, [formData.is_set_item, formData.laying_planning_type_id, formData.lot_ids, lots]);
+    }, [formData.is_set_item, formData.laying_planning_type_id, formData.lot_ids, lots, combinasiTypeId]);
 
     const setItemOptions = useMemo(() => {
         return relatedLayingPlannings.map((p: any) => ({
@@ -82,12 +123,12 @@ export default function CreateLayingPlanningPage() {
 
     const bodyOptions = useMemo(() => {
         return relatedLayingPlannings
-            .filter((p: any) => p.type?.id === '019ef740-1826-72ce-8cd6-2003ea77f496' || p.laying_planning_type_id === '019ef740-1826-72ce-8cd6-2003ea77f496')
+            .filter((p: any) => p.type?.id === bodyTypeId || p.laying_planning_type_id === bodyTypeId)
             .map((p: any) => ({
                 id: p.id.toString(),
                 label: `${p.serial_number} - ${p.color?.name || p.color_name}`
             }));
-    }, [relatedLayingPlannings]);
+    }, [relatedLayingPlannings, bodyTypeId]);
 
     const handleInitialSave = () => {
         if (triggerValidation()) {
@@ -123,10 +164,9 @@ export default function CreateLayingPlanningPage() {
         label: s.size || s.size_code || s.name || 'Unknown Size'
     }));
 
-    const typeOptions = [
-        { id: '019ef740-1826-72ce-8cd6-2003ea77f496', label: 'BODY' },
-        { id: '019ef740-184d-714c-aa4c-c0d6f023a816', label: 'COMBINASI' }
-    ];
+    const typeRadioOptions = typeOptions.length > 0
+        ? typeOptions
+        : [{ id: 'loading', label: isLoadingTypes ? 'Loading types...' : 'No types available' }];
 
     const patternOptions = ['Solid', 'Stripe'];
 
@@ -362,18 +402,18 @@ export default function CreateLayingPlanningPage() {
                             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 border-b border-zinc-100 pb-2">B. Classifications</h3>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <RadioCard title="Laying Planning Type" options={typeOptions} stateKey="laying_planning_type_id" />
+                                <RadioCard title="Laying Planning Type" options={typeRadioOptions} stateKey="laying_planning_type_id" />
                                 <ErrorMsg msg={errors.laying_planning_type_id} />
                                 <RadioCard title="Fabric Pattern" options={patternOptions} stateKey="fabric_pattern" />
                             </div>
 
-                            {(formData.lot_ids.length > 1 || formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816') && (
+                            {(formData.lot_ids.length > 1 || formData.laying_planning_type_id === combinasiTypeId) && (
                                 <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 mb-8 space-y-4">
                                     <div className="flex items-center justify-between">
                                         <label className="text-sm font-bold text-zinc-900">Combine / Support Marker</label>
                                         <label className="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" className="sr-only peer" checked={formData.is_combine} onChange={(e) => updateField('is_combine', e.target.checked)} disabled={formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816'} />
-                                            <div className={cn("w-11 h-6 bg-zinc-200 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white", formData.laying_planning_type_id === '019ef740-184d-714c-aa4c-c0d6f023a816' ? "opacity-60 cursor-not-allowed" : "cursor-pointer")}></div>
+                                            <input type="checkbox" className="sr-only peer" checked={formData.is_combine} onChange={(e) => updateField('is_combine', e.target.checked)} disabled={formData.laying_planning_type_id === combinasiTypeId} />
+                                            <div className={cn("w-11 h-6 bg-zinc-200 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white", formData.laying_planning_type_id === combinasiTypeId ? "opacity-60 cursor-not-allowed" : "cursor-pointer")}></div>
                                         </label>
                                     </div>
                                     
