@@ -16,7 +16,6 @@ import { useLayingPlanningDetails } from '../hooks/useLayingPlanningDetails'
 // 1. DEFINISI TYPE / INTERFACE (Anti-Any)
 // ==========================================
 
-
 // ==========================================
 // 2. SUB-KOMPONEN DI LUAR RENDER UTAMA
 // ==========================================
@@ -78,7 +77,7 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
     totalQty, // <--- Siap pakai
     totalCutMap,
     parts,
-    groupParts
+    groupParts,
   } = useLayingPlanningDetail(id)
   const {
     details,
@@ -376,13 +375,16 @@ export default function DetailLayingPlanningPage({ id }: { id: string }) {
                     Parts Component Setup
                   </h3>
 
-                  <LayingPlanningParts parts={parts} groupParts={groupParts} />
+                  <LayingPlanningParts
+                    parts={parts}
+                    groupParts={groupParts}
+                    lotCode={data?.lot_code}
+                    layingPlanningId={data?.laying_planning_id}
+                    router={router}
+                  />
                   <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                     Total Parts:{' '}
-                    {(groupParts.length > 0
-                      ? groupParts
-                      : parts
-                    )?.length || 0}
+                    {(groupParts.length > 0 ? groupParts : parts)?.length || 0}
                   </div>
                 </div>
 
