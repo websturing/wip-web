@@ -1,4 +1,5 @@
 'use client'
+import { Button } from '@/app/components/ui/Button'
 import { SizeItem } from '@/features/LayingPlanning/types'
 // Definisikan bentuk props secara utuh
 interface LayingPlanningSizeAllocationProps {
@@ -7,17 +8,16 @@ interface LayingPlanningSizeAllocationProps {
   totalCutMap?: Record<string, number> // Tambahkan ini agar tidak error 'variable not found'
 }
 
-
 export const LayingPlanningSizeAllocation = ({
   sizes = [],
   totalCutMap = {},
 }: LayingPlanningSizeAllocationProps) => {
   // Hitung total cut dari map
-    const totalQty = sizes.reduce(
+  const totalQty = sizes.reduce(
     (sum: number, s: SizeItem) => sum + (s.order_qty || 0),
     0,
   )
-  
+
   const grandTotalCut = Object.values(totalCutMap).reduce((a, b) => a + b, 0)
 
   return (
@@ -26,8 +26,14 @@ export const LayingPlanningSizeAllocation = ({
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
           Size Allocation Breakdown
         </h3>
-        <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-          Total Quantities: {totalQty}
+
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            Total Quantities: {totalQty}
+          </div>
+          <Button className="h-10 px-6 bg-blue-600 hover:bg-blue-800 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-zinc-900/20 transition-all hover:-translate-y-0.5">
+            Add Size
+          </Button>
         </div>
       </div>
       <div className="border border-zinc-100 rounded-xl overflow-hidden shadow-sm bg-white">

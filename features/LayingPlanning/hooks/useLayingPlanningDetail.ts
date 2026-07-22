@@ -1,8 +1,36 @@
-import { SizeItem } from '@/features/LayingPlanning/types';
+import { GroupPartsApiSchema, PartsApiSchema, SizeItem } from '@/features/LayingPlanning/types';
 import { useEffect, useMemo, useState } from 'react';
 import { LayingPlanningService } from '../services/LayingPlanningService';
 
+const normalizePart = (item: any) => {
+    if (!item) return item;
+    if ('itemPart' in item || 'layingPlanningId' in item || 'itemPartGroupCode' in item) {
+        return item;
+    }
 
+    const parsed = PartsApiSchema.safeParse(item);
+    return parsed.success ? parsed.data : item;
+};
+
+const normalizeGroupPart = (item: any) => {
+    if (!item) return item;
+    if ('itemPart' in item || 'layingPlanningId' in item) {
+        return item;
+    }
+
+    const parsed = GroupPartsApiSchema.safeParse(item);
+    return parsed.success ? parsed.data : item;
+};
+
+const normalizeDetailPayload = (payload: any) => {
+    if (!payload) return payload;
+
+    return {
+        ...payload,
+        parts: Array.isArray(payload.parts) ? payload.parts.map(normalizePart) : payload.parts,
+        group_parts: Array.isArray(payload.group_parts) ? payload.group_parts.map(normalizeGroupPart) : payload.group_parts,
+    };
+};
 
 export const useLayingPlanningDetail = (id: string) => {
     const [data, setData] = useState<any>(null);
@@ -17,7 +45,8 @@ export const useLayingPlanningDetail = (id: string) => {
         setIsLoading(true);
         try {
             const response = await LayingPlanningService.getById(id);
-            setData(response.data || response);
+            const payload = response?.data ?? response;
+            setData(normalizeDetailPayload(payload));
             setError(null);
         } catch (err: any) {
             setError(err);
@@ -44,8 +73,8 @@ export const useLayingPlanningDetail = (id: string) => {
             computedTotalCutMap[key] = (item as any).total_cut || 0;
         });
 
-        const computedParts = data?.parts || [];
-        const computedIsGroupParts = data?.group_parts || [];
+        const computedParts = (data?.parts || []).map(normalizePart);
+        const computedIsGroupParts = (data?.group_parts || []).map(normalizeGroupPart);
 
         return {
             sizes: computedSizes,

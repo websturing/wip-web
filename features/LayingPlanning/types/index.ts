@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 export interface LayingPlanningModel {
     id: number;
     name: string;
@@ -25,18 +27,34 @@ export interface SizeItem {
     }
 }
 
+export const PartsApiSchema = z.object({
+    id: z.union([z.string(), z.number()]),
+    item_part: z.string(),
+    item_part_group_code: z.string(),
+}).transform((data) => ({
+    // Transform ke camelCase di sini
+    id: data.id,
+    itemPart: data.item_part,
+    itemPartGroupCode: data.item_part_group_code,
+}));
 
-export interface Parts {
-    id: string | number,
-    itemPart: string,
-    itemPartGroupCode: string
-}
+export type Parts = z.output<typeof PartsApiSchema>;
 
-export interface GroupParts {
-    id: string | number,
-    itemPart: string,
-    layingPlanningId: string | number
-}
+
+export const GroupPartsApiSchema = z.object({
+    id: z.union([z.string(), z.number()]),
+    item_part: z.string(),
+    laying_planning_id: z.union([z.string(), z.number()]),
+}).transform((data) => ({
+    // Transform ke camelCase di sini
+    id: data.id,
+    itemPart: data.item_part,
+    layingPlanningId: data.laying_planning_id,
+}));
+
+export type GroupParts = z.output<typeof GroupPartsApiSchema>;
+
+
 
 export interface PartItem {
     id: string | number

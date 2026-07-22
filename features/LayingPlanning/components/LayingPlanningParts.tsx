@@ -25,9 +25,14 @@ export const LayingPlanningParts = ({
           Parts Component Setup
         </h3>
 
-        <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-          Total Parts:{' '}
-          {(groupParts.length > 0 ? groupParts : parts)?.length || 0}
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            Total Parts:{' '}
+            {(groupParts.length > 0 ? groupParts : parts)?.length || 0}
+          </div>
+          <Button className="h-10 px-6 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-zinc-900/20 transition-all hover:-translate-y-0.5">
+            Add Part
+          </Button>
         </div>
       </div>
 
@@ -52,41 +57,40 @@ export const LayingPlanningParts = ({
                 </td>
               </tr>
             ) : (
-              (groupParts.length > 0 ? groupParts : parts).map((p: any) => (
-                <tr
-                  key={p.id}
-                  className="hover:bg-blue-50/30 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm font-bold text-zinc-800">
-                    {p.itemPart}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-zinc-700">
-                    {lotCode}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <Button
-                      onClick={() => {
-                        if (p.layingPlanningId) {
-                          router.push(
-                            `/admin/laying-planning/${p.layingPlanningId}`,
-                          )
+              (groupParts.length > 0 ? groupParts : parts).map((p: any) => {
+                const partName = p.itemPart ?? p.item_part ?? 'N/A'
+                const partLinkId = p.layingPlanningId ?? p.laying_planning_id
+
+                return (
+                  <tr
+                    key={p.id}
+                    className="hover:bg-blue-50/30 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm font-bold text-zinc-800">
+                      {partName}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-zinc-700">
+                      {lotCode}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <Button
+                        onClick={() => {
+                          if (partLinkId) {
+                            router.push(`/admin/laying-planning/${partLinkId}`)
+                          }
+                        }}
+                        variant="ghost"
+                        className="h-8 px-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 border border-blue-100/50"
+                        disabled={
+                          !partLinkId || partLinkId === layingPlanningId
                         }
-                      }}
-                      variant="ghost"
-                      className="h-8 px-4 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 border border-blue-100/50"
-                      disabled={
-                        !p.layingPlanningId ||
-                        p.layingPlanningId === layingPlanningId
-                      }
-                    >
-                      {p.layingPlanningId === layingPlanningId
-                        ? 'Current'
-                        : 'Detail'}
-                      {p.layingPlanningId}
-                    </Button>
-                  </td>
-                </tr>
-              ))
+                      >
+                        {partLinkId === layingPlanningId ? 'Current' : 'Detail'}
+                      </Button>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
